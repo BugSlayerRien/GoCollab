@@ -10,6 +10,7 @@ import '../../../announcements/presentation/widgets/announcement_card.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../../events/presentation/providers/event_providers.dart';
 import '../../../events/presentation/widgets/event_card.dart';
+import '../../../notifications/presentation/providers/notification_providers.dart';
 import '../../../opportunities/presentation/providers/opportunity_providers.dart';
 import '../../../opportunities/presentation/widgets/opportunity_card.dart';
 import '../../../shell/presentation/providers/shell_providers.dart';
@@ -29,6 +30,7 @@ class DashboardScreen extends ConsumerWidget {
     final announcementsAsync = ref.watch(announcementsListProvider);
     final eventsAsync = ref.watch(eventsListProvider);
     final savedAsync = ref.watch(savedOpportunitiesProvider);
+    final unreadCount = ref.watch(unreadNotificationCountProvider);
 
     final user = userAsync.valueOrNull;
     if (user == null) return const Scaffold(body: Center(child: CircularProgressIndicator()));
@@ -44,7 +46,11 @@ class DashboardScreen extends ConsumerWidget {
         child: ListView(
           padding: const EdgeInsets.all(AppSpacing.lg),
           children: [
-            DashboardHeader(user: user, onNotificationsTap: () {}),
+            DashboardHeader(
+              user: user,
+              unreadNotificationCount: unreadCount,
+              onNotificationsTap: () => context.push('/notifications'),
+            ),
             const SizedBox(height: AppSpacing.lg),
             statsAsync.when(
               loading: () => const SizedBox(height: 72, child: Center(child: CircularProgressIndicator())),

@@ -6,6 +6,7 @@ import '../../features/auth/presentation/screens/login_screen.dart';
 import '../../features/auth/presentation/screens/register_screen.dart';
 import '../../features/events/presentation/screens/event_detail_screen.dart';
 import '../../features/events/presentation/screens/qr_checkin_screen.dart';
+import '../../features/notifications/presentation/screens/notifications_screen.dart';
 import '../../features/opportunities/presentation/screens/opportunity_detail_screen.dart';
 import '../../features/partnerships/presentation/screens/partner_detail_screen.dart';
 import '../../features/profile/presentation/screens/edit_profile_screen.dart';
@@ -67,6 +68,7 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => PartnerDetailScreen(partnerId: state.pathParameters['id']!),
       ),
       GoRoute(path: '/profile/edit', builder: (context, state) => const EditProfileScreen()),
+      GoRoute(path: '/notifications', builder: (context, state) => const NotificationsScreen()),
     ],
   );
 });

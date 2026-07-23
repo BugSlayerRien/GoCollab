@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/widgets/section_header.dart';
@@ -7,6 +8,7 @@ import '../../../analytics/presentation/providers/analytics_providers.dart';
 import '../../../analytics/presentation/widgets/stat_summary_card.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../../events/presentation/providers/event_providers.dart';
+import '../../../notifications/presentation/providers/notification_providers.dart';
 import '../../../partnerships/presentation/providers/partnership_providers.dart';
 import '../../../shell/presentation/providers/shell_providers.dart';
 import '../widgets/dashboard_header.dart';
@@ -24,6 +26,7 @@ class OfficerDashboardScreen extends ConsumerWidget {
     final analyticsAsync = ref.watch(analyticsSnapshotProvider);
     final eventsAsync = ref.watch(eventsListProvider);
     final partnersAsync = ref.watch(partnersListProvider);
+    final unreadCount = ref.watch(unreadNotificationCountProvider);
 
     final user = userAsync.valueOrNull;
     if (user == null) return const Scaffold(body: Center(child: CircularProgressIndicator()));
@@ -38,7 +41,11 @@ class OfficerDashboardScreen extends ConsumerWidget {
         child: ListView(
           padding: const EdgeInsets.all(AppSpacing.lg),
           children: [
-            DashboardHeader(user: user, onNotificationsTap: () {}),
+            DashboardHeader(
+              user: user,
+              unreadNotificationCount: unreadCount,
+              onNotificationsTap: () => context.push('/notifications'),
+            ),
             const SizedBox(height: AppSpacing.lg),
             QuickActionsGrid(
               actions: [

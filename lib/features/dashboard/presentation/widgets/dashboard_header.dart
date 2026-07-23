@@ -3,15 +3,22 @@ import '../../../../core/animations/prismatic_background.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../auth/domain/entities/app_user.dart';
+import '../../../notifications/presentation/widgets/notification_badge.dart';
 
 /// The dashboard's signature "premium" header — a prismatic-animated card
 /// greeting the member/officer by name. Per placement guidance this is one
 /// of the explicitly-approved surfaces for the flowing prismatic effect.
 class DashboardHeader extends StatelessWidget {
-  const DashboardHeader({super.key, required this.user, this.onNotificationsTap});
+  const DashboardHeader({
+    super.key,
+    required this.user,
+    this.onNotificationsTap,
+    this.unreadNotificationCount = 0,
+  });
 
   final AppUser user;
   final VoidCallback? onNotificationsTap;
+  final int unreadNotificationCount;
 
   String get _greeting {
     final hour = DateTime.now().hour;
@@ -58,9 +65,9 @@ class DashboardHeader extends StatelessWidget {
                     ],
                   ),
                 ),
-                IconButton.filledTonal(
-                  onPressed: onNotificationsTap,
-                  icon: const Icon(Icons.notifications_none_rounded),
+                NotificationBellButton(
+                  unreadCount: unreadNotificationCount,
+                  onPressed: onNotificationsTap ?? () {},
                 ),
               ],
             ),
