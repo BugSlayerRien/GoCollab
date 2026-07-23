@@ -1,8 +1,8 @@
 # GoCollab
 
-**GoCollab** is a production-oriented Flutter mobile application built exclusively for **Google Developer Groups on Campus (GDGoC) Philippines**. It centralizes community management — announcements, career opportunities, event management, member engagement analytics, and partnership management — into a single, role-aware Material Design 3 experience.
+**GoCollab** is a production-oriented Flutter mobile application built exclusively for **Google Developer Groups on Campus (GDGoC) Philippines**. It centralizes community management - announcements, career opportunities, event management, member engagement analytics, and partnership management - into a single, role-aware Material Design 3 experience.
 
-This project aligns with **SDG 17 – Partnerships for the Goals**, using technology to strengthen collaboration between the student community, its officers, and external partner organizations.
+This project aligns with **SDG 17 - Partnerships for the Goals**, using technology to strengthen collaboration between the student community, its officers, and external partner organizations.
 
  Built with Flutter + Riverpod on the client and Supabase (PostgreSQL, Auth, Storage, Realtime) on the backend, following Clean Architecture and the Repository pattern throughout.
 
