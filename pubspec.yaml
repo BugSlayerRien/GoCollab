@@ -1,0 +1,91 @@
+name: gocollab
+description: "GoCollab: centralized community management app for Google Developer Groups on Campus (GDGoC) Philippines."
+publish_to: 'none'
+
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.12.0
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  cupertino_icons: ^1.0.8
+
+  # ---- State management (Riverpod, hand-written providers, no codegen) ----
+  flutter_riverpod: ^2.6.1
+
+  # ---- Backend: Supabase (Auth, Postgres, Storage, Realtime) ----
+  supabase_flutter: ^2.8.0
+
+  # ---- Navigation ----
+  go_router: ^14.6.2
+
+  # ---- Authentication ----
+  google_sign_in: ^6.2.2
+
+  # ---- Push notifications (Firebase Cloud Messaging) ----
+  firebase_core: ^3.8.0
+  firebase_messaging: ^15.1.6
+  flutter_local_notifications: ^18.0.1
+
+  # ---- Maps & location ----
+  google_maps_flutter: ^2.10.0
+  geolocator: ^13.0.2
+
+  # ---- QR attendance ----
+  mobile_scanner: ^6.0.2
+  qr_flutter: ^4.1.0
+
+  # ---- Charts (Community Analytics) ----
+  fl_chart: ^0.70.2
+
+  # ---- Calendar integration ----
+  add_2_calendar: ^3.0.1
+
+  # ---- Utilities ----
+  intl: ^0.19.0
+  equatable: ^2.0.7
+  cached_network_image: ^3.4.1
+  shared_preferences: ^2.3.3
+  permission_handler: ^11.3.1
+  url_launcher: ^6.3.1
+  image_picker: ^1.1.2
+  flutter_svg: ^2.0.16
+  logger: ^2.5.0
+  connectivity_plus: ^6.1.0
+  timeago: ^3.7.0
+  uuid: ^4.5.1
+  http: ^1.2.2
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+
+flutter:
+  uses-material-design: true
+
+  assets:
+    - assets/images/
+    - assets/icons/
+
+  fonts:
+    # NOTE: "Century Gothic" is a licensed commercial font and cannot be
+    # bundled in this open repository. Poppins (Open Font License) is used
+    # as a structurally-identical geometric sans-serif substitute so the
+    # typography hierarchy, spacing, and weights match the intended design.
+    # To switch to the licensed Century Gothic font: drop the .ttf files into
+    # assets/fonts/ and update the `family`/`asset` paths below — no other
+    # code changes are required because lib/core/theme/app_typography.dart
+    # references a single `AppTypography.fontFamily` constant.
+    - family: Poppins
+      fonts:
+        - asset: assets/fonts/Poppins-Regular.ttf
+        - asset: assets/fonts/Poppins-Medium.ttf
+          weight: 500
+        - asset: assets/fonts/Poppins-SemiBold.ttf
+          weight: 600
+        - asset: assets/fonts/Poppins-Bold.ttf
+          weight: 700
