@@ -6,7 +6,7 @@ This project aligns with **SDG 17 - Partnerships for the Goals**, using technolo
 
  Built with Flutter + Riverpod on the client and Supabase (PostgreSQL, Auth, Storage, Realtime) on the backend, following Clean Architecture and the Repository pattern throughout.
 
-----
+---
 
 ## Table of Contents
 
