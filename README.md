@@ -15,7 +15,7 @@ This project aligns with **SDG 17 - Partnerships for the Goals**, using technolo
 3. [Architecture](#architecture)
 4. [Project Structure](#project-structure)
 
----
+--
 
 ## Feature Overview
 
