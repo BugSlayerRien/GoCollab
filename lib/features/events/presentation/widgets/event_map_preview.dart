@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import '../../../../core/config/env.dart';
-import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
+import '../../../../core/theme/theme_extensions.dart';
 
 /// Renders a small, non-interactive map preview for an event venue or
 /// partner address. Degrades gracefully to a placeholder card when
@@ -30,15 +30,15 @@ class LocationMapPreview extends StatelessWidget {
       return Container(
         height: height,
         decoration: BoxDecoration(
-          color: AppColors.surfaceLightGray,
+          color: context.appSurfaceMuted,
           borderRadius: borderRadius,
-          border: Border.all(color: AppColors.surfaceBorder),
+          border: Border.all(color: context.appBorder),
         ),
         child: Center(
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(Icons.map_outlined, color: AppColors.textDisabled, size: 28),
+              Icon(Icons.map_outlined, color: context.appTextDisabled, size: 28),
               const SizedBox(height: AppSpacing.xs),
               Text(
                 label,

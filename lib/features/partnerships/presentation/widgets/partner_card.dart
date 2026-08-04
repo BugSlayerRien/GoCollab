@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
+import '../../../../core/theme/theme_extensions.dart';
 import '../../../../core/widgets/status_badge.dart';
 import '../../domain/entities/partner.dart';
 
@@ -23,9 +24,9 @@ class PartnerCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surfaceLightGray,
+        color: context.appSurfaceMuted,
         borderRadius: BorderRadius.circular(AppSpacing.radiusLg),
-        border: Border.all(color: AppColors.surfaceBorder),
+        border: Border.all(color: context.appBorder),
       ),
       child: Material(
         color: Colors.transparent,
@@ -54,7 +55,7 @@ class PartnerCard extends StatelessWidget {
                       const SizedBox(height: 2),
                       Text(
                         partner.category.label,
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(color: AppColors.textSecondary),
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(color: context.appTextSecondary),
                       ),
                     ],
                   ),

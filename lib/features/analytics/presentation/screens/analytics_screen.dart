@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
+import '../../../../core/theme/theme_extensions.dart';
 import '../../../../core/widgets/empty_state.dart';
 import '../../domain/entities/analytics_snapshot.dart';
 import '../providers/analytics_providers.dart';
@@ -100,9 +101,9 @@ class _GrowthChart extends StatelessWidget {
       height: 200,
       padding: const EdgeInsets.all(AppSpacing.md),
       decoration: BoxDecoration(
-        color: AppColors.surfaceLightGray,
+        color: context.appSurfaceMuted,
         borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
-        border: Border.all(color: AppColors.surfaceBorder),
+        border: Border.all(color: context.appBorder),
       ),
       child: LineChart(
         LineChartData(
@@ -156,9 +157,9 @@ class _EventPerformanceChart extends StatelessWidget {
       height: 240,
       padding: const EdgeInsets.all(AppSpacing.md),
       decoration: BoxDecoration(
-        color: AppColors.surfaceLightGray,
+        color: context.appSurfaceMuted,
         borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
-        border: Border.all(color: AppColors.surfaceBorder),
+        border: Border.all(color: context.appBorder),
       ),
       child: BarChart(
         BarChartData(

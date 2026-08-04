@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:timeago/timeago.dart' as timeago;
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
+import '../../../../core/theme/theme_extensions.dart';
 import '../../../../core/widgets/empty_state.dart';
 import '../../domain/entities/app_notification.dart';
 import '../providers/notification_providers.dart';
@@ -85,7 +86,7 @@ class _NotificationTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final color = notification.type.color;
     return Material(
-      color: notification.isRead ? AppColors.surfaceWhite : color.withValues(alpha: 0.06),
+      color: notification.isRead ? context.appSurface : color.withValues(alpha: 0.06),
       borderRadius: BorderRadius.circular(AppSpacing.radiusLg),
       child: InkWell(
         onTap: onTap,
@@ -94,7 +95,7 @@ class _NotificationTile extends StatelessWidget {
           padding: const EdgeInsets.all(AppSpacing.md),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(AppSpacing.radiusLg),
-            border: Border.all(color: AppColors.surfaceBorder),
+            border: Border.all(color: context.appBorder),
           ),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,

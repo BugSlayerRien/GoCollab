@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
+import '../../../../core/theme/theme_extensions.dart';
 import '../../../../core/utils/validators.dart';
 import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_text_field.dart';
@@ -66,7 +67,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
             _emailSent
                 ? 'We sent a password reset link to ${_emailController.text.trim()}. Follow the link to choose a new password.'
                 : "Enter the email associated with your account and we'll send you a link to reset your password.",
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: AppColors.textSecondary),
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: context.appTextSecondary),
           ),
           const SizedBox(height: AppSpacing.xxl),
           if (!_emailSent)

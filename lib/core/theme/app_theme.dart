@@ -3,53 +3,72 @@ import 'app_colors.dart';
 import 'app_spacing.dart';
 import 'app_typography.dart';
 
-/// Builds the app's single Material 3 [ThemeData]. GoCollab ships with a
-/// light, white-dominant theme only (per design spec: "primarily white
-/// backgrounds"); a dark variant can be added later by branching this
-/// builder off a `Brightness` parameter without touching call sites.
+/// Builds Material 3 [ThemeData] for light and dark modes. Surfaces stay
+/// calm (white / near-black) with Google brand colors as intentional accents.
 class AppTheme {
   AppTheme._();
 
-  static ThemeData get light {
+  static ThemeData get light => _build(Brightness.light);
+  static ThemeData get dark => _build(Brightness.dark);
+
+  static ThemeData _build(Brightness brightness) {
+    final isDark = brightness == Brightness.dark;
+    final surface = isDark ? AppColors.darkSurface : AppColors.surfaceWhite;
+    final surfaceMuted = isDark ? AppColors.darkSurfaceMuted : AppColors.surfaceLightGray;
+    final border = isDark ? AppColors.darkBorder : AppColors.surfaceBorder;
+    final onSurface = isDark ? AppColors.darkTextPrimary : AppColors.textPrimary;
+    final onSurfaceVariant = isDark ? AppColors.darkTextSecondary : AppColors.textSecondary;
+    final disabled = isDark ? AppColors.darkTextDisabled : AppColors.textDisabled;
+    final textTheme = AppTypography.forBrightness(brightness);
+
     final colorScheme = ColorScheme.fromSeed(
       seedColor: AppColors.googleBlue,
-      brightness: Brightness.light,
+      brightness: brightness,
       primary: AppColors.googleBlue,
       secondary: AppColors.googleGreen,
       tertiary: AppColors.googleYellow,
       error: AppColors.googleRed,
-      surface: AppColors.surfaceWhite,
+      surface: surface,
+      onSurface: onSurface,
+      onSurfaceVariant: onSurfaceVariant,
+      outline: border,
+      outlineVariant: border,
+      surfaceContainerHighest: surfaceMuted,
+      surfaceContainerHigh: surfaceMuted,
+      surfaceContainer: surfaceMuted,
+      surfaceContainerLow: surface,
+      surfaceContainerLowest: surface,
     );
 
     return ThemeData(
       useMaterial3: true,
-      brightness: Brightness.light,
+      brightness: brightness,
       colorScheme: colorScheme,
-      scaffoldBackgroundColor: AppColors.surfaceWhite,
+      scaffoldBackgroundColor: surface,
       fontFamily: AppTypography.fontFamily,
-      textTheme: AppTypography.textTheme,
+      textTheme: textTheme,
       splashFactory: InkSparkle.splashFactory,
       visualDensity: VisualDensity.adaptivePlatformDensity,
 
       appBarTheme: AppBarTheme(
-        backgroundColor: AppColors.surfaceWhite,
-        foregroundColor: AppColors.textPrimary,
+        backgroundColor: surface,
+        foregroundColor: onSurface,
         elevation: 0,
         scrolledUnderElevation: 1,
-        surfaceTintColor: AppColors.surfaceWhite,
+        surfaceTintColor: surface,
         centerTitle: false,
-        titleTextStyle: AppTypography.textTheme.headlineSmall,
-        iconTheme: const IconThemeData(color: AppColors.textPrimary),
+        titleTextStyle: textTheme.headlineSmall,
+        iconTheme: IconThemeData(color: onSurface),
       ),
 
       cardTheme: CardThemeData(
-        color: AppColors.surfaceLightGray,
+        color: surfaceMuted,
         elevation: 0,
         surfaceTintColor: Colors.transparent,
-        shadowColor: AppColors.textPrimary.withValues(alpha: 0.06),
+        shadowColor: onSurface.withValues(alpha: 0.06),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
-          side: BorderSide(color: AppColors.surfaceBorder, width: 1),
+          side: BorderSide(color: border, width: 1),
         ),
         margin: EdgeInsets.zero,
       ),
@@ -58,13 +77,13 @@ class AppTheme {
         style: ElevatedButton.styleFrom(
           backgroundColor: AppColors.googleBlue,
           foregroundColor: Colors.white,
-          disabledBackgroundColor: AppColors.textDisabled.withValues(alpha: 0.3),
+          disabledBackgroundColor: disabled.withValues(alpha: 0.3),
           elevation: 0,
           padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xl, vertical: AppSpacing.md),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(AppSpacing.radiusPill),
           ),
-          textStyle: AppTypography.textTheme.labelLarge?.copyWith(color: Colors.white),
+          textStyle: textTheme.labelLarge?.copyWith(color: Colors.white),
         ),
       ),
 
@@ -76,7 +95,7 @@ class AppTheme {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(AppSpacing.radiusPill),
           ),
-          textStyle: AppTypography.textTheme.labelLarge,
+          textStyle: textTheme.labelLarge,
         ),
       ),
 
@@ -87,7 +106,7 @@ class AppTheme {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(AppSpacing.radiusPill),
           ),
-          textStyle: AppTypography.textTheme.labelLarge,
+          textStyle: textTheme.labelLarge,
         ),
       ),
 
@@ -102,17 +121,17 @@ class AppTheme {
 
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: AppColors.surfaceLightGray,
+        fillColor: surfaceMuted,
         contentPadding: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: AppSpacing.md),
-        hintStyle: AppTypography.textTheme.bodyMedium?.copyWith(color: AppColors.textDisabled),
-        labelStyle: AppTypography.textTheme.bodyMedium?.copyWith(color: AppColors.textSecondary),
+        hintStyle: textTheme.bodyMedium?.copyWith(color: disabled),
+        labelStyle: textTheme.bodyMedium?.copyWith(color: onSurfaceVariant),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
-          borderSide: BorderSide(color: AppColors.surfaceBorder),
+          borderSide: BorderSide(color: border),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
-          borderSide: BorderSide(color: AppColors.surfaceBorder),
+          borderSide: BorderSide(color: border),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
@@ -129,72 +148,90 @@ class AppTheme {
       ),
 
       chipTheme: ChipThemeData(
-        backgroundColor: AppColors.surfaceLightGray,
+        backgroundColor: surfaceMuted,
         selectedColor: AppColors.googleBlue.withValues(alpha: 0.12),
-        labelStyle: AppTypography.textTheme.labelMedium,
+        labelStyle: textTheme.labelMedium,
         padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm, vertical: AppSpacing.xxs),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppSpacing.radiusPill),
-          side: BorderSide(color: AppColors.surfaceBorder),
+          side: BorderSide(color: border),
         ),
       ),
 
-      bottomNavigationBarTheme: const BottomNavigationBarThemeData(
-        backgroundColor: AppColors.surfaceWhite,
+      bottomNavigationBarTheme: BottomNavigationBarThemeData(
+        backgroundColor: surface,
         selectedItemColor: AppColors.googleBlue,
-        unselectedItemColor: AppColors.textDisabled,
+        unselectedItemColor: disabled,
         type: BottomNavigationBarType.fixed,
         elevation: 8,
       ),
 
       navigationBarTheme: NavigationBarThemeData(
-        backgroundColor: AppColors.surfaceWhite,
+        backgroundColor: surface,
         indicatorColor: AppColors.googleBlue.withValues(alpha: 0.12),
         surfaceTintColor: Colors.transparent,
         elevation: 3,
         height: 68,
         labelTextStyle: WidgetStateProperty.resolveWith((states) {
           final selected = states.contains(WidgetState.selected);
-          return AppTypography.textTheme.labelSmall?.copyWith(
-            color: selected ? AppColors.googleBlue : AppColors.textDisabled,
+          return textTheme.labelSmall?.copyWith(
+            color: selected ? AppColors.googleBlue : disabled,
             fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
           );
         }),
       ),
 
-      dividerTheme: const DividerThemeData(
-        color: AppColors.surfaceBorder,
+      dividerTheme: DividerThemeData(
+        color: border,
         thickness: 1,
         space: 1,
       ),
 
       snackBarTheme: SnackBarThemeData(
-        backgroundColor: AppColors.textPrimary,
-        contentTextStyle: AppTypography.textTheme.bodyMedium?.copyWith(color: Colors.white),
+        backgroundColor: isDark ? AppColors.darkSurfaceMuted : AppColors.textPrimary,
+        contentTextStyle: textTheme.bodyMedium?.copyWith(color: Colors.white),
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
         ),
       ),
 
-      progressIndicatorTheme: const ProgressIndicatorThemeData(
+      progressIndicatorTheme: ProgressIndicatorThemeData(
         color: AppColors.googleBlue,
-        linearTrackColor: AppColors.surfaceBorder,
-        circularTrackColor: AppColors.surfaceBorder,
+        linearTrackColor: border,
+        circularTrackColor: border,
       ),
 
       dialogTheme: DialogThemeData(
-        backgroundColor: AppColors.surfaceWhite,
+        backgroundColor: surface,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppSpacing.radiusLg),
         ),
       ),
 
-      bottomSheetTheme: const BottomSheetThemeData(
-        backgroundColor: AppColors.surfaceWhite,
-        shape: RoundedRectangleBorder(
+      bottomSheetTheme: BottomSheetThemeData(
+        backgroundColor: surface,
+        shape: const RoundedRectangleBorder(
           borderRadius: BorderRadius.vertical(top: Radius.circular(AppSpacing.radiusXl)),
         ),
+      ),
+
+      switchTheme: SwitchThemeData(
+        thumbColor: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.selected)) return AppColors.googleBlue;
+          return disabled;
+        }),
+        trackColor: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.selected)) {
+            return AppColors.googleBlue.withValues(alpha: 0.35);
+          }
+          return border;
+        }),
+      ),
+
+      listTileTheme: ListTileThemeData(
+        iconColor: onSurfaceVariant,
+        textColor: onSurface,
       ),
     );
   }

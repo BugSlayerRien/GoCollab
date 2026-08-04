@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
+import '../../../../core/theme/theme_extensions.dart';
 
 /// Google-branded "Sign in with Google" button following Google's own
 /// identity guidelines (white background, colored "G" mark, gray border).
@@ -18,8 +19,8 @@ class GoogleSignInButton extends StatelessWidget {
       child: OutlinedButton(
         onPressed: isLoading ? null : onPressed,
         style: OutlinedButton.styleFrom(
-          foregroundColor: AppColors.textPrimary,
-          side: const BorderSide(color: AppColors.surfaceBorder, width: 1.4),
+          foregroundColor: context.appTextPrimary,
+          side: BorderSide(color: context.appBorder, width: 1.4),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppSpacing.radiusPill)),
         ),
         child: isLoading

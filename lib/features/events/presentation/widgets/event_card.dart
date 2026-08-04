@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../../core/animations/prismatic_glow_border.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
+import '../../../../core/theme/theme_extensions.dart';
 import '../../../../core/utils/date_formatter.dart';
 import '../../../../core/widgets/status_badge.dart';
 import '../../domain/entities/event.dart';
@@ -24,9 +25,9 @@ class EventCard extends StatelessWidget {
     }
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surfaceLightGray,
+        color: context.appSurfaceMuted,
         borderRadius: BorderRadius.circular(AppSpacing.radiusLg),
-        border: Border.all(color: AppColors.surfaceBorder),
+        border: Border.all(color: context.appBorder),
       ),
       child: card,
     );
@@ -43,7 +44,7 @@ class _CardContent extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: AppColors.surfaceLightGray,
+      color: context.appSurfaceMuted,
       borderRadius: BorderRadius.circular(AppSpacing.radiusLg),
       child: InkWell(
         onTap: onTap,
@@ -73,7 +74,7 @@ class _CardContent extends StatelessWidget {
               const SizedBox(height: AppSpacing.xs),
               Row(
                 children: [
-                  const Icon(Icons.schedule_rounded, size: 14, color: AppColors.textSecondary),
+                  Icon(Icons.schedule_rounded, size: 14, color: context.appTextSecondary),
                   const SizedBox(width: 4),
                   Expanded(
                     child: Text(
@@ -90,7 +91,7 @@ class _CardContent extends StatelessWidget {
                     Icon(
                       event.isOnline ? Icons.videocam_outlined : Icons.place_outlined,
                       size: 14,
-                      color: AppColors.textSecondary,
+                      color: context.appTextSecondary,
                     ),
                     const SizedBox(width: 4),
                     Expanded(

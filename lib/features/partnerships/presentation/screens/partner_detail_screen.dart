@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
+import '../../../../core/theme/theme_extensions.dart';
 import '../../../../core/utils/date_formatter.dart';
 import '../../../../core/widgets/empty_state.dart';
 import '../../../../core/widgets/status_badge.dart';
@@ -126,7 +127,7 @@ class _InfoTile extends StatelessWidget {
     return ListTile(
       onTap: onTap,
       contentPadding: EdgeInsets.zero,
-      leading: Icon(icon, color: AppColors.textSecondary),
+      leading: Icon(icon, color: context.appTextSecondary),
       title: Text(label),
     );
   }
@@ -163,7 +164,7 @@ class _SponsorshipsTab extends ConsumerWidget {
             itemBuilder: (context, index) {
               final s = sponsorships[index];
               return ListTile(
-                tileColor: AppColors.surfaceLightGray,
+                tileColor: context.appSurfaceMuted,
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppSpacing.radiusMd)),
                 title: Text(s.title),
                 subtitle: Text('${s.sponsorshipType} • ${s.status}${s.amount != null ? ' • ${s.currency} ${s.amount!.toStringAsFixed(0)}' : ''}'),

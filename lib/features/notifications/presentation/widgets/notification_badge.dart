@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/theme_extensions.dart';
 
 /// Bell icon button with a small pulsing red badge when [unreadCount] > 0 —
 /// the "notification badge pulses" microinteraction called out in the spec.
@@ -73,7 +74,7 @@ class _NotificationBellButtonState extends State<NotificationBellButton> with Si
                           decoration: BoxDecoration(
                             color: AppColors.googleRed,
                             shape: BoxShape.circle,
-                            border: Border.all(color: AppColors.surfaceWhite, width: 1.5),
+                            border: Border.all(color: context.appSurface, width: 1.5),
                           ),
                           child: widget.unreadCount > 9
                               ? null

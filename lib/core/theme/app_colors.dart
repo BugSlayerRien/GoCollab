@@ -12,15 +12,25 @@ abstract final class AppColors {
   static const Color googleYellow = Color(0xFFFBBC05);
   static const Color googleRed = Color(0xFFEA4335);
 
-  // ---- Neutral surfaces ----
+  // ---- Neutral surfaces (light) ----
   static const Color surfaceWhite = Color(0xFFFFFFFF);
   static const Color surfaceLightGray = Color(0xFFF8F9FA);
   static const Color surfaceBorder = Color(0xFFE8EAED);
 
-  // ---- Text ----
+  // ---- Neutral surfaces (dark) ----
+  static const Color darkSurface = Color(0xFF121417);
+  static const Color darkSurfaceMuted = Color(0xFF1E2126);
+  static const Color darkBorder = Color(0xFF2F3338);
+
+  // ---- Text (light) ----
   static const Color textPrimary = Color(0xFF202124);
   static const Color textSecondary = Color(0xFF5F6368);
   static const Color textDisabled = Color(0xFF9AA0A6);
+
+  // ---- Text (dark) ----
+  static const Color darkTextPrimary = Color(0xFFE8EAED);
+  static const Color darkTextSecondary = Color(0xFF9AA0A6);
+  static const Color darkTextDisabled = Color(0xFF5F6368);
 
   // ---- Semantic aliases (keep naming close to product spec) ----
   static const Color primary = googleBlue;

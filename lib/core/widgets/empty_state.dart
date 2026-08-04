@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_spacing.dart';
+import '../theme/theme_extensions.dart';
 import 'app_button.dart';
 
 /// Consistent "nothing here yet" placeholder for empty lists (announcements,
@@ -33,10 +34,10 @@ class EmptyState extends StatelessWidget {
               width: 72,
               height: 72,
               decoration: BoxDecoration(
-                color: AppColors.surfaceLightGray,
+                color: context.appSurfaceMuted,
                 shape: BoxShape.circle,
               ),
-              child: Icon(icon, size: 32, color: AppColors.textDisabled),
+              child: Icon(icon, size: 32, color: context.appTextDisabled),
             ),
             const SizedBox(height: AppSpacing.lg),
             Text(title, style: Theme.of(context).textTheme.titleMedium, textAlign: TextAlign.center),

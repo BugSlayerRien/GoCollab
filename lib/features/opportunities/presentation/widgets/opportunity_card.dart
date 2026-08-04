@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
+import '../../../../core/theme/theme_extensions.dart';
 import '../../../../core/widgets/status_badge.dart';
 import '../../domain/entities/opportunity.dart';
 import '../providers/opportunity_providers.dart';
@@ -19,9 +20,9 @@ class OpportunityCard extends ConsumerWidget {
 
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surfaceLightGray,
+        color: context.appSurfaceMuted,
         borderRadius: BorderRadius.circular(AppSpacing.radiusLg),
-        border: Border.all(color: AppColors.surfaceBorder),
+        border: Border.all(color: context.appBorder),
       ),
       child: Material(
         color: Colors.transparent,
@@ -42,7 +43,7 @@ class OpportunityCard extends ConsumerWidget {
                       visualDensity: VisualDensity.compact,
                       icon: Icon(
                         opportunity.isSaved ? Icons.bookmark_rounded : Icons.bookmark_border_rounded,
-                        color: opportunity.isSaved ? AppColors.googleBlue : AppColors.textSecondary,
+                        color: opportunity.isSaved ? AppColors.googleBlue : context.appTextSecondary,
                       ),
                       onPressed: () => ref.read(savedOpportunityControllerProvider.notifier).toggle(opportunity),
                     ),
@@ -52,7 +53,7 @@ class OpportunityCard extends ConsumerWidget {
                 const SizedBox(height: 2),
                 Text(
                   opportunity.organization,
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(color: AppColors.textSecondary),
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(color: context.appTextSecondary),
                 ),
                 const SizedBox(height: AppSpacing.sm),
                 Row(
@@ -60,7 +61,7 @@ class OpportunityCard extends ConsumerWidget {
                     Icon(
                       opportunity.isRemote ? Icons.public_rounded : Icons.location_on_outlined,
                       size: 14,
-                      color: AppColors.textSecondary,
+                      color: context.appTextSecondary,
                     ),
                     const SizedBox(width: 4),
                     Expanded(

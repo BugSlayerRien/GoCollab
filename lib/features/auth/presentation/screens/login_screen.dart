@@ -3,9 +3,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
+import '../../../../core/theme/theme_extensions.dart';
 import '../../../../core/utils/validators.dart';
 import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_text_field.dart';
+import '../../../../core/widgets/gocollab_logo.dart';
 import '../providers/auth_providers.dart';
 import '../widgets/auth_scaffold.dart';
 import '../widgets/google_sign_in_button.dart';
@@ -72,7 +74,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             const SizedBox(height: AppSpacing.xs),
             Text(
               'Sign in to continue building with GDGoC Philippines.',
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: AppColors.textSecondary),
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: context.appTextSecondary),
             ),
             const SizedBox(height: AppSpacing.xxl),
             AppTextField(
@@ -154,19 +156,7 @@ class _BrandMark extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       children: [
-        Container(
-          width: 44,
-          height: 44,
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
-            gradient: const LinearGradient(
-              colors: [AppColors.googleBlue, AppColors.googleGreen],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
-          ),
-          child: const Icon(Icons.groups_2_rounded, color: Colors.white, size: 24),
-        ),
+        const GoCollabLogo(size: 44, borderRadius: AppSpacing.radiusSm),
         const SizedBox(width: AppSpacing.sm),
         Text('GoCollab', style: Theme.of(context).textTheme.titleLarge),
       ],

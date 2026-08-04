@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
-import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
+import '../../../../core/theme/theme_extensions.dart';
 import '../../../../core/utils/date_formatter.dart';
 import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/empty_state.dart';
@@ -59,7 +59,7 @@ class _DetailBody extends ConsumerWidget {
           const SizedBox(height: 4),
           Text(
             opportunity.organization,
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(color: AppColors.textSecondary),
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(color: context.appTextSecondary),
           ),
           const SizedBox(height: AppSpacing.md),
           Wrap(
@@ -123,14 +123,14 @@ class _MetaChip extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm, vertical: 6),
       decoration: BoxDecoration(
-        color: AppColors.surfaceLightGray,
+        color: context.appSurfaceMuted,
         borderRadius: BorderRadius.circular(AppSpacing.radiusPill),
-        border: Border.all(color: AppColors.surfaceBorder),
+        border: Border.all(color: context.appBorder),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 14, color: AppColors.textSecondary),
+          Icon(icon, size: 14, color: context.appTextSecondary),
           const SizedBox(width: 4),
           Text(label, style: Theme.of(context).textTheme.bodySmall),
         ],

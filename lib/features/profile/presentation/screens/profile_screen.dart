@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
+import '../../../../core/theme/theme_extensions.dart';
+import '../../../../core/theme/theme_mode_provider.dart';
 import '../../../../core/utils/date_formatter.dart';
 import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/empty_state.dart';
@@ -16,6 +18,8 @@ class ProfileScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final userAsync = ref.watch(currentUserProvider);
+    final themeMode = ref.watch(themeModeProvider);
+    final isDark = themeMode == ThemeMode.dark;
 
     return Scaffold(
       appBar: AppBar(
@@ -36,6 +40,11 @@ class ProfileScreen extends ConsumerWidget {
             padding: const EdgeInsets.all(AppSpacing.lg),
             children: [
               ProfileHeader(user: user),
+              const SizedBox(height: AppSpacing.lg),
+              _AppearanceTile(
+                isDark: isDark,
+                onChanged: (value) => ref.read(themeModeProvider.notifier).toggleDark(value),
+              ),
               const SizedBox(height: AppSpacing.lg),
               if (user.bio != null && user.bio!.isNotEmpty) ...[
                 Text('Bio', style: Theme.of(context).textTheme.titleMedium),
@@ -78,6 +87,39 @@ class ProfileScreen extends ConsumerWidget {
   }
 }
 
+class _AppearanceTile extends StatelessWidget {
+  const _AppearanceTile({required this.isDark, required this.onChanged});
+
+  final bool isDark;
+  final ValueChanged<bool> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: AppSpacing.xs),
+      decoration: BoxDecoration(
+        color: context.appSurfaceMuted,
+        borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+        border: Border.all(color: context.appBorder),
+      ),
+      child: SwitchListTile(
+        contentPadding: EdgeInsets.zero,
+        secondary: Icon(
+          isDark ? Icons.dark_mode_rounded : Icons.light_mode_rounded,
+          color: AppColors.googleBlue,
+        ),
+        title: Text('Dark mode', style: Theme.of(context).textTheme.titleMedium),
+        subtitle: Text(
+          isDark ? 'Using dark appearance' : 'Using light appearance',
+          style: Theme.of(context).textTheme.bodySmall,
+        ),
+        value: isDark,
+        onChanged: onChanged,
+      ),
+    );
+  }
+}
+
 class _GithubSection extends ConsumerWidget {
   const _GithubSection({required this.githubUsername, required this.userId});
   final String? githubUsername;
@@ -97,9 +139,9 @@ class _GithubSection extends ConsumerWidget {
     return Container(
       padding: const EdgeInsets.all(AppSpacing.md),
       decoration: BoxDecoration(
-        color: AppColors.surfaceLightGray,
+        color: context.appSurfaceMuted,
         borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
-        border: Border.all(color: AppColors.surfaceBorder),
+        border: Border.all(color: context.appBorder),
       ),
       child: githubAsync.when(
         loading: () => const SizedBox(height: 40, child: Center(child: CircularProgressIndicator())),
@@ -120,7 +162,7 @@ class _GithubSection extends ConsumerWidget {
           }
           return Row(
             children: [
-              const Icon(Icons.code_rounded, color: AppColors.textPrimary),
+              Icon(Icons.code_rounded, color: context.appTextPrimary),
               const SizedBox(width: AppSpacing.sm),
               Expanded(
                 child: Column(

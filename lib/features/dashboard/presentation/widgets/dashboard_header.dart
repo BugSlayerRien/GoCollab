@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../../core/animations/prismatic_background.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
+import '../../../../core/theme/theme_extensions.dart';
 import '../../../auth/domain/entities/app_user.dart';
 import '../../../notifications/presentation/widgets/notification_badge.dart';
 
@@ -33,7 +34,7 @@ class DashboardHeader extends StatelessWidget {
       borderRadius: BorderRadius.circular(AppSpacing.radiusXl),
       child: Container(
         height: 150,
-        decoration: BoxDecoration(color: AppColors.surfaceWhite, borderRadius: BorderRadius.circular(AppSpacing.radiusXl)),
+        decoration: BoxDecoration(color: context.appSurface, borderRadius: BorderRadius.circular(AppSpacing.radiusXl)),
         child: PrismaticBackground(
           opacity: 0.16,
           loopDuration: const Duration(seconds: 18),
@@ -47,7 +48,7 @@ class DashboardHeader extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Text(_greeting, style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: AppColors.textSecondary)),
+                      Text(_greeting, style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: context.appTextSecondary)),
                       const SizedBox(height: 2),
                       Text(
                         user.fullName.split(' ').first,

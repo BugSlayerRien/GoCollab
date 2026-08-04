@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../../core/animations/prismatic_background.dart';
-import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
+import '../../../../core/theme/theme_extensions.dart';
 
 /// Shared layout for every auth screen (login/register/forgot password):
 /// a calm, low-opacity [PrismaticBackground] behind a white content card,
@@ -21,7 +21,7 @@ class AuthScaffold extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.surfaceWhite,
+      backgroundColor: context.appSurface,
       body: PrismaticBackground(
         opacity: 0.12,
         child: SafeArea(

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../../core/animations/prismatic_background.dart';
-import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
+import '../../../../core/widgets/gocollab_logo.dart';
 
 /// The Flutter-rendered splash shown immediately after the native launch
 /// screen while Supabase session restoration / role resolution happens in
@@ -32,8 +32,9 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Scaffold(
-      backgroundColor: AppColors.surfaceWhite,
+      backgroundColor: colorScheme.surface,
       body: PrismaticBackground(
         opacity: 0.2,
         loopDuration: const Duration(seconds: 14),
@@ -48,33 +49,16 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
                   duration: const Duration(milliseconds: 900),
                   curve: Curves.elasticOut,
                   builder: (context, scale, child) => Transform.scale(scale: scale, child: child),
-                  child: Container(
-                    width: 88,
-                    height: 88,
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(AppSpacing.radiusXl),
-                      gradient: const LinearGradient(
-                        colors: AppColors.prismaticSpectrum,
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                      ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: AppColors.googleBlue.withValues(alpha: 0.25),
-                          blurRadius: 24,
-                          offset: const Offset(0, 8),
-                        ),
-                      ],
-                    ),
-                    child: const Icon(Icons.groups_2_rounded, color: Colors.white, size: 44),
-                  ),
+                  child: const GoCollabLogo(size: 96, showShadow: true),
                 ),
                 const SizedBox(height: AppSpacing.xl),
                 Text('GoCollab', style: Theme.of(context).textTheme.displaySmall),
                 const SizedBox(height: AppSpacing.xs),
                 Text(
                   'GDGoC Philippines',
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: AppColors.textSecondary),
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: colorScheme.onSurfaceVariant,
+                      ),
                 ),
               ],
             ),

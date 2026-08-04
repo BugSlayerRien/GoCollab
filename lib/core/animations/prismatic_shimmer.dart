@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_spacing.dart';
+import '../theme/theme_extensions.dart';
 
 /// A loading-skeleton "shimmer" built natively with [ShaderMask] +
 /// [AnimationController] — no Lottie/GIF assets. A soft prismatic gradient
@@ -59,12 +60,12 @@ class _PrismaticShimmerState extends State<PrismaticShimmer>
             return LinearGradient(
               begin: Alignment(-1.5 + sweep, 0),
               end: Alignment(0.5 + sweep, 0),
-              colors: const [
-                AppColors.surfaceLightGray,
+              colors: [
+                context.appSurfaceMuted,
                 AppColors.googleBlue,
                 AppColors.googleGreen,
                 AppColors.googleYellow,
-                AppColors.surfaceLightGray,
+                context.appSurfaceMuted,
               ],
               stops: const [0.0, 0.35, 0.5, 0.65, 1.0],
             ).createShader(bounds);
@@ -73,7 +74,7 @@ class _PrismaticShimmerState extends State<PrismaticShimmer>
             width: widget.width,
             height: widget.height,
             decoration: BoxDecoration(
-              color: AppColors.surfaceLightGray,
+              color: context.appSurfaceMuted,
               borderRadius: BorderRadius.circular(widget.borderRadius),
             ),
           ),
@@ -95,9 +96,9 @@ class PrismaticSkeletonCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(AppSpacing.md),
       decoration: BoxDecoration(
-        color: AppColors.surfaceLightGray,
+        color: context.appSurfaceMuted,
         borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
-        border: Border.all(color: AppColors.surfaceBorder),
+        border: Border.all(color: context.appBorder),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

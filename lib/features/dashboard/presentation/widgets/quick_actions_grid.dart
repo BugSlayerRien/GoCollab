@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
+import '../../../../core/theme/theme_extensions.dart';
 
 class QuickAction {
   const QuickAction({required this.icon, required this.label, required this.color, required this.onTap});
@@ -45,7 +45,7 @@ class QuickActionsGrid extends StatelessWidget {
               const SizedBox(height: AppSpacing.xs),
               Text(
                 action.label,
-                style: Theme.of(context).textTheme.labelSmall?.copyWith(color: AppColors.textPrimary),
+                style: Theme.of(context).textTheme.labelSmall?.copyWith(color: context.appTextPrimary),
                 textAlign: TextAlign.center,
                 maxLines: 2,
               ),

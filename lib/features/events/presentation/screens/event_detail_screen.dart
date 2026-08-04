@@ -6,6 +6,7 @@ import '../../../../core/animations/prismatic_background.dart';
 import '../../../../core/services/calendar_service.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
+import '../../../../core/theme/theme_extensions.dart';
 import '../../../../core/utils/date_formatter.dart';
 import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/empty_state.dart';
@@ -55,8 +56,8 @@ class _EventDetailBody extends ConsumerWidget {
         SliverAppBar(
           expandedHeight: 200,
           pinned: true,
-          backgroundColor: AppColors.surfaceWhite,
-          foregroundColor: AppColors.textPrimary,
+          backgroundColor: context.appSurface,
+          foregroundColor: context.appTextPrimary,
           flexibleSpace: FlexibleSpaceBar(
             background: PrismaticBackground(opacity: 0.18, loopDuration: const Duration(seconds: 15)),
           ),
@@ -170,7 +171,7 @@ class _InfoRow extends StatelessWidget {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Icon(icon, size: 18, color: AppColors.textSecondary),
+        Icon(icon, size: 18, color: context.appTextSecondary),
         const SizedBox(width: AppSpacing.xs),
         Expanded(child: Text(text, style: Theme.of(context).textTheme.bodyMedium)),
       ],
@@ -189,9 +190,9 @@ class _MyQrCodeCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(AppSpacing.lg),
       decoration: BoxDecoration(
-        color: AppColors.surfaceLightGray,
+        color: context.appSurfaceMuted,
         borderRadius: BorderRadius.circular(AppSpacing.radiusLg),
-        border: Border.all(color: AppColors.surfaceBorder),
+        border: Border.all(color: context.appBorder),
       ),
       child: Column(
         children: [

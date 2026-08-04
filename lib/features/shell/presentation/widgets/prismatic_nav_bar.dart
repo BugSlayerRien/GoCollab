@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
+import '../../../../core/theme/theme_extensions.dart';
 
 class NavDestinationSpec {
   const NavDestinationSpec({required this.icon, required this.selectedIcon, required this.label});
@@ -48,9 +49,9 @@ class _PrismaticNavBarState extends State<PrismaticNavBar> with SingleTickerProv
   @override
   Widget build(BuildContext context) {
     return Container(
-      decoration: const BoxDecoration(
-        color: AppColors.surfaceWhite,
-        border: Border(top: BorderSide(color: AppColors.surfaceBorder)),
+      decoration: BoxDecoration(
+        color: context.appSurface,
+        border: Border(top: BorderSide(color: context.appBorder)),
       ),
       child: SafeArea(
         top: false,
@@ -86,7 +87,7 @@ class _PrismaticNavBarState extends State<PrismaticNavBar> with SingleTickerProv
                             ),
                             child: Icon(
                               isSelected ? destination.selectedIcon : destination.icon,
-                              color: isSelected ? Colors.white : AppColors.textDisabled,
+                              color: isSelected ? Colors.white : context.appTextDisabled,
                               size: 22,
                             ),
                           );
@@ -98,7 +99,7 @@ class _PrismaticNavBarState extends State<PrismaticNavBar> with SingleTickerProv
                         style: TextStyle(
                           fontSize: 11,
                           fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-                          color: isSelected ? AppColors.googleBlue : AppColors.textDisabled,
+                          color: isSelected ? AppColors.googleBlue : context.appTextDisabled,
                         ),
                       ),
                     ],
