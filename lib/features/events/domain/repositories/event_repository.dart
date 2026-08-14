@@ -18,4 +18,31 @@ abstract class EventRepository {
     required String qrCode,
     required String officerId,
   });
+
+  Future<Result<void>> createEvent({
+    required String title,
+    required String description,
+    required EventCategory category,
+    required DateTime startAt,
+    required DateTime endAt,
+    String? venueName,
+    required bool isOnline,
+    String? onlineUrl,
+    required String createdBy,
+  });
+
+  Future<Result<void>> updateEvent({
+    required String id,
+    required String title,
+    required String description,
+    required EventCategory category,
+    required DateTime startAt,
+    required DateTime endAt,
+    String? venueName,
+    required bool isOnline,
+    String? onlineUrl,
+    required EventStatus status,
+  });
+
+  Future<Result<void>> deleteEvent(String id);
 }

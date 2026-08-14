@@ -81,4 +81,48 @@ class OpportunityRepositoryImpl implements OpportunityRepository {
       return Result.failure(mapExceptionToFailure(e));
     }
   }
+
+  @override
+  Future<Result<void>> updateOpportunity({
+    required String id,
+    required String title,
+    required String organization,
+    required OpportunityType type,
+    required String description,
+    String? requirements,
+    String? location,
+    required bool isRemote,
+    String? applicationUrl,
+    DateTime? deadline,
+    required String status,
+  }) async {
+    try {
+      await _dataSource.updateOpportunity(
+        id: id,
+        title: title,
+        organization: organization,
+        type: type,
+        description: description,
+        requirements: requirements,
+        location: location,
+        isRemote: isRemote,
+        applicationUrl: applicationUrl,
+        deadline: deadline,
+        status: status,
+      );
+      return const Result.success(null);
+    } catch (e) {
+      return Result.failure(mapExceptionToFailure(e));
+    }
+  }
+
+  @override
+  Future<Result<void>> deleteOpportunity(String id) async {
+    try {
+      await _dataSource.deleteOpportunity(id);
+      return const Result.success(null);
+    } catch (e) {
+      return Result.failure(mapExceptionToFailure(e));
+    }
+  }
 }

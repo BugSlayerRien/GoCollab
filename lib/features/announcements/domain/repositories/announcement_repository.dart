@@ -11,4 +11,14 @@ abstract class AnnouncementRepository {
     required bool isPinned,
     required String createdBy,
   });
+
+  Future<Result<void>> updateAnnouncement({
+    required String id,
+    required String title,
+    required String body,
+    required AnnouncementCategory category,
+    required bool isPinned,
+  });
+
+  Future<Result<void>> deleteAnnouncement(String id);
 }

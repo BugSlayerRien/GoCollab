@@ -62,4 +62,76 @@ class EventRepositoryImpl implements EventRepository {
       return Result.failure(mapExceptionToFailure(e));
     }
   }
+
+  @override
+  Future<Result<void>> createEvent({
+    required String title,
+    required String description,
+    required EventCategory category,
+    required DateTime startAt,
+    required DateTime endAt,
+    String? venueName,
+    required bool isOnline,
+    String? onlineUrl,
+    required String createdBy,
+  }) async {
+    try {
+      await _dataSource.createEvent(
+        title: title,
+        description: description,
+        category: category,
+        startAt: startAt,
+        endAt: endAt,
+        venueName: venueName,
+        isOnline: isOnline,
+        onlineUrl: onlineUrl,
+        createdBy: createdBy,
+      );
+      return const Result.success(null);
+    } catch (e) {
+      return Result.failure(mapExceptionToFailure(e));
+    }
+  }
+
+  @override
+  Future<Result<void>> updateEvent({
+    required String id,
+    required String title,
+    required String description,
+    required EventCategory category,
+    required DateTime startAt,
+    required DateTime endAt,
+    String? venueName,
+    required bool isOnline,
+    String? onlineUrl,
+    required EventStatus status,
+  }) async {
+    try {
+      await _dataSource.updateEvent(
+        id: id,
+        title: title,
+        description: description,
+        category: category,
+        startAt: startAt,
+        endAt: endAt,
+        venueName: venueName,
+        isOnline: isOnline,
+        onlineUrl: onlineUrl,
+        status: status,
+      );
+      return const Result.success(null);
+    } catch (e) {
+      return Result.failure(mapExceptionToFailure(e));
+    }
+  }
+
+  @override
+  Future<Result<void>> deleteEvent(String id) async {
+    try {
+      await _dataSource.deleteEvent(id);
+      return const Result.success(null);
+    } catch (e) {
+      return Result.failure(mapExceptionToFailure(e));
+    }
+  }
 }

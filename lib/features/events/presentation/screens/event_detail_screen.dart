@@ -9,12 +9,14 @@ import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/theme_extensions.dart';
 import '../../../../core/utils/date_formatter.dart';
 import '../../../../core/widgets/app_button.dart';
+import '../../../../core/widgets/confirm_dialog.dart';
 import '../../../../core/widgets/empty_state.dart';
 import '../../../../core/widgets/status_badge.dart';
 import '../../../auth/domain/entities/user_role.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../domain/entities/event.dart';
 import '../providers/event_providers.dart';
+import '../widgets/create_event_sheet.dart';
 import '../widgets/event_map_preview.dart';
 
 class EventDetailScreen extends ConsumerWidget {
@@ -67,6 +69,34 @@ class _EventDetailBody extends ConsumerWidget {
                 icon: const Icon(Icons.qr_code_scanner_rounded),
                 tooltip: 'Scan attendance',
                 onPressed: () => context.push('/events/${event.id}/check-in'),
+              ),
+            if (isOfficer)
+              IconButton(
+                icon: const Icon(Icons.edit_outlined),
+                tooltip: 'Edit',
+                onPressed: () => showEventEditorSheet(context, existing: event),
+              ),
+            if (isOfficer)
+              IconButton(
+                icon: const Icon(Icons.delete_outline_rounded),
+                tooltip: 'Delete',
+                onPressed: () async {
+                  final confirmed = await confirmDestructiveAction(
+                    context,
+                    title: 'Delete event?',
+                    message: 'This permanently removes the event and its registrations.',
+                  );
+                  if (!confirmed) return;
+                  final error = await ref.read(eventActionsControllerProvider.notifier).deleteEvent(event.id);
+                  if (!context.mounted) return;
+                  showActionFeedback(
+                    context,
+                    success: error == null,
+                    successMessage: 'Event deleted.',
+                    errorMessage: error,
+                  );
+                  if (error == null) context.pop();
+                },
               ),
           ],
         ),

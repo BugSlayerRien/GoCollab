@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/animations/prismatic_shimmer.dart';
 import '../../../../core/theme/app_spacing.dart';
+import '../../../../core/widgets/confirm_dialog.dart';
 import '../../../../core/widgets/empty_state.dart';
 import '../../../announcements/presentation/providers/announcement_providers.dart';
 import '../../../announcements/presentation/widgets/announcement_card.dart';
@@ -19,6 +20,7 @@ class CommunityScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final announcementsAsync = ref.watch(announcementsListProvider);
+    ref.watch(announcementControllerProvider);
     final currentUser = ref.watch(currentUserProvider).valueOrNull;
     final isOfficer = currentUser?.role == UserRole.officer;
 
@@ -56,7 +58,38 @@ class CommunityScreen extends ConsumerWidget {
               padding: const EdgeInsets.all(AppSpacing.md),
               itemCount: announcements.length,
               separatorBuilder: (_, __) => const SizedBox(height: AppSpacing.md),
-              itemBuilder: (context, index) => AnnouncementCard(announcement: announcements[index]),
+              itemBuilder: (context, index) {
+                final announcement = announcements[index];
+                return AnnouncementCard(
+                  announcement: announcement,
+                  onEdit: isOfficer
+                      ? () => showAnnouncementEditorSheet(
+                            context,
+                            ref,
+                            authorId: currentUser!.id,
+                            existing: announcement,
+                          )
+                      : null,
+                  onDelete: isOfficer
+                      ? () async {
+                          final confirmed = await confirmDestructiveAction(
+                            context,
+                            title: 'Delete announcement?',
+                            message: 'This removes the announcement from the community feed.',
+                          );
+                          if (!confirmed || !context.mounted) return;
+                          final error = await ref.read(announcementControllerProvider.notifier).delete(announcement.id);
+                          if (!context.mounted) return;
+                          showActionFeedback(
+                            context,
+                            success: error == null,
+                            successMessage: 'Announcement deleted.',
+                            errorMessage: error,
+                          );
+                        }
+                      : null,
+                );
+              },
             );
           },
         ),

@@ -4,8 +4,11 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/animations/prismatic_shimmer.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/widgets/empty_state.dart';
+import '../../../auth/domain/entities/user_role.dart';
+import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../domain/entities/event.dart';
 import '../providers/event_providers.dart';
+import '../widgets/create_event_sheet.dart';
 import '../widgets/event_card.dart';
 
 class EventsListScreen extends ConsumerStatefulWidget {
@@ -21,9 +24,17 @@ class _EventsListScreenState extends ConsumerState<EventsListScreen> {
   @override
   Widget build(BuildContext context) {
     final eventsAsync = ref.watch(eventsListProvider);
+    final isOfficer = ref.watch(currentUserProvider).valueOrNull?.role == UserRole.officer;
 
     return Scaffold(
       appBar: AppBar(title: const Text('Events')),
+      floatingActionButton: isOfficer
+          ? FloatingActionButton.extended(
+              onPressed: () => showEventEditorSheet(context),
+              icon: const Icon(Icons.add_rounded),
+              label: const Text('Event'),
+            )
+          : null,
       body: RefreshIndicator(
         onRefresh: () async => ref.invalidate(eventsListProvider),
         child: eventsAsync.when(

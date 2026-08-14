@@ -11,15 +11,27 @@ abstract class PartnershipRepository {
 
   Future<Result<void>> createPartner(Partner partner);
 
+  Future<Result<void>> updatePartner(Partner partner);
+
+  Future<Result<void>> deletePartner(String id);
+
   Future<Result<void>> updateCollaborationStatus(String partnerId, CollaborationStatus status);
 
   Future<Result<List<Sponsorship>>> getSponsorships(String partnerId);
 
   Future<Result<void>> createSponsorship(Sponsorship sponsorship);
 
+  Future<Result<void>> updateSponsorship(Sponsorship sponsorship);
+
+  Future<Result<void>> deleteSponsorship(String id);
+
   Future<Result<List<Meeting>>> getMeetings(String partnerId);
 
   Future<Result<void>> createMeeting(Meeting meeting);
+
+  Future<Result<void>> updateMeeting(Meeting meeting);
+
+  Future<Result<void>> deleteMeeting(String id);
 
   Future<Result<List<CommunicationLog>>> getCommunications(String partnerId);
 
@@ -31,4 +43,8 @@ abstract class PartnershipRepository {
     required String contactMethod,
     required String communicatedBy,
   });
+
+  Future<Result<void>> updateCommunication(CommunicationLog log);
+
+  Future<Result<void>> deleteCommunication(String id);
 }

@@ -64,7 +64,7 @@ class CreateOpportunityController extends StateNotifier<bool> {
   CreateOpportunityController(this._ref) : super(false);
   final Ref _ref;
 
-  Future<bool> create({
+  Future<String?> create({
     required String title,
     required String organization,
     required OpportunityType type,
@@ -92,7 +92,57 @@ class CreateOpportunityController extends StateNotifier<bool> {
     );
     state = false;
     if (result.isSuccess) _ref.invalidate(opportunitiesListProvider);
-    return result.isSuccess;
+    return result.when(success: (_) => null, failure: (f) => f.message);
+  }
+
+  Future<String?> update({
+    required String id,
+    required String title,
+    required String organization,
+    required OpportunityType type,
+    required String description,
+    String? requirements,
+    String? location,
+    required bool isRemote,
+    String? applicationUrl,
+    DateTime? deadline,
+    required String status,
+  }) async {
+    state = true;
+    final repository = _ref.read(opportunityRepositoryProvider);
+    final result = await repository.updateOpportunity(
+      id: id,
+      title: title,
+      organization: organization,
+      type: type,
+      description: description,
+      requirements: requirements,
+      location: location,
+      isRemote: isRemote,
+      applicationUrl: applicationUrl,
+      deadline: deadline,
+      status: status,
+    );
+    state = false;
+    if (result.isSuccess) {
+      _ref.invalidate(opportunitiesListProvider);
+      _ref.invalidate(opportunityDetailProvider(id));
+      _ref.invalidate(savedOpportunitiesProvider);
+    }
+    return result.when(success: (_) => null, failure: (f) => f.message);
+  }
+
+  Future<String?> delete(String id) async {
+    state = true;
+    final repository = _ref.read(opportunityRepositoryProvider);
+    final result = await repository.deleteOpportunity(id);
+    state = false;
+    if (result.isSuccess) {
+      _ref.invalidate(opportunitiesListProvider);
+      _ref.invalidate(opportunityDetailProvider(id));
+      _ref.invalidate(savedOpportunitiesProvider);
+    }
+    return result.when(success: (_) => null, failure: (f) => f.message);
   }
 }
 

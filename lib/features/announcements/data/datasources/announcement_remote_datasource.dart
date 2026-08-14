@@ -32,4 +32,23 @@ class AnnouncementRemoteDataSource {
       'created_by': createdBy,
     });
   }
+
+  Future<void> updateAnnouncement({
+    required String id,
+    required String title,
+    required String body,
+    required AnnouncementCategory category,
+    required bool isPinned,
+  }) async {
+    await _client.from('announcements').update({
+      'title': title,
+      'body': body,
+      'category': category.name,
+      'is_pinned': isPinned,
+    }).eq('id', id);
+  }
+
+  Future<void> deleteAnnouncement(String id) async {
+    await _client.from('announcements').delete().eq('id', id);
+  }
 }

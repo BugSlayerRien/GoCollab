@@ -30,6 +30,11 @@ enum EventCategory {
         EventCategory.competition => 'Competition',
         EventCategory.other => 'Other',
       };
+
+  String get key => switch (this) {
+        EventCategory.studyJam => 'study-jam',
+        _ => name,
+      };
 }
 
 enum EventStatus {

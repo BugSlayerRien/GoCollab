@@ -50,13 +50,37 @@ class PartnershipActionsController extends StateNotifier<bool> {
   PartnershipActionsController(this._ref) : super(false);
   final Ref _ref;
 
-  Future<bool> createPartner(Partner partner) async {
+  Future<String?> createPartner(Partner partner) async {
     state = true;
     final repository = _ref.read(partnershipRepositoryProvider);
     final result = await repository.createPartner(partner);
     state = false;
     if (result.isSuccess) _ref.invalidate(partnersListProvider);
-    return result.isSuccess;
+    return result.when(success: (_) => null, failure: (f) => f.message);
+  }
+
+  Future<String?> updatePartner(Partner partner) async {
+    state = true;
+    final repository = _ref.read(partnershipRepositoryProvider);
+    final result = await repository.updatePartner(partner);
+    state = false;
+    if (result.isSuccess) {
+      _ref.invalidate(partnersListProvider);
+      _ref.invalidate(partnerDetailProvider(partner.id));
+    }
+    return result.when(success: (_) => null, failure: (f) => f.message);
+  }
+
+  Future<String?> deletePartner(String id) async {
+    state = true;
+    final repository = _ref.read(partnershipRepositoryProvider);
+    final result = await repository.deletePartner(id);
+    state = false;
+    if (result.isSuccess) {
+      _ref.invalidate(partnersListProvider);
+      _ref.invalidate(partnerDetailProvider(id));
+    }
+    return result.when(success: (_) => null, failure: (f) => f.message);
   }
 
   Future<bool> updateStatus(String partnerId, CollaborationStatus status) async {
@@ -69,25 +93,49 @@ class PartnershipActionsController extends StateNotifier<bool> {
     return result.isSuccess;
   }
 
-  Future<bool> createMeeting(Meeting meeting) async {
-    state = true;
+  Future<String?> createMeeting(Meeting meeting) async {
     final repository = _ref.read(partnershipRepositoryProvider);
     final result = await repository.createMeeting(meeting);
-    state = false;
     if (result.isSuccess) _ref.invalidate(meetingsProvider(meeting.partnerId));
-    return result.isSuccess;
+    return result.when(success: (_) => null, failure: (f) => f.message);
   }
 
-  Future<bool> createSponsorship(Sponsorship sponsorship) async {
-    state = true;
+  Future<String?> updateMeeting(Meeting meeting) async {
+    final repository = _ref.read(partnershipRepositoryProvider);
+    final result = await repository.updateMeeting(meeting);
+    if (result.isSuccess) _ref.invalidate(meetingsProvider(meeting.partnerId));
+    return result.when(success: (_) => null, failure: (f) => f.message);
+  }
+
+  Future<String?> deleteMeeting(String id, String partnerId) async {
+    final repository = _ref.read(partnershipRepositoryProvider);
+    final result = await repository.deleteMeeting(id);
+    if (result.isSuccess) _ref.invalidate(meetingsProvider(partnerId));
+    return result.when(success: (_) => null, failure: (f) => f.message);
+  }
+
+  Future<String?> createSponsorship(Sponsorship sponsorship) async {
     final repository = _ref.read(partnershipRepositoryProvider);
     final result = await repository.createSponsorship(sponsorship);
-    state = false;
     if (result.isSuccess) _ref.invalidate(sponsorshipsProvider(sponsorship.partnerId));
-    return result.isSuccess;
+    return result.when(success: (_) => null, failure: (f) => f.message);
   }
 
-  Future<bool> createCommunication({
+  Future<String?> updateSponsorship(Sponsorship sponsorship) async {
+    final repository = _ref.read(partnershipRepositoryProvider);
+    final result = await repository.updateSponsorship(sponsorship);
+    if (result.isSuccess) _ref.invalidate(sponsorshipsProvider(sponsorship.partnerId));
+    return result.when(success: (_) => null, failure: (f) => f.message);
+  }
+
+  Future<String?> deleteSponsorship(String id, String partnerId) async {
+    final repository = _ref.read(partnershipRepositoryProvider);
+    final result = await repository.deleteSponsorship(id);
+    if (result.isSuccess) _ref.invalidate(sponsorshipsProvider(partnerId));
+    return result.when(success: (_) => null, failure: (f) => f.message);
+  }
+
+  Future<String?> createCommunication({
     required String partnerId,
     required String subject,
     String? message,
@@ -95,7 +143,6 @@ class PartnershipActionsController extends StateNotifier<bool> {
     required String contactMethod,
     required String communicatedBy,
   }) async {
-    state = true;
     final repository = _ref.read(partnershipRepositoryProvider);
     final result = await repository.createCommunication(
       partnerId: partnerId,
@@ -105,11 +152,24 @@ class PartnershipActionsController extends StateNotifier<bool> {
       contactMethod: contactMethod,
       communicatedBy: communicatedBy,
     );
-    state = false;
     if (result.isSuccess) _ref.invalidate(communicationsProvider(partnerId));
-    return result.isSuccess;
+    return result.when(success: (_) => null, failure: (f) => f.message);
+  }
+
+  Future<String?> updateCommunication(CommunicationLog log) async {
+    final repository = _ref.read(partnershipRepositoryProvider);
+    final result = await repository.updateCommunication(log);
+    if (result.isSuccess) _ref.invalidate(communicationsProvider(log.partnerId));
+    return result.when(success: (_) => null, failure: (f) => f.message);
+  }
+
+  Future<String?> deleteCommunication(String id, String partnerId) async {
+    final repository = _ref.read(partnershipRepositoryProvider);
+    final result = await repository.deleteCommunication(id);
+    if (result.isSuccess) _ref.invalidate(communicationsProvider(partnerId));
+    return result.when(success: (_) => null, failure: (f) => f.message);
   }
 }
 
 final partnershipActionsControllerProvider =
-    StateNotifierProvider.autoDispose<PartnershipActionsController, bool>((ref) => PartnershipActionsController(ref));
+    StateNotifierProvider<PartnershipActionsController, bool>((ref) => PartnershipActionsController(ref));

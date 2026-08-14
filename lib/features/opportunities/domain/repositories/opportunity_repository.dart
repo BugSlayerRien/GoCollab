@@ -26,4 +26,20 @@ abstract class OpportunityRepository {
     DateTime? deadline,
     required String postedBy,
   });
+
+  Future<Result<void>> updateOpportunity({
+    required String id,
+    required String title,
+    required String organization,
+    required OpportunityType type,
+    required String description,
+    String? requirements,
+    String? location,
+    required bool isRemote,
+    String? applicationUrl,
+    DateTime? deadline,
+    required String status,
+  });
+
+  Future<Result<void>> deleteOpportunity(String id);
 }

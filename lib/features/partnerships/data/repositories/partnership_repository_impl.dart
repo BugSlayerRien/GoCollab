@@ -33,22 +33,45 @@ class PartnershipRepositoryImpl implements PartnershipRepository {
   @override
   Future<Result<void>> createPartner(Partner partner) async {
     try {
-      final model = PartnerModel(
-        id: partner.id,
-        name: partner.name,
-        category: partner.category,
-        collaborationStatus: partner.collaborationStatus,
-        logoUrl: partner.logoUrl,
-        description: partner.description,
-        contactPerson: partner.contactPerson,
-        contactEmail: partner.contactEmail,
-        contactPhone: partner.contactPhone,
-        address: partner.address,
-        latitude: partner.latitude,
-        longitude: partner.longitude,
-        website: partner.website,
-      );
-      await _dataSource.createPartner(model);
+      await _dataSource.createPartner(_toModel(partner));
+      return const Result.success(null);
+    } catch (e) {
+      return Result.failure(mapExceptionToFailure(e));
+    }
+  }
+
+  PartnerModel _toModel(Partner partner) {
+    return PartnerModel(
+      id: partner.id,
+      name: partner.name,
+      category: partner.category,
+      collaborationStatus: partner.collaborationStatus,
+      logoUrl: partner.logoUrl,
+      description: partner.description,
+      contactPerson: partner.contactPerson,
+      contactEmail: partner.contactEmail,
+      contactPhone: partner.contactPhone,
+      address: partner.address,
+      latitude: partner.latitude,
+      longitude: partner.longitude,
+      website: partner.website,
+    );
+  }
+
+  @override
+  Future<Result<void>> updatePartner(Partner partner) async {
+    try {
+      await _dataSource.updatePartner(partner.id, _toModel(partner));
+      return const Result.success(null);
+    } catch (e) {
+      return Result.failure(mapExceptionToFailure(e));
+    }
+  }
+
+  @override
+  Future<Result<void>> deletePartner(String id) async {
+    try {
+      await _dataSource.deletePartner(id);
       return const Result.success(null);
     } catch (e) {
       return Result.failure(mapExceptionToFailure(e));
@@ -95,6 +118,33 @@ class PartnershipRepositoryImpl implements PartnershipRepository {
   }
 
   @override
+  Future<Result<void>> updateSponsorship(Sponsorship sponsorship) async {
+    try {
+      await _dataSource.updateSponsorship(sponsorship.id, {
+        'title': sponsorship.title,
+        'sponsorship_type': sponsorship.sponsorshipType,
+        'status': sponsorship.status,
+        'amount': sponsorship.amount,
+        'currency': sponsorship.currency,
+        'notes': sponsorship.notes,
+      });
+      return const Result.success(null);
+    } catch (e) {
+      return Result.failure(mapExceptionToFailure(e));
+    }
+  }
+
+  @override
+  Future<Result<void>> deleteSponsorship(String id) async {
+    try {
+      await _dataSource.deleteSponsorship(id);
+      return const Result.success(null);
+    } catch (e) {
+      return Result.failure(mapExceptionToFailure(e));
+    }
+  }
+
+  @override
   Future<Result<List<Meeting>>> getMeetings(String partnerId) async {
     try {
       return Result.success(await _dataSource.getMeetings(partnerId));
@@ -115,6 +165,33 @@ class PartnershipRepositoryImpl implements PartnershipRepository {
         'status': meeting.status,
         'notes': meeting.notes,
       });
+      return const Result.success(null);
+    } catch (e) {
+      return Result.failure(mapExceptionToFailure(e));
+    }
+  }
+
+  @override
+  Future<Result<void>> updateMeeting(Meeting meeting) async {
+    try {
+      await _dataSource.updateMeeting(meeting.id, {
+        'title': meeting.title,
+        'agenda': meeting.agenda,
+        'scheduled_at': meeting.scheduledAt.toIso8601String(),
+        'location': meeting.location,
+        'status': meeting.status,
+        'notes': meeting.notes,
+      });
+      return const Result.success(null);
+    } catch (e) {
+      return Result.failure(mapExceptionToFailure(e));
+    }
+  }
+
+  @override
+  Future<Result<void>> deleteMeeting(String id) async {
+    try {
+      await _dataSource.deleteMeeting(id);
       return const Result.success(null);
     } catch (e) {
       return Result.failure(mapExceptionToFailure(e));
@@ -148,6 +225,32 @@ class PartnershipRepositoryImpl implements PartnershipRepository {
         contactMethod: contactMethod,
         communicatedBy: communicatedBy,
       );
+      return const Result.success(null);
+    } catch (e) {
+      return Result.failure(mapExceptionToFailure(e));
+    }
+  }
+
+  @override
+  Future<Result<void>> updateCommunication(CommunicationLog log) async {
+    try {
+      await _dataSource.updateCommunication(
+        id: log.id,
+        subject: log.subject,
+        message: log.message,
+        direction: log.direction,
+        contactMethod: log.contactMethod,
+      );
+      return const Result.success(null);
+    } catch (e) {
+      return Result.failure(mapExceptionToFailure(e));
+    }
+  }
+
+  @override
+  Future<Result<void>> deleteCommunication(String id) async {
+    try {
+      await _dataSource.deleteCommunication(id);
       return const Result.success(null);
     } catch (e) {
       return Result.failure(mapExceptionToFailure(e));

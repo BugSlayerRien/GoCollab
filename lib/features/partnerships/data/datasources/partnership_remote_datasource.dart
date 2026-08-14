@@ -24,6 +24,14 @@ class PartnershipRemoteDataSource {
     await _client.from('partners').insert(partner.toInsertMap());
   }
 
+  Future<void> updatePartner(String id, PartnerModel partner) async {
+    await _client.from('partners').update(partner.toInsertMap()).eq('id', id);
+  }
+
+  Future<void> deletePartner(String id) async {
+    await _client.from('partners').delete().eq('id', id);
+  }
+
   Future<void> updateCollaborationStatus(String partnerId, CollaborationStatus status) async {
     await _client.from('partners').update({'collaboration_status': status.key}).eq('id', partnerId);
   }
@@ -41,6 +49,14 @@ class PartnershipRemoteDataSource {
     await _client.from('sponsorships').insert(data);
   }
 
+  Future<void> updateSponsorship(String id, Map<String, dynamic> data) async {
+    await _client.from('sponsorships').update(data).eq('id', id);
+  }
+
+  Future<void> deleteSponsorship(String id) async {
+    await _client.from('sponsorships').delete().eq('id', id);
+  }
+
   Future<List<MeetingModel>> getMeetings(String partnerId) async {
     final rows = await _client
         .from('meetings')
@@ -52,6 +68,14 @@ class PartnershipRemoteDataSource {
 
   Future<void> createMeeting(Map<String, dynamic> data) async {
     await _client.from('meetings').insert(data);
+  }
+
+  Future<void> updateMeeting(String id, Map<String, dynamic> data) async {
+    await _client.from('meetings').update(data).eq('id', id);
+  }
+
+  Future<void> deleteMeeting(String id) async {
+    await _client.from('meetings').delete().eq('id', id);
   }
 
   Future<List<CommunicationLogModel>> getCommunications(String partnerId) async {
@@ -79,5 +103,24 @@ class PartnershipRemoteDataSource {
       'contact_method': contactMethod,
       'communicated_by': communicatedBy,
     });
+  }
+
+  Future<void> updateCommunication({
+    required String id,
+    required String subject,
+    String? message,
+    required String direction,
+    required String contactMethod,
+  }) async {
+    await _client.from('communications').update({
+      'subject': subject,
+      'message': message,
+      'direction': direction,
+      'contact_method': contactMethod,
+    }).eq('id', id);
+  }
+
+  Future<void> deleteCommunication(String id) async {
+    await _client.from('communications').delete().eq('id', id);
   }
 }

@@ -39,4 +39,36 @@ class AnnouncementRepositoryImpl implements AnnouncementRepository {
       return Result.failure(mapExceptionToFailure(e));
     }
   }
+
+  @override
+  Future<Result<void>> updateAnnouncement({
+    required String id,
+    required String title,
+    required String body,
+    required AnnouncementCategory category,
+    required bool isPinned,
+  }) async {
+    try {
+      await _dataSource.updateAnnouncement(
+        id: id,
+        title: title,
+        body: body,
+        category: category,
+        isPinned: isPinned,
+      );
+      return const Result.success(null);
+    } catch (e) {
+      return Result.failure(mapExceptionToFailure(e));
+    }
+  }
+
+  @override
+  Future<Result<void>> deleteAnnouncement(String id) async {
+    try {
+      await _dataSource.deleteAnnouncement(id);
+      return const Result.success(null);
+    } catch (e) {
+      return Result.failure(mapExceptionToFailure(e));
+    }
+  }
 }

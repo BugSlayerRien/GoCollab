@@ -23,7 +23,7 @@ class AnnouncementController extends StateNotifier<bool> {
   AnnouncementController(this._ref) : super(false);
   final Ref _ref;
 
-  Future<bool> create({
+  Future<String?> create({
     required String title,
     required String body,
     required AnnouncementCategory category,
@@ -41,9 +41,37 @@ class AnnouncementController extends StateNotifier<bool> {
     );
     state = false;
     if (result.isSuccess) _ref.invalidate(announcementsListProvider);
-    return result.isSuccess;
+    return result.when(success: (_) => null, failure: (f) => f.message);
+  }
+
+  Future<String?> update({
+    required String id,
+    required String title,
+    required String body,
+    required AnnouncementCategory category,
+    required bool isPinned,
+  }) async {
+    state = true;
+    final repository = _ref.read(announcementRepositoryProvider);
+    final result = await repository.updateAnnouncement(
+      id: id,
+      title: title,
+      body: body,
+      category: category,
+      isPinned: isPinned,
+    );
+    state = false;
+    if (result.isSuccess) _ref.invalidate(announcementsListProvider);
+    return result.when(success: (_) => null, failure: (f) => f.message);
+  }
+
+  Future<String?> delete(String id) async {
+    final repository = _ref.read(announcementRepositoryProvider);
+    final result = await repository.deleteAnnouncement(id);
+    if (result.isSuccess) _ref.invalidate(announcementsListProvider);
+    return result.when(success: (_) => null, failure: (f) => f.message);
   }
 }
 
 final announcementControllerProvider =
-    StateNotifierProvider.autoDispose<AnnouncementController, bool>((ref) => AnnouncementController(ref));
+    StateNotifierProvider<AnnouncementController, bool>((ref) => AnnouncementController(ref));

@@ -69,6 +69,82 @@ class EventActionsController extends StateNotifier<bool> {
     }
     return result.isSuccess;
   }
+
+  Future<String?> createEvent({
+    required String title,
+    required String description,
+    required EventCategory category,
+    required DateTime startAt,
+    required DateTime endAt,
+    String? venueName,
+    required bool isOnline,
+    String? onlineUrl,
+  }) async {
+    state = true;
+    final user = _ref.read(currentUserProvider).valueOrNull;
+    if (user == null) {
+      state = false;
+      return 'You must be signed in.';
+    }
+    final result = await _ref.read(eventRepositoryProvider).createEvent(
+          title: title,
+          description: description,
+          category: category,
+          startAt: startAt,
+          endAt: endAt,
+          venueName: venueName,
+          isOnline: isOnline,
+          onlineUrl: onlineUrl,
+          createdBy: user.id,
+        );
+    state = false;
+    if (result.isSuccess) _ref.invalidate(eventsListProvider);
+    return result.when(success: (_) => null, failure: (f) => f.message);
+  }
+
+  Future<String?> updateEvent({
+    required String id,
+    required String title,
+    required String description,
+    required EventCategory category,
+    required DateTime startAt,
+    required DateTime endAt,
+    String? venueName,
+    required bool isOnline,
+    String? onlineUrl,
+    required EventStatus status,
+  }) async {
+    state = true;
+    final result = await _ref.read(eventRepositoryProvider).updateEvent(
+          id: id,
+          title: title,
+          description: description,
+          category: category,
+          startAt: startAt,
+          endAt: endAt,
+          venueName: venueName,
+          isOnline: isOnline,
+          onlineUrl: onlineUrl,
+          status: status,
+        );
+    state = false;
+    if (result.isSuccess) {
+      _ref.invalidate(eventsListProvider);
+      _ref.invalidate(eventDetailProvider(id));
+    }
+    return result.when(success: (_) => null, failure: (f) => f.message);
+  }
+
+  Future<String?> deleteEvent(String id) async {
+    state = true;
+    final result = await _ref.read(eventRepositoryProvider).deleteEvent(id);
+    state = false;
+    if (result.isSuccess) {
+      _ref.invalidate(eventsListProvider);
+      _ref.invalidate(eventDetailProvider(id));
+    }
+    return result.when(success: (_) => null, failure: (f) => f.message);
+  }
 }
 
 final eventActionsControllerProvider =

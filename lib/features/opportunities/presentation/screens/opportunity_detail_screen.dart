@@ -1,14 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/theme_extensions.dart';
 import '../../../../core/utils/date_formatter.dart';
 import '../../../../core/widgets/app_button.dart';
+import '../../../../core/widgets/confirm_dialog.dart';
 import '../../../../core/widgets/empty_state.dart';
 import '../../../../core/widgets/status_badge.dart';
+import '../../../auth/domain/entities/user_role.dart';
+import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../domain/entities/opportunity.dart';
 import '../providers/opportunity_providers.dart';
+import '../widgets/create_opportunity_sheet.dart';
 
 class OpportunityDetailScreen extends ConsumerWidget {
   const OpportunityDetailScreen({super.key, required this.opportunityId});
@@ -18,9 +23,31 @@ class OpportunityDetailScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final opportunityAsync = ref.watch(opportunityDetailProvider(opportunityId));
+    final currentUser = ref.watch(currentUserProvider).valueOrNull;
+    final isOfficer = currentUser?.role == UserRole.officer;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Opportunity')),
+      appBar: AppBar(
+        title: const Text('Opportunity'),
+        actions: [
+          if (isOfficer)
+            IconButton(
+              icon: const Icon(Icons.edit_outlined),
+              tooltip: 'Edit',
+              onPressed: () {
+                final opportunity = opportunityAsync.valueOrNull;
+                if (opportunity == null || currentUser == null) return;
+                showOpportunityEditorSheet(context, postedBy: currentUser.id, existing: opportunity);
+              },
+            ),
+          if (isOfficer)
+            IconButton(
+              icon: const Icon(Icons.delete_outline_rounded),
+              tooltip: 'Delete',
+              onPressed: () => _deleteOpportunity(context, ref),
+            ),
+        ],
+      ),
       body: opportunityAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (error, _) => ErrorStateView(
@@ -30,6 +57,24 @@ class OpportunityDetailScreen extends ConsumerWidget {
         data: (opportunity) => _DetailBody(opportunity: opportunity),
       ),
     );
+  }
+
+  Future<void> _deleteOpportunity(BuildContext context, WidgetRef ref) async {
+    final confirmed = await confirmDestructiveAction(
+      context,
+      title: 'Delete opportunity?',
+      message: 'This permanently removes the posting from Career Hub for all members.',
+    );
+    if (!confirmed) return;
+    final error = await ref.read(createOpportunityControllerProvider.notifier).delete(opportunityId);
+    if (!context.mounted) return;
+    showActionFeedback(
+      context,
+      success: error == null,
+      successMessage: 'Opportunity deleted.',
+      errorMessage: error,
+    );
+    if (error == null) context.pop();
   }
 }
 

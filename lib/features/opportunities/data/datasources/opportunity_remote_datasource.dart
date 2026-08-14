@@ -100,4 +100,35 @@ class OpportunityRemoteDataSource {
       'posted_by': postedBy,
     });
   }
+
+  Future<void> updateOpportunity({
+    required String id,
+    required String title,
+    required String organization,
+    required OpportunityType type,
+    required String description,
+    String? requirements,
+    String? location,
+    required bool isRemote,
+    String? applicationUrl,
+    DateTime? deadline,
+    required String status,
+  }) async {
+    await _client.from('opportunities').update({
+      'title': title,
+      'organization': organization,
+      'type': type.name,
+      'description': description,
+      'requirements': requirements,
+      'location': location,
+      'is_remote': isRemote,
+      'application_url': applicationUrl,
+      'deadline': deadline?.toIso8601String(),
+      'status': status,
+    }).eq('id', id);
+  }
+
+  Future<void> deleteOpportunity(String id) async {
+    await _client.from('opportunities').delete().eq('id', id);
+  }
 }

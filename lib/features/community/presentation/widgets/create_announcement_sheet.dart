@@ -1,33 +1,56 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_spacing.dart';
+import '../../../../core/utils/validators.dart';
 import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_text_field.dart';
+import '../../../../core/widgets/confirm_dialog.dart';
 import '../../../announcements/domain/entities/announcement.dart';
 import '../../../announcements/presentation/providers/announcement_providers.dart';
 
-void showCreateAnnouncementSheet(BuildContext context, WidgetRef ref, {required String authorId}) {
+void showAnnouncementEditorSheet(
+  BuildContext context,
+  WidgetRef ref, {
+  required String authorId,
+  Announcement? existing,
+}) {
   showModalBottomSheet(
     context: context,
     isScrollControlled: true,
-    builder: (context) => _CreateAnnouncementSheet(authorId: authorId),
+    builder: (context) => _AnnouncementEditorSheet(authorId: authorId, existing: existing),
   );
 }
 
-class _CreateAnnouncementSheet extends ConsumerStatefulWidget {
-  const _CreateAnnouncementSheet({required this.authorId});
-  final String authorId;
-
-  @override
-  ConsumerState<_CreateAnnouncementSheet> createState() => _CreateAnnouncementSheetState();
+void showCreateAnnouncementSheet(BuildContext context, WidgetRef ref, {required String authorId}) {
+  showAnnouncementEditorSheet(context, ref, authorId: authorId);
 }
 
-class _CreateAnnouncementSheetState extends ConsumerState<_CreateAnnouncementSheet> {
+class _AnnouncementEditorSheet extends ConsumerStatefulWidget {
+  const _AnnouncementEditorSheet({required this.authorId, this.existing});
+  final String authorId;
+  final Announcement? existing;
+
+  @override
+  ConsumerState<_AnnouncementEditorSheet> createState() => _AnnouncementEditorSheetState();
+}
+
+class _AnnouncementEditorSheetState extends ConsumerState<_AnnouncementEditorSheet> {
   final _formKey = GlobalKey<FormState>();
-  final _titleController = TextEditingController();
-  final _bodyController = TextEditingController();
-  AnnouncementCategory _category = AnnouncementCategory.general;
-  bool _pinned = false;
+  late final TextEditingController _titleController;
+  late final TextEditingController _bodyController;
+  late AnnouncementCategory _category;
+  late bool _pinned;
+
+  bool get _isEditing => widget.existing != null;
+
+  @override
+  void initState() {
+    super.initState();
+    _titleController = TextEditingController(text: widget.existing?.title ?? '');
+    _bodyController = TextEditingController(text: widget.existing?.body ?? '');
+    _category = widget.existing?.category ?? AnnouncementCategory.general;
+    _pinned = widget.existing?.isPinned ?? false;
+  }
 
   @override
   void dispose() {
@@ -39,14 +62,29 @@ class _CreateAnnouncementSheetState extends ConsumerState<_CreateAnnouncementShe
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
     final controller = ref.read(announcementControllerProvider.notifier);
-    final success = await controller.create(
-      title: _titleController.text.trim(),
-      body: _bodyController.text.trim(),
-      category: _category,
-      isPinned: _pinned,
-      createdBy: widget.authorId,
+    final error = _isEditing
+        ? await controller.update(
+            id: widget.existing!.id,
+            title: _titleController.text.trim(),
+            body: _bodyController.text.trim(),
+            category: _category,
+            isPinned: _pinned,
+          )
+        : await controller.create(
+            title: _titleController.text.trim(),
+            body: _bodyController.text.trim(),
+            category: _category,
+            isPinned: _pinned,
+            createdBy: widget.authorId,
+          );
+    if (!mounted) return;
+    showActionFeedback(
+      context,
+      success: error == null,
+      successMessage: _isEditing ? 'Announcement updated.' : 'Announcement published.',
+      errorMessage: error,
     );
-    if (success && context.mounted) Navigator.of(context).pop();
+    if (error == null) Navigator.of(context).pop();
   }
 
   @override
@@ -66,19 +104,19 @@ class _CreateAnnouncementSheetState extends ConsumerState<_CreateAnnouncementShe
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text('New announcement', style: Theme.of(context).textTheme.titleLarge),
+              Text(_isEditing ? 'Edit announcement' : 'New announcement', style: Theme.of(context).textTheme.titleLarge),
               const SizedBox(height: AppSpacing.lg),
               AppTextField(
                 label: 'Title',
                 controller: _titleController,
-                validator: (v) => v == null || v.trim().isEmpty ? 'Title is required' : null,
+                validator: (v) => Validators.required(v, fieldName: 'Title'),
               ),
               const SizedBox(height: AppSpacing.md),
               AppTextField(
                 label: 'Message',
                 controller: _bodyController,
                 maxLines: 4,
-                validator: (v) => v == null || v.trim().isEmpty ? 'Message is required' : null,
+                validator: (v) => Validators.required(v, fieldName: 'Message'),
               ),
               const SizedBox(height: AppSpacing.md),
               Wrap(
@@ -99,7 +137,7 @@ class _CreateAnnouncementSheetState extends ConsumerState<_CreateAnnouncementShe
                 title: const Text('Pin to top'),
               ),
               const SizedBox(height: AppSpacing.md),
-              AppButton(label: 'Publish', isLoading: isSubmitting, onPressed: _submit),
+              AppButton(label: _isEditing ? 'Save changes' : 'Publish', isLoading: isSubmitting, onPressed: _submit),
             ],
           ),
         ),

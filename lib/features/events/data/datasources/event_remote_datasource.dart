@@ -1,4 +1,5 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../domain/entities/event.dart';
 import '../models/event_model.dart';
 
 class EventRemoteDataSource {
@@ -138,5 +139,59 @@ class EventRemoteDataSource {
     });
 
     return name;
+  }
+
+  Future<void> createEvent({
+    required String title,
+    required String description,
+    required EventCategory category,
+    required DateTime startAt,
+    required DateTime endAt,
+    String? venueName,
+    required bool isOnline,
+    String? onlineUrl,
+    required String createdBy,
+  }) async {
+    await _client.from('events').insert({
+      'title': title,
+      'description': description,
+      'category': category.key,
+      'start_at': startAt.toIso8601String(),
+      'end_at': endAt.toIso8601String(),
+      'venue_name': venueName,
+      'is_online': isOnline,
+      'online_url': onlineUrl,
+      'status': 'upcoming',
+      'created_by': createdBy,
+    });
+  }
+
+  Future<void> updateEvent({
+    required String id,
+    required String title,
+    required String description,
+    required EventCategory category,
+    required DateTime startAt,
+    required DateTime endAt,
+    String? venueName,
+    required bool isOnline,
+    String? onlineUrl,
+    required EventStatus status,
+  }) async {
+    await _client.from('events').update({
+      'title': title,
+      'description': description,
+      'category': category.key,
+      'start_at': startAt.toIso8601String(),
+      'end_at': endAt.toIso8601String(),
+      'venue_name': venueName,
+      'is_online': isOnline,
+      'online_url': onlineUrl,
+      'status': status.name,
+    }).eq('id', id);
+  }
+
+  Future<void> deleteEvent(String id) async {
+    await _client.from('events').delete().eq('id', id);
   }
 }

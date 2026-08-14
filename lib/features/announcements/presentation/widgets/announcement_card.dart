@@ -7,9 +7,16 @@ import '../../../../core/widgets/status_badge.dart';
 import '../../domain/entities/announcement.dart';
 
 class AnnouncementCard extends StatelessWidget {
-  const AnnouncementCard({super.key, required this.announcement});
+  const AnnouncementCard({
+    super.key,
+    required this.announcement,
+    this.onEdit,
+    this.onDelete,
+  });
 
   final Announcement announcement;
+  final VoidCallback? onEdit;
+  final Future<void> Function()? onDelete;
 
   Color _categoryColor(AnnouncementCategory category) {
     return switch (category) {
@@ -46,6 +53,20 @@ class AnnouncementCard extends StatelessWidget {
                 timeago.format(announcement.publishedAt),
                 style: Theme.of(context).textTheme.labelSmall,
               ),
+              if (onEdit != null)
+                IconButton(
+                  visualDensity: VisualDensity.compact,
+                  tooltip: 'Edit',
+                  icon: const Icon(Icons.edit_outlined, size: 20),
+                  onPressed: onEdit,
+                ),
+              if (onDelete != null)
+                IconButton(
+                  visualDensity: VisualDensity.compact,
+                  tooltip: 'Delete',
+                  icon: const Icon(Icons.delete_outline_rounded, size: 20, color: AppColors.googleRed),
+                  onPressed: () => onDelete!.call(),
+                ),
             ],
           ),
           const SizedBox(height: AppSpacing.sm),
