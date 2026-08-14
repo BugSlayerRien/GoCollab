@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/di/supabase_providers.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
+import '../../../profile/presentation/providers/profile_providers.dart';
 import '../../data/datasources/event_remote_datasource.dart';
 import '../../data/repositories/event_repository_impl.dart';
 import '../../domain/entities/event.dart';
@@ -36,38 +37,34 @@ class EventActionsController extends StateNotifier<bool> {
   EventActionsController(this._ref) : super(false);
   final Ref _ref;
 
-  Future<bool> register(String eventId) async {
-    state = true;
+  Future<String?> register(String eventId) async {
     final user = _ref.read(currentUserProvider).valueOrNull;
-    if (user == null) {
-      state = false;
-      return false;
-    }
+    if (user == null) return 'You must be signed in.';
+    state = true;
     final repository = _ref.read(eventRepositoryProvider);
     final result = await repository.registerForEvent(eventId: eventId, userId: user.id);
     state = false;
     if (result.isSuccess) {
       _ref.invalidate(eventDetailProvider(eventId));
       _ref.invalidate(eventsListProvider);
+      _ref.invalidate(eventHistoryProvider);
     }
-    return result.isSuccess;
+    return result.when(success: (_) => null, failure: (f) => f.message);
   }
 
-  Future<bool> cancel(String eventId) async {
-    state = true;
+  Future<String?> cancel(String eventId) async {
     final user = _ref.read(currentUserProvider).valueOrNull;
-    if (user == null) {
-      state = false;
-      return false;
-    }
+    if (user == null) return 'You must be signed in.';
+    state = true;
     final repository = _ref.read(eventRepositoryProvider);
     final result = await repository.cancelRegistration(eventId: eventId, userId: user.id);
     state = false;
     if (result.isSuccess) {
       _ref.invalidate(eventDetailProvider(eventId));
       _ref.invalidate(eventsListProvider);
+      _ref.invalidate(eventHistoryProvider);
     }
-    return result.isSuccess;
+    return result.when(success: (_) => null, failure: (f) => f.message);
   }
 
   Future<String?> createEvent({
@@ -148,4 +145,4 @@ class EventActionsController extends StateNotifier<bool> {
 }
 
 final eventActionsControllerProvider =
-    StateNotifierProvider.autoDispose<EventActionsController, bool>((ref) => EventActionsController(ref));
+    StateNotifierProvider<EventActionsController, bool>((ref) => EventActionsController(ref));

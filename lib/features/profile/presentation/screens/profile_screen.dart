@@ -215,6 +215,7 @@ class _EventHistorySection extends ConsumerWidget {
           children: items.map((item) {
             return ListTile(
               contentPadding: EdgeInsets.zero,
+              onTap: () => context.push('/events/${item.eventId}'),
               leading: Icon(
                 item.attended ? Icons.check_circle_rounded : Icons.event_available_rounded,
                 color: item.attended ? AppColors.googleGreen : AppColors.googleYellow,

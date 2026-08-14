@@ -47,12 +47,16 @@ class OpportunityRemoteDataSource {
         {'opportunity_id': opportunityId, 'user_id': userId},
         onConflict: 'user_id,opportunity_id',
       );
-      await _client.from('engagement_logs').insert({
-        'user_id': userId,
-        'action_type': 'opportunity_save',
-        'reference_type': 'opportunity',
-        'reference_id': opportunityId,
-      });
+      try {
+        await _client.from('engagement_logs').insert({
+          'user_id': userId,
+          'action_type': 'opportunity_save',
+          'reference_type': 'opportunity',
+          'reference_id': opportunityId,
+        });
+      } catch (_) {
+        // Bookmark is already persisted; analytics must not roll it back.
+      }
     } else {
       await _client
           .from('saved_opportunities')

@@ -144,7 +144,7 @@ class DashboardScreen extends ConsumerWidget {
               loading: () => const SizedBox(height: 120, child: Center(child: CircularProgressIndicator())),
               error: (_, __) => const SizedBox.shrink(),
               data: (events) {
-                final upcoming = events.where((e) => e.startAt.isAfter(DateTime.now())).take(5).toList();
+                final upcoming = events.where((e) => e.isAvailable).take(5).toList();
                 if (upcoming.isEmpty) {
                   return const EmptyState(icon: Icons.event_busy_rounded, title: 'No upcoming events', message: '');
                 }

@@ -27,6 +27,7 @@ class _OpportunitiesListScreenState extends ConsumerState<OpportunitiesListScree
   Widget build(BuildContext context) {
     final opportunitiesAsync =
         _savedOnly ? ref.watch(savedOpportunitiesProvider) : ref.watch(opportunitiesListProvider);
+    ref.watch(savedOpportunityControllerProvider);
     final currentUser = ref.watch(currentUserProvider).valueOrNull;
     final isOfficer = currentUser?.role == UserRole.officer;
 

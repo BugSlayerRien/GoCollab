@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/theme_extensions.dart';
+import '../../../../core/widgets/confirm_dialog.dart';
 import '../../../../core/widgets/status_badge.dart';
 import '../../domain/entities/opportunity.dart';
 import '../providers/opportunity_providers.dart';
@@ -41,11 +42,21 @@ class OpportunityCard extends ConsumerWidget {
                     const Spacer(),
                     IconButton(
                       visualDensity: VisualDensity.compact,
+                      tooltip: opportunity.isSaved ? 'Remove bookmark' : 'Save',
                       icon: Icon(
                         opportunity.isSaved ? Icons.bookmark_rounded : Icons.bookmark_border_rounded,
                         color: opportunity.isSaved ? AppColors.googleBlue : context.appTextSecondary,
                       ),
-                      onPressed: () => ref.read(savedOpportunityControllerProvider.notifier).toggle(opportunity),
+                      onPressed: () async {
+                        final error = await ref.read(savedOpportunityControllerProvider.notifier).toggle(opportunity);
+                        if (!context.mounted) return;
+                        showActionFeedback(
+                          context,
+                          success: error == null,
+                          successMessage: opportunity.isSaved ? 'Removed from saved.' : 'Saved.',
+                          errorMessage: error,
+                        );
+                      },
                     ),
                   ],
                 ),

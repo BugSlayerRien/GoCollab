@@ -96,10 +96,18 @@ class Event extends Equatable {
 
   bool get hasLocation => latitude != null && longitude != null;
   bool get isFull => capacity != null && registeredCount >= capacity!;
+  bool get isPast =>
+      endAt.isBefore(DateTime.now()) ||
+      status == EventStatus.completed ||
+      status == EventStatus.cancelled;
   bool get registrationOpen =>
       status == EventStatus.upcoming &&
+      startAt.isAfter(DateTime.now()) &&
       (registrationDeadline == null || registrationDeadline!.isAfter(DateTime.now())) &&
       !isFull;
+
+  /// Shown on the member Events "Available" list: not past, and still open to register.
+  bool get isAvailable => registrationOpen && status != EventStatus.draft;
 
   @override
   List<Object?> get props => [

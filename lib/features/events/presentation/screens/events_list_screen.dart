@@ -20,15 +20,26 @@ class EventsListScreen extends ConsumerStatefulWidget {
 
 class _EventsListScreenState extends ConsumerState<EventsListScreen> {
   EventCategory? _filter;
+  bool _showHistory = false;
 
   @override
   Widget build(BuildContext context) {
     final eventsAsync = ref.watch(eventsListProvider);
+    ref.watch(eventActionsControllerProvider);
     final isOfficer = ref.watch(currentUserProvider).valueOrNull?.role == UserRole.officer;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Events')),
-      floatingActionButton: isOfficer
+      appBar: AppBar(
+        title: Text(_showHistory ? 'Event history' : 'Events'),
+        actions: [
+          IconButton(
+            icon: Icon(_showHistory ? Icons.event_available_rounded : Icons.history_rounded),
+            tooltip: _showHistory ? 'Available events' : 'Event history',
+            onPressed: () => setState(() => _showHistory = !_showHistory),
+          ),
+        ],
+      ),
+      floatingActionButton: isOfficer && !_showHistory
           ? FloatingActionButton.extended(
               onPressed: () => showEventEditorSheet(context),
               icon: const Icon(Icons.add_rounded),
@@ -49,7 +60,14 @@ class _EventsListScreenState extends ConsumerState<EventsListScreen> {
             onRetry: () => ref.invalidate(eventsListProvider),
           ),
           data: (events) {
-            final filtered = _filter == null ? events : events.where((e) => e.category == _filter).toList();
+            final scoped = events.where((e) {
+              if (!isOfficer && e.status == EventStatus.draft) return false;
+              if (isOfficer) {
+                return _showHistory ? e.isPast : !e.isPast;
+              }
+              return _showHistory ? !e.isAvailable : e.isAvailable;
+            }).toList();
+            final filtered = _filter == null ? scoped : scoped.where((e) => e.category == _filter).toList();
             return Column(
               children: [
                 _CategoryFilterBar(
@@ -58,10 +76,12 @@ class _EventsListScreenState extends ConsumerState<EventsListScreen> {
                 ),
                 Expanded(
                   child: filtered.isEmpty
-                      ? const EmptyState(
-                          icon: Icons.event_busy_rounded,
-                          title: 'No events found',
-                          message: 'Check back soon — new GDGoC events are added regularly.',
+                      ? EmptyState(
+                          icon: _showHistory ? Icons.history_rounded : Icons.event_busy_rounded,
+                          title: _showHistory ? 'No past or closed events' : 'No available events',
+                          message: _showHistory
+                              ? 'Past events and closed registrations appear here, including ones you joined.'
+                              : 'Check back soon — new GDGoC events are added regularly.',
                         )
                       : ListView.separated(
                           padding: const EdgeInsets.all(AppSpacing.md),

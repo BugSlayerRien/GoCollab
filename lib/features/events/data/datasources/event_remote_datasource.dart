@@ -65,14 +65,17 @@ class EventRemoteDataSource {
       'event_id': eventId,
       'user_id': userId,
       'status': 'registered',
+      'cancelled_at': null,
     }, onConflict: 'event_id,user_id');
 
-    await _client.from('engagement_logs').insert({
-      'user_id': userId,
-      'action_type': 'event_register',
-      'reference_type': 'event',
-      'reference_id': eventId,
-    });
+    try {
+      await _client.from('engagement_logs').insert({
+        'user_id': userId,
+        'action_type': 'event_register',
+        'reference_type': 'event',
+        'reference_id': eventId,
+      });
+    } catch (_) {}
   }
 
   Future<void> cancelRegistration({required String eventId, required String userId}) async {

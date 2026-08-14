@@ -153,7 +153,7 @@ class _EventDetailBody extends ConsumerWidget {
                         variant: event.isRegistered ? AppButtonVariant.outlined : AppButtonVariant.filled,
                         color: event.isRegistered ? AppColors.googleRed : null,
                         isLoading: isSubmitting,
-                        onPressed: (event.isRegistered || event.registrationOpen)
+                        onPressed: (event.isRegistered && !event.isPast) || event.registrationOpen
                             ? () => _handleRegistration(context, ref)
                             : null,
                       ),
@@ -177,16 +177,13 @@ class _EventDetailBody extends ConsumerWidget {
 
   Future<void> _handleRegistration(BuildContext context, WidgetRef ref) async {
     final controller = ref.read(eventActionsControllerProvider.notifier);
-    final success = event.isRegistered ? await controller.cancel(event.id) : await controller.register(event.id);
+    final error = event.isRegistered ? await controller.cancel(event.id) : await controller.register(event.id);
     if (!context.mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          success
-              ? (event.isRegistered ? 'Registration cancelled.' : "You're registered! See you there.")
-              : 'Something went wrong. Please try again.',
-        ),
-      ),
+    showActionFeedback(
+      context,
+      success: error == null,
+      successMessage: event.isRegistered ? 'Registration cancelled.' : "You're registered! See you there.",
+      errorMessage: error,
     );
   }
 }

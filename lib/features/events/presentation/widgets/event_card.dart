@@ -59,6 +59,8 @@ class _CardContent extends StatelessWidget {
                   StatusBadge.pending(event.category.label),
                   const SizedBox(width: AppSpacing.xs),
                   if (event.isRegistered) StatusBadge.success('Registered'),
+                  if (!event.isAvailable && !event.isRegistered)
+                    StatusBadge.alert(event.isPast ? 'Past' : 'Closed'),
                   const Spacer(),
                   if (event.isFeatured)
                     const Icon(Icons.auto_awesome_rounded, size: 16, color: AppColors.googleYellow),

@@ -40,25 +40,26 @@ class SavedOpportunityController extends StateNotifier<bool> {
   SavedOpportunityController(this._ref) : super(false);
   final Ref _ref;
 
-  Future<void> toggle(Opportunity opportunity) async {
+  Future<String?> toggle(Opportunity opportunity) async {
     final user = _ref.read(currentUserProvider).valueOrNull;
-    if (user == null) return;
-    state = true;
+    if (user == null) return 'You must be signed in.';
     final repository = _ref.read(opportunityRepositoryProvider);
-    await repository.toggleSaved(
+    final result = await repository.toggleSaved(
       opportunityId: opportunity.id,
       userId: user.id,
       save: !opportunity.isSaved,
     );
-    state = false;
-    _ref.invalidate(opportunitiesListProvider);
-    _ref.invalidate(opportunityDetailProvider(opportunity.id));
-    _ref.invalidate(savedOpportunitiesProvider);
+    if (result.isSuccess) {
+      _ref.invalidate(opportunitiesListProvider);
+      _ref.invalidate(opportunityDetailProvider(opportunity.id));
+      _ref.invalidate(savedOpportunitiesProvider);
+    }
+    return result.when(success: (_) => null, failure: (f) => f.message);
   }
 }
 
 final savedOpportunityControllerProvider =
-    StateNotifierProvider.autoDispose<SavedOpportunityController, bool>((ref) => SavedOpportunityController(ref));
+    StateNotifierProvider<SavedOpportunityController, bool>((ref) => SavedOpportunityController(ref));
 
 class CreateOpportunityController extends StateNotifier<bool> {
   CreateOpportunityController(this._ref) : super(false);
@@ -147,4 +148,4 @@ class CreateOpportunityController extends StateNotifier<bool> {
 }
 
 final createOpportunityControllerProvider =
-    StateNotifierProvider.autoDispose<CreateOpportunityController, bool>((ref) => CreateOpportunityController(ref));
+    StateNotifierProvider<CreateOpportunityController, bool>((ref) => CreateOpportunityController(ref));

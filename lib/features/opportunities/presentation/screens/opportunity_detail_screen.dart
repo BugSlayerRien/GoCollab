@@ -147,8 +147,21 @@ class _DetailBody extends ConsumerWidget {
               const SizedBox(width: AppSpacing.sm),
               IconButton.filledTonal(
                 isSelected: opportunity.isSaved,
+                tooltip: opportunity.isSaved ? 'Remove bookmark' : 'Save',
                 icon: Icon(opportunity.isSaved ? Icons.bookmark_rounded : Icons.bookmark_border_rounded),
-                onPressed: isSaving ? null : () => ref.read(savedOpportunityControllerProvider.notifier).toggle(opportunity),
+                onPressed: isSaving
+                    ? null
+                    : () async {
+                        final error =
+                            await ref.read(savedOpportunityControllerProvider.notifier).toggle(opportunity);
+                        if (!context.mounted) return;
+                        showActionFeedback(
+                          context,
+                          success: error == null,
+                          successMessage: opportunity.isSaved ? 'Removed from saved.' : 'Saved.',
+                          errorMessage: error,
+                        );
+                      },
               ),
             ],
           ),
