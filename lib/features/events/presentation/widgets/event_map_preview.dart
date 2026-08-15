@@ -1,13 +1,15 @@
 import 'package:flutter/material.dart';
-import 'package:google_maps_flutter/google_maps_flutter.dart';
-import '../../../../core/config/env.dart';
+import 'package:flutter_map/flutter_map.dart';
+import 'package:latlong2/latlong.dart';
+import 'package:url_launcher/url_launcher.dart';
+import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/theme_extensions.dart';
 
-/// Renders a small, non-interactive map preview for an event venue or
-/// partner address. Degrades gracefully to a placeholder card when
-/// [Env.googleMapsApiKey] hasn't been configured for this build, so the
-/// app never crashes in environments without a Maps API key.
+/// Small map preview for an event venue or partner address.
+///
+/// Uses OpenStreetMap tiles (no Google Cloud billing or Maps API key).
+/// Tapping the map opens the location in the browser.
 class LocationMapPreview extends StatelessWidget {
   const LocationMapPreview({
     super.key,
@@ -22,52 +24,54 @@ class LocationMapPreview extends StatelessWidget {
   final String label;
   final double height;
 
+  Uri get _openStreetMapUri => Uri.parse(
+        'https://www.openstreetmap.org/?mlat=$latitude&mlon=$longitude#map=16/$latitude/$longitude',
+      );
+
   @override
   Widget build(BuildContext context) {
     final borderRadius = BorderRadius.circular(AppSpacing.radiusMd);
+    final point = LatLng(latitude, longitude);
 
-    if (!Env.hasGoogleMaps) {
-      return Container(
-        height: height,
-        decoration: BoxDecoration(
-          color: context.appSurfaceMuted,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        ClipRRect(
           borderRadius: borderRadius,
-          border: Border.all(color: context.appBorder),
-        ),
-        child: Center(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(Icons.map_outlined, color: context.appTextDisabled, size: 28),
-              const SizedBox(height: AppSpacing.xs),
-              Text(
-                label,
-                style: Theme.of(context).textTheme.bodySmall,
-                textAlign: TextAlign.center,
+          child: SizedBox(
+            height: height,
+            child: FlutterMap(
+              options: MapOptions(
+                initialCenter: point,
+                initialZoom: 15,
+                interactionFlags: InteractiveFlag.pinchZoom | InteractiveFlag.drag,
+                onTap: (_, __) => launchUrl(_openStreetMapUri, mode: LaunchMode.externalApplication),
               ),
-              Text(
-                'Map preview unavailable (no Maps API key configured)',
-                style: Theme.of(context).textTheme.labelSmall,
-                textAlign: TextAlign.center,
-              ),
-            ],
+              children: [
+                TileLayer(
+                  urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                  userAgentPackageName: 'ph.gdgoc.gocollab.gocollab',
+                ),
+                MarkerLayer(
+                  markers: [
+                    Marker(
+                      point: point,
+                      width: 40,
+                      height: 40,
+                      child: const Icon(Icons.location_on_rounded, color: AppColors.googleRed, size: 36),
+                    ),
+                  ],
+                ),
+              ],
+            ),
           ),
         ),
-      );
-    }
-
-    return ClipRRect(
-      borderRadius: borderRadius,
-      child: SizedBox(
-        height: height,
-        child: GoogleMap(
-          initialCameraPosition: CameraPosition(target: LatLng(latitude, longitude), zoom: 15),
-          markers: {
-            Marker(markerId: const MarkerId('location'), position: LatLng(latitude, longitude), infoWindow: InfoWindow(title: label)),
-          },
-          zoomControlsEnabled: false,
+        const SizedBox(height: 4),
+        Text(
+          '$label · © OpenStreetMap',
+          style: Theme.of(context).textTheme.labelSmall?.copyWith(color: context.appTextSecondary),
         ),
-      ),
+      ],
     );
   }
 }
