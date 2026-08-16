@@ -23,13 +23,6 @@ android {
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
-
-        // Google Maps API key, injected into AndroidManifest.xml's
-        // ${mapsApiKey} placeholder. Set MAPS_API_KEY in
-        // android/gradle.properties (gitignored) or pass
-        // -PMAPS_API_KEY=... on the command line. See README.md.
-        manifestPlaceholders["mapsApiKey"] =
-            (project.findProperty("MAPS_API_KEY") as String?) ?: ""
     }
 
     buildTypes {

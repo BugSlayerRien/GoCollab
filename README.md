@@ -19,12 +19,11 @@ This project aligns with **SDG 17 - Partnerships for the Goals**, using technolo
 7. [Environment Configuration](#environment-configuration)
 8. [Firebase Cloud Messaging Setup](#firebase-cloud-messaging-setup)
 9. [Google Sign-In Setup](#google-sign-in-setup)
-10. [Google Maps Setup](#google-maps-setup)
-11. [Running the App](#running-the-app)
-12. [Testing & Static Analysis](#testing--static-analysis)
-13. [Building for Release](#building-for-release)
-14. [Roles & Promoting an Officer](#roles--promoting-an-officer)
-15. [Known Limitations](#known-limitations)
+10. [Running the App](#running-the-app)
+11. [Testing & Static Analysis](#testing--static-analysis)
+12. [Building for Release](#building-for-release)
+13. [Roles & Promoting an Officer](#roles--promoting-an-officer)
+14. [Known Limitations](#known-limitations)
 
 -------
 
@@ -46,7 +45,7 @@ This project aligns with **SDG 17 - Partnerships for the Goals**, using technolo
 
 - **Frontend:** Flutter (stable channel, Dart ≥ 3.9), Material Design 3, [`flutter_riverpod`](https://pub.dev/packages/flutter_riverpod) for state management, [`go_router`](https://pub.dev/packages/go_router) for declarative/role-based navigation.
 - **Backend:** [Supabase](https://supabase.com) — PostgreSQL, GoTrue Auth, Storage, and Realtime (the in-app notifications inbox streams live via `.stream()` on the `notifications` table) — accessed through `supabase_flutter`.
-- **Integrations:** Google Sign-In (`google_sign_in`), Firebase Cloud Messaging (`firebase_messaging` + `flutter_local_notifications`), Google Maps (`google_maps_flutter`), device calendar sync (`add_2_calendar`), QR scanning (`mobile_scanner`) and generation (`qr_flutter`), charts (`fl_chart`).
+- **Integrations:** Google Sign-In (`google_sign_in`), Firebase Cloud Messaging (`firebase_messaging` + `flutter_local_notifications`), in-app maps via OpenStreetMap (`flutter_map`), device calendar sync (`add_2_calendar`), QR scanning (`mobile_scanner`) and generation (`qr_flutter`), charts (`fl_chart`).
 - **Architecture:** Clean Architecture (`presentation` / `domain` / `data`) + Repository Pattern per feature, a shared `core/` layer for cross-cutting concerns, and an explicit `Result<T>`/`Failure` type for error handling instead of throwing across layers.
 
 ## Architecture
@@ -80,7 +79,7 @@ lib/
 ├── main.dart                      # Supabase + notification bootstrap, MaterialApp.router
 ├── core/
 │   ├── animations/                # PrismaticBackground, PrismaticShimmer, PrismaticGlowBorder, PrismaticLoader
-│   ├── config/env.dart            # Build-time config (Supabase URL/key, OAuth id, Maps key, FCM sender id)
+│   ├── config/env.dart            # Build-time config (Supabase URL/key, OAuth id, FCM sender id)
 │   ├── di/supabase_providers.dart
 │   ├── errors/                    # Failure hierarchy + exception_mapper
 │   ├── router/app_router.dart     # go_router + auth/role redirects
@@ -155,12 +154,11 @@ GoCollab never hardcodes secrets in source. All runtime configuration is read in
      "SUPABASE_URL": "https://nhuoziavgyxtcutmygtl.supabase.co",
      "SUPABASE_PUBLISHABLE_KEY": "sb_publishable_0dTO5gPz68bTVW_2xxrs1A_t7qjZk_r",
      "GOOGLE_WEB_CLIENT_ID": "",
-     "GOOGLE_MAPS_API_KEY": "",
      "FIREBASE_SENDER_ID": ""
    }
    ```
 
-   `env.json` is gitignored. The Supabase URL/publishable key already default to the live GoCollab project (a publishable/anon key is safe to ship — every table is protected by RLS), so **the app builds and runs out of the box** even if you leave the rest blank. Google Sign-In and Google Maps degrade gracefully (friendly "not configured" states, see [`Env.hasGoogleSignIn`](lib/core/config/env.dart) / `hasGoogleMaps`) instead of crashing when their keys are empty.
+   `env.json` is gitignored. The Supabase URL/publishable key already default to the live GoCollab project (a publishable/anon key is safe to ship — every table is protected by RLS), so **the app builds and runs out of the box** even if you leave the rest blank. Google Sign-In degrades gracefully (friendly "not configured" state, see [`Env.hasGoogleSignIn`](lib/core/config/env.dart)) instead of crashing when the client id is empty. Event and partner maps use OpenStreetMap in-app (`flutter_map`) from latitude/longitude stored in Supabase; no Maps API key is required. Tapping a preview opens the same coordinates in Google Maps / the browser.
 
 2. Run/build with the file:
 
@@ -187,17 +185,6 @@ To enable FCM:
 4. Set `GOOGLE_WEB_CLIENT_ID` (the *Web* client id) in `env.json`.
 
 Until this is configured, the Google Sign-In button on the login/register screens shows a friendly "Google Sign-In isn't configured yet" message instead of crashing.
-
-## Google Maps Setup
-
-Used for event venue previews and the Partner Directory map.
-
-1. Enable **Maps SDK for Android** and **Maps SDK for iOS** in Google Cloud Console and create an API key.
-2. Set `GOOGLE_MAPS_API_KEY` in `env.json` **and**:
-   - **Android:** add the same key to `android/gradle.properties` as `MAPS_API_KEY=...` (this file is read by `android/app/build.gradle.kts` and injected into `AndroidManifest.xml`'s `com.google.android.geo.API_KEY` meta-data).
-   - **iOS:** paste the key into the empty `GMSApiKey` entry in `ios/Runner/Info.plist` — `AppDelegate.swift` reads it at launch and calls `GMSServices.provideAPIKey(...)`.
-
-Without a key, map previews render an inline "map unavailable" fallback rather than crashing.
 
 ## Running the App
 
@@ -243,7 +230,7 @@ update public.profiles set role_id = 2 where email = 'someone@dlsu.edu.ph';
 ## Known Limitations
 
 - Century Gothic is a licensed commercial font and isn't bundled; **Poppins** (Open Font License) is used as a structurally-identical geometric sans-serif substitute. Swapping in a licensed Century Gothic later only requires dropping `.ttf` files into `assets/fonts/` and updating `pubspec.yaml` + `app_typography.dart` — no other code changes.
-- Google Sign-In, FCM, and Google Maps all degrade gracefully but require the external setup steps above for full functionality.
+- Google Sign-In and FCM degrade gracefully but require the external setup steps above for full functionality.
 - Android release builds sign with the debug keystore by default (see [Building for Release](#building-for-release)).
 
 

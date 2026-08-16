@@ -36,15 +36,6 @@ class Env {
     defaultValue: '',
   );
 
-  /// Google Maps SDK API key. Required for the Events venue map and the
-  /// Partner Directory map. Configure in Google Cloud Console and inject via
-  /// --dart-define plus the native AndroidManifest.xml / Info.plist
-  /// placeholders documented in README.md.
-  static const String googleMapsApiKey = String.fromEnvironment(
-    'GOOGLE_MAPS_API_KEY',
-    defaultValue: '',
-  );
-
   /// Firebase project sender id — used only for diagnostics; the real
   /// Firebase config lives in `firebase_options.dart` (generated via
   /// `flutterfire configure`, see README.md).
@@ -54,6 +45,4 @@ class Env {
   );
 
   static bool get hasGoogleSignIn => googleWebClientId.isNotEmpty;
-
-  static bool get hasGoogleMaps => googleMapsApiKey.isNotEmpty;
 }

@@ -30,11 +30,7 @@ dependencies:
   firebase_messaging: ^15.1.6
   flutter_local_notifications: ^18.0.1
 
-  # ---- Maps & location ----
-  # OpenStreetMap tiles via flutter_map (no Google billing / API key).
-  # google_maps_flutter is kept for optional native Google Maps if a billed
-  # key is added later; previews use OSM so the app works without prepaid Cloud.
-  google_maps_flutter: ^2.10.0
+  # ---- Maps & location (OpenStreetMap via flutter_map; no Google Maps SDK) ----
   flutter_map: ^7.0.2
   latlong2: ^0.9.1
   geolocator: ^13.0.2

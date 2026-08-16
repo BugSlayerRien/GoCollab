@@ -8,8 +8,8 @@ import '../../../../core/theme/theme_extensions.dart';
 
 /// Small map preview for an event venue or partner address.
 ///
-/// Uses OpenStreetMap tiles (no Google Cloud billing or Maps API key).
-/// Tapping the map opens the location in the browser.
+/// In-app tiles come from OpenStreetMap (no API key). Tapping the map opens
+/// the same coordinates in Google Maps / the system browser.
 class LocationMapPreview extends StatelessWidget {
   const LocationMapPreview({
     super.key,
@@ -24,9 +24,13 @@ class LocationMapPreview extends StatelessWidget {
   final String label;
   final double height;
 
-  Uri get _openStreetMapUri => Uri.parse(
-        'https://www.openstreetmap.org/?mlat=$latitude&mlon=$longitude#map=16/$latitude/$longitude',
+  Uri get _externalMapsUri => Uri.parse(
+        'https://www.google.com/maps/search/?api=1&query=$latitude,$longitude',
       );
+
+  Future<void> _openExternally() async {
+    await launchUrl(_externalMapsUri, mode: LaunchMode.externalApplication);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -45,7 +49,7 @@ class LocationMapPreview extends StatelessWidget {
                 initialCenter: point,
                 initialZoom: 15,
                 interactionFlags: InteractiveFlag.pinchZoom | InteractiveFlag.drag,
-                onTap: (_, __) => launchUrl(_openStreetMapUri, mode: LaunchMode.externalApplication),
+                onTap: (_, __) => _openExternally(),
               ),
               children: [
                 TileLayer(
@@ -67,9 +71,19 @@ class LocationMapPreview extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 4),
-        Text(
-          '$label · © OpenStreetMap',
-          style: Theme.of(context).textTheme.labelSmall?.copyWith(color: context.appTextSecondary),
+        Row(
+          children: [
+            Expanded(
+              child: Text(
+                '$label · © OpenStreetMap',
+                style: Theme.of(context).textTheme.labelSmall?.copyWith(color: context.appTextSecondary),
+              ),
+            ),
+            TextButton(
+              onPressed: _openExternally,
+              child: const Text('Open in Maps'),
+            ),
+          ],
         ),
       ],
     );

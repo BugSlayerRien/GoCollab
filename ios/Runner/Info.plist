@@ -32,8 +32,6 @@
 	<string>GoCollab shows nearby event venues and partner locations on a map.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>GoCollab lets you choose a photo from your library to use as your profile picture.</string>
-	<key>GMSApiKey</key>
-	<string></string>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>
