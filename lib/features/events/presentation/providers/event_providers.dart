@@ -1,6 +1,8 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:image_picker/image_picker.dart';
 import '../../../../core/di/supabase_providers.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
+import '../../../notifications/presentation/providers/notification_providers.dart';
 import '../../../profile/presentation/providers/profile_providers.dart';
 import '../../data/datasources/event_remote_datasource.dart';
 import '../../data/repositories/event_repository_impl.dart';
@@ -48,6 +50,8 @@ class EventActionsController extends StateNotifier<bool> {
       _ref.invalidate(eventDetailProvider(eventId));
       _ref.invalidate(eventsListProvider);
       _ref.invalidate(eventHistoryProvider);
+      _ref.invalidate(communityPointsProvider);
+      _ref.invalidate(notificationsProvider);
     }
     return result.when(success: (_) => null, failure: (f) => f.message);
   }
@@ -74,8 +78,14 @@ class EventActionsController extends StateNotifier<bool> {
     required DateTime startAt,
     required DateTime endAt,
     String? venueName,
+    String? venueAddress,
+    double? latitude,
+    double? longitude,
     required bool isOnline,
     String? onlineUrl,
+    int? capacity,
+    DateTime? registrationDeadline,
+    XFile? bannerFile,
   }) async {
     state = true;
     final user = _ref.read(currentUserProvider).valueOrNull;
@@ -83,6 +93,18 @@ class EventActionsController extends StateNotifier<bool> {
       state = false;
       return 'You must be signed in.';
     }
+
+    String? bannerUrl;
+    String? bannerWarning;
+    if (bannerFile != null) {
+      try {
+        bannerUrl = await _ref.read(storageServiceProvider).uploadEventBanner(file: bannerFile);
+      } catch (_) {
+        bannerWarning =
+            'Event created, but the banner could not be uploaded. Apply the event-banners storage migration in Supabase.';
+      }
+    }
+
     final result = await _ref.read(eventRepositoryProvider).createEvent(
           title: title,
           description: description,
@@ -90,12 +112,22 @@ class EventActionsController extends StateNotifier<bool> {
           startAt: startAt,
           endAt: endAt,
           venueName: venueName,
+          venueAddress: venueAddress,
+          latitude: latitude,
+          longitude: longitude,
           isOnline: isOnline,
           onlineUrl: onlineUrl,
+          capacity: capacity,
+          registrationDeadline: registrationDeadline,
+          bannerUrl: bannerUrl,
           createdBy: user.id,
         );
     state = false;
-    if (result.isSuccess) _ref.invalidate(eventsListProvider);
+    if (result.isSuccess) {
+      _ref.invalidate(eventsListProvider);
+      if (bannerWarning != null) return '__saved__$bannerWarning';
+      return null;
+    }
     return result.when(success: (_) => null, failure: (f) => f.message);
   }
 
@@ -107,11 +139,32 @@ class EventActionsController extends StateNotifier<bool> {
     required DateTime startAt,
     required DateTime endAt,
     String? venueName,
+    String? venueAddress,
+    double? latitude,
+    double? longitude,
     required bool isOnline,
     String? onlineUrl,
+    int? capacity,
+    DateTime? registrationDeadline,
     required EventStatus status,
+    String? existingBannerUrl,
+    XFile? bannerFile,
+    bool removeBanner = false,
   }) async {
     state = true;
+
+    String? bannerUrl = removeBanner ? null : existingBannerUrl;
+    String? bannerWarning;
+    if (bannerFile != null) {
+      try {
+        bannerUrl = await _ref.read(storageServiceProvider).uploadEventBanner(file: bannerFile, eventId: id);
+      } catch (_) {
+        bannerUrl = removeBanner ? null : existingBannerUrl;
+        bannerWarning =
+            'Event saved, but the banner could not be uploaded. Apply the event-banners storage migration in Supabase.';
+      }
+    }
+
     final result = await _ref.read(eventRepositoryProvider).updateEvent(
           id: id,
           title: title,
@@ -120,14 +173,22 @@ class EventActionsController extends StateNotifier<bool> {
           startAt: startAt,
           endAt: endAt,
           venueName: venueName,
+          venueAddress: venueAddress,
+          latitude: latitude,
+          longitude: longitude,
           isOnline: isOnline,
           onlineUrl: onlineUrl,
+          capacity: capacity,
+          registrationDeadline: registrationDeadline,
+          bannerUrl: bannerUrl,
           status: status,
         );
     state = false;
     if (result.isSuccess) {
       _ref.invalidate(eventsListProvider);
       _ref.invalidate(eventDetailProvider(id));
+      if (bannerWarning != null) return '__saved__$bannerWarning';
+      return null;
     }
     return result.when(success: (_) => null, failure: (f) => f.message);
   }

@@ -10,6 +10,7 @@ class AnnouncementModel extends Announcement {
     super.imageUrl,
     super.isPinned,
     super.authorName,
+    super.createdBy,
   });
 
   factory AnnouncementModel.fromMap(Map<String, dynamic> map) {
@@ -23,6 +24,7 @@ class AnnouncementModel extends Announcement {
       imageUrl: map['image_url'] as String?,
       isPinned: map['is_pinned'] as bool? ?? false,
       authorName: author?['full_name'] as String?,
+      createdBy: map['created_by'] as String?,
     );
   }
 }

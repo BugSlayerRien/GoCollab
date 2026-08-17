@@ -30,12 +30,25 @@ Future<bool> confirmDestructiveAction(
   return result ?? false;
 }
 
-void showActionFeedback(BuildContext context, {required bool success, required String successMessage, String? errorMessage}) {
-  if (!context.mounted) return;
-  ScaffoldMessenger.of(context).showSnackBar(
+void showActionFeedback(
+  BuildContext context, {
+  required bool success,
+  required String successMessage,
+  String? errorMessage,
+  ScaffoldMessengerState? messenger,
+  bool isWarning = false,
+}) {
+  final target = messenger ?? ScaffoldMessenger.maybeOf(context);
+  if (target == null) return;
+  target.clearSnackBars();
+  target.showSnackBar(
     SnackBar(
       content: Text(success ? successMessage : (errorMessage ?? 'Something went wrong. Please try again.')),
-      backgroundColor: success ? AppColors.googleGreen : AppColors.googleRed,
+      backgroundColor: success
+          ? AppColors.googleGreen
+          : isWarning
+              ? AppColors.googleYellow
+              : AppColors.googleRed,
     ),
   );
 }

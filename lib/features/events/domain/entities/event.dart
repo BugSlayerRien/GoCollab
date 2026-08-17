@@ -71,6 +71,7 @@ class Event extends Equatable {
     this.registeredCount = 0,
     this.isRegistered = false,
     this.myQrCode,
+    this.createdBy,
   });
 
   final String id;
@@ -93,6 +94,7 @@ class Event extends Equatable {
   final int registeredCount;
   final bool isRegistered;
   final String? myQrCode;
+  final String? createdBy;
 
   bool get hasLocation => latitude != null && longitude != null;
   bool get isFull => capacity != null && registeredCount >= capacity!;
@@ -131,5 +133,6 @@ class Event extends Equatable {
         registeredCount,
         isRegistered,
         myQrCode,
+        createdBy,
       ];
 }

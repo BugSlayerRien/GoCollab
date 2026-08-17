@@ -43,4 +43,22 @@ abstract final class Validators {
     if (uri == null || !uri.isAbsolute) return 'Enter a valid URL';
     return null;
   }
+
+  static String? optionalPositiveInt(String? value, {String fieldName = 'Value'}) {
+    final v = value?.trim() ?? '';
+    if (v.isEmpty) return null;
+    final n = int.tryParse(v);
+    if (n == null || n < 1) return '$fieldName must be a positive number';
+    return null;
+  }
+
+  static String? optionalCoordinate(String? value, {required bool isLatitude}) {
+    final v = value?.trim() ?? '';
+    if (v.isEmpty) return null;
+    final n = double.tryParse(v);
+    if (n == null) return 'Enter a valid number';
+    if (isLatitude && (n < -90 || n > 90)) return 'Latitude must be between -90 and 90';
+    if (!isLatitude && (n < -180 || n > 180)) return 'Longitude must be between -180 and 180';
+    return null;
+  }
 }

@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/di/supabase_providers.dart';
+import '../../../notifications/presentation/providers/notification_providers.dart';
 import '../../data/datasources/announcement_remote_datasource.dart';
 import '../../data/repositories/announcement_repository_impl.dart';
 import '../../domain/entities/announcement.dart';
@@ -40,7 +41,10 @@ class AnnouncementController extends StateNotifier<bool> {
       createdBy: createdBy,
     );
     state = false;
-    if (result.isSuccess) _ref.invalidate(announcementsListProvider);
+    if (result.isSuccess) {
+      _ref.invalidate(announcementsListProvider);
+      _ref.invalidate(notificationsProvider);
+    }
     return result.when(success: (_) => null, failure: (f) => f.message);
   }
 

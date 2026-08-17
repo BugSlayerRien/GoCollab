@@ -22,6 +22,7 @@ class EventModel extends Event {
     super.registeredCount,
     super.isRegistered,
     super.myQrCode,
+    super.createdBy,
   });
 
   /// [map] is a raw `events` row. [registeredCount] should be pre-aggregated
@@ -56,6 +57,7 @@ class EventModel extends Event {
       registeredCount: registeredCount,
       isRegistered: registration != null && registration['status'] != 'cancelled',
       myQrCode: registration?['qr_code'] as String?,
+      createdBy: map['created_by'] as String?,
     );
   }
 }

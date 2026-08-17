@@ -30,6 +30,7 @@ class Announcement extends Equatable {
     this.imageUrl,
     this.isPinned = false,
     this.authorName,
+    this.createdBy,
   });
 
   final String id;
@@ -40,7 +41,8 @@ class Announcement extends Equatable {
   final String? imageUrl;
   final bool isPinned;
   final String? authorName;
+  final String? createdBy;
 
   @override
-  List<Object?> get props => [id, title, body, category, publishedAt, imageUrl, isPinned, authorName];
+  List<Object?> get props => [id, title, body, category, publishedAt, imageUrl, isPinned, authorName, createdBy];
 }

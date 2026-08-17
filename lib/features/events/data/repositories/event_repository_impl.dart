@@ -71,8 +71,14 @@ class EventRepositoryImpl implements EventRepository {
     required DateTime startAt,
     required DateTime endAt,
     String? venueName,
+    String? venueAddress,
+    double? latitude,
+    double? longitude,
     required bool isOnline,
     String? onlineUrl,
+    int? capacity,
+    DateTime? registrationDeadline,
+    String? bannerUrl,
     required String createdBy,
   }) async {
     try {
@@ -83,8 +89,14 @@ class EventRepositoryImpl implements EventRepository {
         startAt: startAt,
         endAt: endAt,
         venueName: venueName,
+        venueAddress: venueAddress,
+        latitude: latitude,
+        longitude: longitude,
         isOnline: isOnline,
         onlineUrl: onlineUrl,
+        capacity: capacity,
+        registrationDeadline: registrationDeadline,
+        bannerUrl: bannerUrl,
         createdBy: createdBy,
       );
       return const Result.success(null);
@@ -102,8 +114,14 @@ class EventRepositoryImpl implements EventRepository {
     required DateTime startAt,
     required DateTime endAt,
     String? venueName,
+    String? venueAddress,
+    double? latitude,
+    double? longitude,
     required bool isOnline,
     String? onlineUrl,
+    int? capacity,
+    DateTime? registrationDeadline,
+    String? bannerUrl,
     required EventStatus status,
   }) async {
     try {
@@ -115,8 +133,14 @@ class EventRepositoryImpl implements EventRepository {
         startAt: startAt,
         endAt: endAt,
         venueName: venueName,
+        venueAddress: venueAddress,
+        latitude: latitude,
+        longitude: longitude,
         isOnline: isOnline,
         onlineUrl: onlineUrl,
+        capacity: capacity,
+        registrationDeadline: registrationDeadline,
+        bannerUrl: bannerUrl,
         status: status,
       );
       return const Result.success(null);

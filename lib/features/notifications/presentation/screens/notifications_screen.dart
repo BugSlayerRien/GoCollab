@@ -28,6 +28,8 @@ class NotificationsScreen extends ConsumerWidget {
         if (notification.referenceId != null) context.push('/opportunities/${notification.referenceId}');
       case 'partner':
         if (notification.referenceId != null) context.push('/partners/${notification.referenceId}');
+      case 'announcement':
+        context.go('/');
     }
   }
 

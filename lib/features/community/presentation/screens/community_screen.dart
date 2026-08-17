@@ -60,17 +60,18 @@ class CommunityScreen extends ConsumerWidget {
               separatorBuilder: (_, __) => const SizedBox(height: AppSpacing.md),
               itemBuilder: (context, index) {
                 final announcement = announcements[index];
+                final canManage = isOfficer && currentUser != null && announcement.createdBy == currentUser.id;
                 return AnnouncementCard(
                   announcement: announcement,
-                  onEdit: isOfficer
+                  onEdit: canManage
                       ? () => showAnnouncementEditorSheet(
                             context,
                             ref,
-                            authorId: currentUser!.id,
+                            authorId: currentUser.id,
                             existing: announcement,
                           )
                       : null,
-                  onDelete: isOfficer
+                  onDelete: canManage
                       ? () async {
                           final confirmed = await confirmDestructiveAction(
                             context,

@@ -1,5 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../services/in_app_notification_service.dart';
+import '../services/storage_service.dart';
 import '../services/supabase_service.dart';
 
 /// Exposes the single [SupabaseClient] singleton to every repository via
@@ -8,6 +10,14 @@ import '../services/supabase_service.dart';
 /// which keeps the data layer testable (swap in a fake client in tests).
 final supabaseClientProvider = Provider<SupabaseClient>((ref) {
   return SupabaseService.client;
+});
+
+final storageServiceProvider = Provider<StorageService>((ref) {
+  return StorageService(ref.watch(supabaseClientProvider));
+});
+
+final inAppNotificationServiceProvider = Provider<InAppNotificationService>((ref) {
+  return InAppNotificationService(ref.watch(supabaseClientProvider));
 });
 
 /// Live stream of Supabase auth state changes (sign in / sign out / token

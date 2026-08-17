@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/di/supabase_providers.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
+import '../../../notifications/presentation/providers/notification_providers.dart';
 import '../../../profile/presentation/providers/profile_providers.dart';
 import '../../data/datasources/opportunity_remote_datasource.dart';
 import '../../data/repositories/opportunity_repository_impl.dart';
@@ -94,7 +95,10 @@ class CreateOpportunityController extends StateNotifier<bool> {
       postedBy: postedBy,
     );
     state = false;
-    if (result.isSuccess) _ref.invalidate(opportunitiesListProvider);
+    if (result.isSuccess) {
+      _ref.invalidate(opportunitiesListProvider);
+      _ref.invalidate(notificationsProvider);
+    }
     return result.when(success: (_) => null, failure: (f) => f.message);
   }
 

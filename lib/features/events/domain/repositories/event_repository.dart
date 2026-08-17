@@ -26,8 +26,14 @@ abstract class EventRepository {
     required DateTime startAt,
     required DateTime endAt,
     String? venueName,
+    String? venueAddress,
+    double? latitude,
+    double? longitude,
     required bool isOnline,
     String? onlineUrl,
+    int? capacity,
+    DateTime? registrationDeadline,
+    String? bannerUrl,
     required String createdBy,
   });
 
@@ -39,8 +45,14 @@ abstract class EventRepository {
     required DateTime startAt,
     required DateTime endAt,
     String? venueName,
+    String? venueAddress,
+    double? latitude,
+    double? longitude,
     required bool isOnline,
     String? onlineUrl,
+    int? capacity,
+    DateTime? registrationDeadline,
+    String? bannerUrl,
     required EventStatus status,
   });
 

@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -37,17 +38,26 @@ class EventDetailScreen extends ConsumerWidget {
           message: 'Could not load this event.',
           onRetry: () => ref.invalidate(eventDetailProvider(eventId)),
         ),
-        data: (event) => _EventDetailBody(event: event, isOfficer: isOfficer),
+        data: (event) => _EventDetailBody(
+          event: event,
+          isOfficer: isOfficer,
+          canManage: isOfficer && currentUser != null && event.createdBy == currentUser.id,
+        ),
       ),
     );
   }
 }
 
 class _EventDetailBody extends ConsumerWidget {
-  const _EventDetailBody({required this.event, required this.isOfficer});
+  const _EventDetailBody({
+    required this.event,
+    required this.isOfficer,
+    required this.canManage,
+  });
 
   final Event event;
   final bool isOfficer;
+  final bool canManage;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -61,22 +71,48 @@ class _EventDetailBody extends ConsumerWidget {
           backgroundColor: context.appSurface,
           foregroundColor: context.appTextPrimary,
           flexibleSpace: FlexibleSpaceBar(
-            background: PrismaticBackground(opacity: 0.18, loopDuration: const Duration(seconds: 15)),
+            background: event.bannerUrl != null && event.bannerUrl!.isNotEmpty
+                ? Stack(
+                    fit: StackFit.expand,
+                    children: [
+                      CachedNetworkImage(
+                        imageUrl: event.bannerUrl!,
+                        fit: BoxFit.cover,
+                        errorWidget: (_, __, ___) => PrismaticBackground(
+                          opacity: 0.18,
+                          loopDuration: const Duration(seconds: 15),
+                        ),
+                      ),
+                      DecoratedBox(
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            begin: Alignment.topCenter,
+                            end: Alignment.bottomCenter,
+                            colors: [
+                              Colors.black.withValues(alpha: 0.05),
+                              Colors.black.withValues(alpha: 0.35),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                  )
+                : PrismaticBackground(opacity: 0.18, loopDuration: const Duration(seconds: 15)),
           ),
           actions: [
-            if (isOfficer)
+            if (canManage)
               IconButton(
                 icon: const Icon(Icons.qr_code_scanner_rounded),
                 tooltip: 'Scan attendance',
                 onPressed: () => context.push('/events/${event.id}/check-in'),
               ),
-            if (isOfficer)
+            if (canManage)
               IconButton(
                 icon: const Icon(Icons.edit_outlined),
                 tooltip: 'Edit',
                 onPressed: () => showEventEditorSheet(context, existing: event),
               ),
-            if (isOfficer)
+            if (canManage)
               IconButton(
                 icon: const Icon(Icons.delete_outline_rounded),
                 tooltip: 'Delete',
@@ -119,7 +155,9 @@ class _EventDetailBody extends ConsumerWidget {
               const SizedBox(height: AppSpacing.xs),
               _InfoRow(
                 icon: event.isOnline ? Icons.videocam_outlined : Icons.place_outlined,
-                text: event.isOnline ? (event.onlineUrl ?? 'Online event') : (event.venueName ?? 'Venue TBA'),
+                text: event.isOnline
+                    ? (event.onlineUrl ?? 'Online event')
+                    : _venueLabel(event),
               ),
               if (event.capacity != null) ...[
                 const SizedBox(height: AppSpacing.xs),
@@ -185,6 +223,19 @@ class _EventDetailBody extends ConsumerWidget {
       successMessage: event.isRegistered ? 'Registration cancelled.' : "You're registered! See you there.",
       errorMessage: error,
     );
+  }
+
+  String _venueLabel(Event event) {
+    if (event.venueName != null && event.venueName!.trim().isNotEmpty) {
+      if (event.venueAddress != null && event.venueAddress!.trim().isNotEmpty) {
+        return '${event.venueName} • ${event.venueAddress}';
+      }
+      return event.venueName!;
+    }
+    if (event.venueAddress != null && event.venueAddress!.trim().isNotEmpty) {
+      return event.venueAddress!;
+    }
+    return 'Venue TBA';
   }
 }
 
