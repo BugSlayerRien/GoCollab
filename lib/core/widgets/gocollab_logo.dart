@@ -2,11 +2,7 @@ import 'package:flutter/material.dart';
 import '../constants/app_assets.dart';
 import '../theme/app_spacing.dart';
 
-/// Official GoCollab / GDGoC Philippines logo mark.
-///
-/// Replaces the old prismatic-gradient + groups icon placeholders used on
-/// the splash and auth screens. [size] is the rendered box; the source
-/// image is cropped/contained to fit.
+/// Official GoCollab prismatic bracket logo mark.
 class GoCollabLogo extends StatelessWidget {
   const GoCollabLogo({
     super.key,
@@ -39,10 +35,10 @@ class GoCollabLogo extends StatelessWidget {
       ),
       clipBehavior: Clip.antiAlias,
       child: Image.asset(
-        AppAssets.gdgocLogo,
+        AppAssets.gocollabLogo,
         width: size,
         height: size,
-        fit: BoxFit.cover,
+        fit: BoxFit.contain,
         errorBuilder: (_, __, ___) => ColoredBox(
           color: Theme.of(context).colorScheme.primaryContainer,
           child: Icon(

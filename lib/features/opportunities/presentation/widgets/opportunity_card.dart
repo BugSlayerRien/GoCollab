@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../../core/animations/prismatic_glow_border.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/theme_extensions.dart';
@@ -19,11 +20,12 @@ class OpportunityCard extends ConsumerWidget {
     final daysLeft = opportunity.daysUntilDeadline;
     final isUrgent = daysLeft != null && daysLeft <= 5 && daysLeft >= 0;
 
-    return Container(
+    return PrismaticGlowBorder(
+      borderRadius: AppSpacing.radiusLg,
+      child: Container(
       decoration: BoxDecoration(
         color: context.appSurfaceMuted,
-        borderRadius: BorderRadius.circular(AppSpacing.radiusLg),
-        border: Border.all(color: context.appBorder),
+        borderRadius: BorderRadius.circular(AppSpacing.radiusLg - 2),
       ),
       child: Material(
         color: Colors.transparent,
@@ -95,6 +97,7 @@ class OpportunityCard extends ConsumerWidget {
           ),
         ),
       ),
+    ),
     );
   }
 }

@@ -1,23 +1,28 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../../core/animations/prismatic_glow_border.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/theme_extensions.dart';
 import '../../../auth/domain/entities/app_user.dart';
 import '../../../auth/domain/entities/user_role.dart';
+import '../providers/profile_providers.dart';
 
-class ProfileHeader extends StatelessWidget {
+class ProfileHeader extends ConsumerWidget {
   const ProfileHeader({super.key, required this.user});
 
   final AppUser user;
 
   @override
-  Widget build(BuildContext context) {
-    return Container(
+  Widget build(BuildContext context, WidgetRef ref) {
+    final points = ref.watch(communityPointsProvider).valueOrNull ?? user.points;
+    return PrismaticGlowBorder(
+      borderRadius: AppSpacing.radiusLg,
+      child: Container(
       padding: const EdgeInsets.all(AppSpacing.lg),
       decoration: BoxDecoration(
         color: context.appSurfaceMuted,
-        borderRadius: BorderRadius.circular(AppSpacing.radiusLg),
-        border: Border.all(color: context.appBorder),
+        borderRadius: BorderRadius.circular(AppSpacing.radiusLg - 2),
       ),
       child: Row(
         children: [
@@ -59,7 +64,7 @@ class ProfileHeader extends StatelessWidget {
                     const SizedBox(width: AppSpacing.xs),
                     Icon(Icons.star_rounded, size: 14, color: AppColors.googleYellow),
                     const SizedBox(width: 2),
-                    Text('${user.points} pts', style: Theme.of(context).textTheme.labelSmall),
+                    Text('$points pts', style: Theme.of(context).textTheme.labelSmall),
                   ],
                 ),
               ],
@@ -67,6 +72,7 @@ class ProfileHeader extends StatelessWidget {
           ),
         ],
       ),
+    ),
     );
   }
 }

@@ -14,6 +14,7 @@ import '../../../events/presentation/widgets/event_card.dart';
 import '../../../notifications/presentation/providers/notification_providers.dart';
 import '../../../opportunities/presentation/providers/opportunity_providers.dart';
 import '../../../opportunities/presentation/widgets/opportunity_card.dart';
+import '../../../profile/presentation/providers/profile_providers.dart';
 import '../../../shell/presentation/providers/shell_providers.dart';
 import '../providers/dashboard_providers.dart';
 import '../widgets/dashboard_header.dart';
@@ -32,6 +33,7 @@ class DashboardScreen extends ConsumerWidget {
     final eventsAsync = ref.watch(eventsListProvider);
     final savedAsync = ref.watch(savedOpportunitiesProvider);
     final unreadCount = ref.watch(unreadNotificationCountProvider);
+    final pointsAsync = ref.watch(communityPointsProvider);
 
     final user = userAsync.valueOrNull;
     if (user == null) return const Scaffold(body: Center(child: CircularProgressIndicator()));
@@ -43,12 +45,14 @@ class DashboardScreen extends ConsumerWidget {
           ref.invalidate(announcementsListProvider);
           ref.invalidate(eventsListProvider);
           ref.invalidate(savedOpportunitiesProvider);
+          ref.invalidate(communityPointsProvider);
         },
         child: ListView(
           padding: const EdgeInsets.all(AppSpacing.lg),
           children: [
             DashboardHeader(
               user: user,
+              communityPoints: pointsAsync.valueOrNull,
               unreadNotificationCount: unreadCount,
               onNotificationsTap: () => context.push('/notifications'),
             ),

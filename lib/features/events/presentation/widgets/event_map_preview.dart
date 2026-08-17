@@ -48,7 +48,9 @@ class LocationMapPreview extends StatelessWidget {
               options: MapOptions(
                 initialCenter: point,
                 initialZoom: 15,
-                interactionFlags: InteractiveFlag.pinchZoom | InteractiveFlag.drag,
+                interactionOptions: const InteractionOptions(
+                  flags: InteractiveFlag.pinchZoom | InteractiveFlag.drag,
+                ),
                 onTap: (_, __) => _openExternally(),
               ),
               children: [

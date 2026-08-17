@@ -15,11 +15,13 @@ class DashboardHeader extends StatelessWidget {
     required this.user,
     this.onNotificationsTap,
     this.unreadNotificationCount = 0,
+    this.communityPoints,
   });
 
   final AppUser user;
   final VoidCallback? onNotificationsTap;
   final int unreadNotificationCount;
+  final int? communityPoints;
 
   String get _greeting {
     final hour = DateTime.now().hour;
@@ -36,8 +38,8 @@ class DashboardHeader extends StatelessWidget {
         height: 150,
         decoration: BoxDecoration(color: context.appSurface, borderRadius: BorderRadius.circular(AppSpacing.radiusXl)),
         child: PrismaticBackground(
-          opacity: 0.16,
-          loopDuration: const Duration(seconds: 18),
+          opacity: 0.34,
+          loopDuration: const Duration(seconds: 14),
           child: Padding(
             padding: const EdgeInsets.all(AppSpacing.lg),
             child: Row(
@@ -60,7 +62,7 @@ class DashboardHeader extends StatelessWidget {
                         children: [
                           const Icon(Icons.star_rounded, size: 16, color: AppColors.googleYellow),
                           const SizedBox(width: 4),
-                          Text('${user.points} community points', style: Theme.of(context).textTheme.bodySmall),
+                          Text('${communityPoints ?? user.points} community points', style: Theme.of(context).textTheme.bodySmall),
                         ],
                       ),
                     ],

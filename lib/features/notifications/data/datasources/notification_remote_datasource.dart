@@ -6,17 +6,37 @@ class NotificationRemoteDataSource {
 
   final SupabaseClient _client;
 
-  /// Realtime stream of a user's notifications (see
-  /// `notifications_select_own` RLS policy — the server itself scopes this
-  /// to `auth.uid()`, the `.eq` below just avoids fetching rows this device
-  /// doesn't need to render).
-  Stream<List<AppNotificationModel>> watchNotifications(String userId) {
-    return _client
+  Future<List<AppNotificationModel>> fetchNotifications(String userId) async {
+    final rows = await _client
         .from('notifications')
-        .stream(primaryKey: ['id'])
+        .select()
         .eq('user_id', userId)
-        .order('created_at', ascending: false)
-        .map((rows) => rows.map(AppNotificationModel.fromMap).toList());
+        .order('created_at', ascending: false);
+    return (rows as List).map((row) => AppNotificationModel.fromMap(row as Map<String, dynamic>)).toList();
+  }
+
+  List<AppNotificationModel> _sortRows(List<Map<String, dynamic>> rows) {
+    final list = rows.map(AppNotificationModel.fromMap).toList();
+    list.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+    return list;
+  }
+
+  /// REST fetch first (always works with RLS), then Realtime updates when
+  /// available. Supabase `.stream().order()` is unreliable on web, so we
+  /// sort client-side and fall back to polling on stream errors.
+  Stream<List<AppNotificationModel>> watchNotifications(String userId) async* {
+    yield await fetchNotifications(userId);
+
+    try {
+      await for (final rows in _client.from('notifications').stream(primaryKey: ['id']).eq('user_id', userId)) {
+        yield _sortRows(rows.cast<Map<String, dynamic>>());
+      }
+    } catch (_) {
+      while (true) {
+        await Future<void>.delayed(const Duration(seconds: 30));
+        yield await fetchNotifications(userId);
+      }
+    }
   }
 
   Future<void> markAsRead(String notificationId) async {

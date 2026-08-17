@@ -1,41 +1,73 @@
+import 'dart:async';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../domain/entities/github_stats.dart';
 
-/// Fetches public GitHub profile data straight from the GitHub REST API
-/// (`GET https://api.github.com/users/{username}`). No authentication is
-/// required for this endpoint since it only returns public profile fields —
-/// satisfying the "GitHub" profile-linking requirement without needing a
-/// GitHub OAuth app. Results are cached in `public.github_profiles` so the
-/// profile screen has instant data on subsequent loads and to respect
-/// GitHub's unauthenticated rate limit (60 requests/hour per IP).
+/// Live GitHub REST client for public user profiles.
+///
+/// Endpoint: `GET https://api.github.com/users/{username}`
+/// Auth: none (public fields only; no API key).
 class GithubDataSource {
-  GithubDataSource(this._client);
+  GithubDataSource(this._client, {http.Client? httpClient}) : _http = httpClient ?? http.Client();
 
   final SupabaseClient _client;
+  final http.Client _http;
+
+  static final _usernamePattern = RegExp(r'^[a-zA-Z0-9](?:[a-zA-Z0-9]|-(?=[a-zA-Z0-9])){0,38}$');
 
   Future<GithubStats> fetchAndCache({required String userId, required String username}) async {
-    final response = await http.get(Uri.parse('https://api.github.com/users/$username'));
+    final handle = _normalizeUsername(username);
+    if (handle.isEmpty) {
+      throw Exception('Enter a GitHub username first.');
+    }
+    if (!_usernamePattern.hasMatch(handle)) {
+      throw Exception('"$handle" is not a valid GitHub username.');
+    }
+
+    late final http.Response response;
+    try {
+      response = await _http
+          .get(
+            Uri.https('api.github.com', '/users/$handle'),
+            headers: const {
+              'Accept': 'application/vnd.github+json',
+              'X-GitHub-Api-Version': '2022-11-28',
+              'User-Agent': 'GoCollab',
+            },
+          )
+          .timeout(const Duration(seconds: 15));
+    } on TimeoutException {
+      throw Exception('GitHub took too long to respond. Please try again.');
+    } on http.ClientException {
+      throw Exception('Could not reach GitHub. Please try again later.');
+    } catch (e) {
+      if (e is Exception && e.toString().contains('GitHub')) rethrow;
+      throw Exception('No internet connection. Check your network and try again.');
+    }
 
     if (response.statusCode == 404) {
-      throw Exception('GitHub user "$username" was not found.');
+      throw Exception('GitHub user "$handle" was not found.');
+    }
+    if (response.statusCode == 403) {
+      throw Exception('GitHub rate limit reached. Try again in a few minutes.');
     }
     if (response.statusCode != 200) {
-      throw Exception('Could not reach GitHub right now. Please try again later.');
+      throw Exception('GitHub returned an error (${response.statusCode}). Please try again later.');
     }
 
-    final json = jsonDecode(response.body) as Map<String, dynamic>;
-    final stats = GithubStats(
-      username: json['login'] as String,
-      publicRepos: (json['public_repos'] as num?)?.toInt() ?? 0,
-      followers: (json['followers'] as num?)?.toInt() ?? 0,
-      following: (json['following'] as num?)?.toInt() ?? 0,
-      avatarUrl: json['avatar_url'] as String?,
-      bio: json['bio'] as String?,
-      profileUrl: json['html_url'] as String?,
-      syncedAt: DateTime.now(),
-    );
+    late final Map<String, dynamic> json;
+    try {
+      final decoded = jsonDecode(response.body);
+      if (decoded is! Map<String, dynamic> || decoded['login'] == null) {
+        throw const FormatException('unexpected body');
+      }
+      json = decoded;
+    } on FormatException {
+      throw Exception('GitHub returned an invalid response.');
+    }
+
+    final stats = GithubStats.fromGithubJson(json);
 
     await _client.from('github_profiles').upsert({
       'user_id': userId,
@@ -55,15 +87,15 @@ class GithubDataSource {
   Future<GithubStats?> getCached(String userId) async {
     final row = await _client.from('github_profiles').select().eq('user_id', userId).maybeSingle();
     if (row == null) return null;
-    return GithubStats(
-      username: row['github_username'] as String,
-      publicRepos: (row['public_repos'] as num?)?.toInt() ?? 0,
-      followers: (row['followers'] as num?)?.toInt() ?? 0,
-      following: (row['following'] as num?)?.toInt() ?? 0,
-      avatarUrl: row['avatar_url'] as String?,
-      bio: row['bio'] as String?,
-      profileUrl: row['profile_url'] as String?,
-      syncedAt: row['synced_at'] != null ? DateTime.parse(row['synced_at'] as String) : null,
-    );
+    return GithubStats.fromCache(row);
+  }
+
+  String _normalizeUsername(String raw) {
+    var value = raw.trim();
+    if (value.startsWith('@')) value = value.substring(1);
+    if (value.contains('github.com/')) {
+      value = value.split('github.com/').last.split('/').first;
+    }
+    return value;
   }
 }

@@ -21,6 +21,20 @@ final profileRepositoryProvider = Provider<ProfileRepository>((ref) {
   return ProfileRepositoryImpl(ref.watch(profileRemoteDataSourceProvider), ref.watch(githubDataSourceProvider));
 });
 
+/// Live community points from `profiles.points` — invalidated after engagement
+/// so the dashboard/profile header reflects newly earned points.
+final communityPointsProvider = FutureProvider.autoDispose<int>((ref) async {
+  final userId = ref.watch(currentUserProvider).valueOrNull?.id;
+  if (userId == null) return 0;
+  final row = await ref
+      .watch(supabaseClientProvider)
+      .from('profiles')
+      .select('points')
+      .eq('id', userId)
+      .maybeSingle();
+  return (row?['points'] as num?)?.toInt() ?? 0;
+});
+
 final eventHistoryProvider = FutureProvider.autoDispose<List<EventHistoryItem>>((ref) async {
   final user = await ref.watch(currentUserProvider.future);
   if (user == null) return [];
@@ -32,9 +46,16 @@ final eventHistoryProvider = FutureProvider.autoDispose<List<EventHistoryItem>>(
 final cachedGithubProfileProvider = FutureProvider.autoDispose<GithubStats?>((ref) async {
   final user = await ref.watch(currentUserProvider.future);
   if (user == null) return null;
+  final username = user.githubUsername;
+  if (username == null || username.trim().isEmpty) return null;
+
   final repository = ref.watch(profileRepositoryProvider);
-  final result = await repository.getCachedGithubProfile(user.id);
-  return result.when(success: (data) => data, failure: (_) => null);
+  final cached = await repository.getCachedGithubProfile(user.id);
+  final cachedStats = cached.dataOrNull;
+  if (cachedStats != null) return cachedStats;
+
+  final live = await repository.syncGithubProfile(userId: user.id, username: username);
+  return live.when(success: (data) => data, failure: (f) => throw Exception(f.message));
 });
 
 class ProfileEditController extends StateNotifier<AsyncValue<void>> {
@@ -57,11 +78,13 @@ class ProfileEditController extends StateNotifier<AsyncValue<void>> {
     );
   }
 
-  Future<GithubStats?> syncGithub({required String userId, required String username}) async {
+  Future<String?> syncGithub({required String userId, required String username}) async {
+    state = const AsyncValue.loading();
     final repository = _ref.read(profileRepositoryProvider);
     final result = await repository.syncGithubProfile(userId: userId, username: username);
-    _ref.invalidate(cachedGithubProfileProvider);
-    return result.dataOrNull;
+    state = const AsyncValue.data(null);
+    if (result.isSuccess) _ref.invalidate(cachedGithubProfileProvider);
+    return result.when(success: (_) => null, failure: (f) => f.message);
   }
 }
 

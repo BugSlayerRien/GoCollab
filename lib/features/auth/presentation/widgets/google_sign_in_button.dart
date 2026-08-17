@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../../../core/theme/app_colors.dart';
+import '../../../../core/constants/app_assets.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/theme_extensions.dart';
 
@@ -32,7 +32,13 @@ class GoogleSignInButton extends StatelessWidget {
             : Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const _GoogleGlyph(),
+                  Image.asset(
+                    AppAssets.googleLogo,
+                    width: 22,
+                    height: 22,
+                    fit: BoxFit.contain,
+                    errorBuilder: (_, __, ___) => const Icon(Icons.g_mobiledata_rounded, size: 22),
+                  ),
                   const SizedBox(width: AppSpacing.sm),
                   Text(
                     'Continue with Google',
@@ -43,51 +49,4 @@ class GoogleSignInButton extends StatelessWidget {
       ),
     );
   }
-}
-
-/// A lightweight, dependency-free rendering of the Google "G" mark using
-/// four colored arcs — avoids bundling an image asset for a single icon.
-class _GoogleGlyph extends StatelessWidget {
-  const _GoogleGlyph();
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      width: 20,
-      height: 20,
-      child: CustomPaint(painter: _GoogleGlyphPainter()),
-    );
-  }
-}
-
-class _GoogleGlyphPainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    final rect = Rect.fromLTWH(0, 0, size.width, size.height);
-    const strokeWidth = 3.2;
-    final paint = Paint()
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = strokeWidth
-      ..strokeCap = StrokeCap.butt;
-
-    // Four quarter-arcs approximating the "G" mark colors.
-    paint.color = AppColors.googleRed;
-    canvas.drawArc(rect.deflate(strokeWidth / 2), -1.55, 1.55, false, paint);
-    paint.color = AppColors.googleYellow;
-    canvas.drawArc(rect.deflate(strokeWidth / 2), 0, 1.6, false, paint);
-    paint.color = AppColors.googleGreen;
-    canvas.drawArc(rect.deflate(strokeWidth / 2), 1.6, 1.55, false, paint);
-    paint.color = AppColors.googleBlue;
-    canvas.drawArc(rect.deflate(strokeWidth / 2), 3.15, 1.6, false, paint);
-
-    // Horizontal bar of the G.
-    final barPaint = Paint()..color = AppColors.googleBlue;
-    canvas.drawRect(
-      Rect.fromLTWH(size.width * 0.52, size.height * 0.44, size.width * 0.42, size.height * 0.14),
-      barPaint,
-    );
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }

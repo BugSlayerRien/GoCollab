@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../../core/animations/prismatic_screen_frame.dart';
 import '../../../analytics/presentation/screens/analytics_screen.dart';
 import '../../../auth/domain/entities/user_role.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
@@ -37,7 +38,7 @@ class AppShellScreen extends ConsumerWidget {
     final safeIndex = selectedIndex >= screens.length ? 0 : selectedIndex;
 
     return Scaffold(
-      body: IndexedStack(index: safeIndex, children: screens),
+      body: PrismaticScreenFrame(child: IndexedStack(index: safeIndex, children: screens)),
       bottomNavigationBar: PrismaticNavBar(
         selectedIndex: safeIndex,
         destinations: destinations,

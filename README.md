@@ -19,11 +19,12 @@ This project aligns with **SDG 17 - Partnerships for the Goals**, using technolo
 7. [Environment Configuration](#environment-configuration)
 8. [Firebase Cloud Messaging Setup](#firebase-cloud-messaging-setup)
 9. [Google Sign-In Setup](#google-sign-in-setup)
-10. [Running the App](#running-the-app)
-11. [Testing & Static Analysis](#testing--static-analysis)
-12. [Building for Release](#building-for-release)
-13. [Roles & Promoting an Officer](#roles--promoting-an-officer)
-14. [Known Limitations](#known-limitations)
+10. [GitHub REST API Integration](#github-rest-api-integration)
+11. [Running the App](#running-the-app)
+12. [Testing & Static Analysis](#testing--static-analysis)
+13. [Building for Release](#building-for-release)
+14. [Roles & Promoting an Officer](#roles--promoting-an-officer)
+15. [Known Limitations](#known-limitations)
 
 -------
 
@@ -185,6 +186,25 @@ To enable FCM:
 4. Set `GOOGLE_WEB_CLIENT_ID` (the *Web* client id) in `env.json`.
 
 Until this is configured, the Google Sign-In button on the login/register screens shows a friendly "Google Sign-In isn't configured yet" message instead of crashing.
+
+## GitHub REST API Integration
+
+GoCollab loads public GitHub profile data over HTTP (no GitHub OAuth app or API key).
+
+| Item | Detail |
+|---|---|
+| **API** | [GitHub REST API](https://docs.github.com/en/rest/users/users) |
+| **Endpoint** | `GET https://api.github.com/users/{username}` |
+| **HTTP method** | GET only (this endpoint does not use POST) |
+| **Client** | `package:http` in [`lib/features/profile/data/datasources/github_datasource.dart`](lib/features/profile/data/datasources/github_datasource.dart) |
+| **JSON fields** | `login`, `name`, `avatar_url`, `bio`, `public_repos`, `followers`, `following`, `html_url` |
+| **Parsing** | `GithubStats.fromGithubJson` in [`lib/features/profile/domain/entities/github_stats.dart`](lib/features/profile/domain/entities/github_stats.dart) |
+| **UI** | Profile tab — avatar, name, bio, repo/follower/following counts, link to GitHub |
+| **Cache** | Successful responses are stored in Supabase `github_profiles` so later opens do not re-hit GitHub until the user taps refresh |
+
+**Flow:** Edit Profile → save a GitHub username → `http.get` → parse JSON → Riverpod invalidates `cachedGithubProfileProvider` → Profile card updates. Opening Profile with a username and no cache also triggers a live GET.
+
+**Error handling:** invalid username format, HTTP 404 (user not found), 403 (rate limit), non-200, invalid JSON, timeout, and network failures. The Profile card shows a spinner while loading and a retry/snackbar on failure.
 
 ## Running the App
 

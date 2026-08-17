@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/di/supabase_providers.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
+import '../../../profile/presentation/providers/profile_providers.dart';
 import '../../data/datasources/opportunity_remote_datasource.dart';
 import '../../data/repositories/opportunity_repository_impl.dart';
 import '../../domain/entities/opportunity.dart';
@@ -53,6 +54,7 @@ class SavedOpportunityController extends StateNotifier<bool> {
       _ref.invalidate(opportunitiesListProvider);
       _ref.invalidate(opportunityDetailProvider(opportunity.id));
       _ref.invalidate(savedOpportunitiesProvider);
+      _ref.invalidate(communityPointsProvider);
     }
     return result.when(success: (_) => null, failure: (f) => f.message);
   }

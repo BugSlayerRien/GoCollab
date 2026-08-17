@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_text_field.dart';
@@ -116,7 +117,12 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     if (success) {
       final githubUsername = updated.githubUsername;
       if (githubUsername != null) {
-        await controller.syncGithub(userId: updated.id, username: githubUsername);
+        final githubError = await controller.syncGithub(userId: updated.id, username: githubUsername);
+        if (githubError != null && mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(githubError), backgroundColor: AppColors.googleRed),
+          );
+        }
       }
       ref.invalidate(currentUserProvider);
       if (mounted) Navigator.of(context).pop();

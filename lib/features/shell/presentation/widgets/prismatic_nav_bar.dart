@@ -67,31 +67,50 @@ class _PrismaticNavBarState extends State<PrismaticNavBar> with SingleTickerProv
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      AnimatedBuilder(
-                        animation: _controller,
-                        builder: (context, _) {
-                          return AnimatedContainer(
-                            duration: const Duration(milliseconds: 250),
-                            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: 6),
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(AppSpacing.radiusPill),
-                              gradient: isSelected
-                                  ? LinearGradient(
-                                      colors: AppColors.prismaticSpectrum,
-                                      begin: Alignment(-1 + _controller.value * 2, 0),
-                                      end: Alignment(1 + _controller.value * 2, 0),
-                                      transform: const GradientRotation(0.4),
-                                    )
-                                  : null,
-                              color: isSelected ? null : Colors.transparent,
-                            ),
-                            child: Icon(
-                              isSelected ? destination.selectedIcon : destination.icon,
-                              color: isSelected ? Colors.white : context.appTextDisabled,
-                              size: 22,
-                            ),
-                          );
-                        },
+                      SizedBox(
+                        width: 44,
+                        height: 34,
+                        child: RepaintBoundary(
+                          child: AnimatedBuilder(
+                            animation: _controller,
+                            builder: (context, _) {
+                              return Stack(
+                                alignment: Alignment.center,
+                                children: [
+                                  if (isSelected)
+                                    AnimatedContainer(
+                                      duration: const Duration(milliseconds: 250),
+                                      width: 44,
+                                      height: 30,
+                                      decoration: BoxDecoration(
+                                        borderRadius: BorderRadius.circular(AppSpacing.radiusPill),
+                                        gradient: LinearGradient(
+                                          colors: AppColors.prismaticSpectrum,
+                                          begin: Alignment(-1 + _controller.value * 2, 0),
+                                          end: Alignment(1 + _controller.value * 2, 0),
+                                        ),
+                                        boxShadow: [
+                                          BoxShadow(
+                                            color: AppColors.googleBlue.withValues(alpha: 0.25),
+                                            blurRadius: 6,
+                                            offset: const Offset(0, 2),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  Icon(
+                                    isSelected ? destination.selectedIcon : destination.icon,
+                                    color: isSelected ? Colors.white : context.appTextDisabled,
+                                    size: 22,
+                                    shadows: isSelected
+                                        ? const [Shadow(color: Color(0x66000000), blurRadius: 3, offset: Offset(0, 1))]
+                                        : null,
+                                  ),
+                                ],
+                              );
+                            },
+                          ),
+                        ),
                       ),
                       const SizedBox(height: 2),
                       Text(
