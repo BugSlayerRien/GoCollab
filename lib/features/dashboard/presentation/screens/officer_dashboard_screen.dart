@@ -16,7 +16,7 @@ import '../widgets/quick_actions_grid.dart';
 
 /// Officer Dashboard: a management-focused Home tab surfacing the same
 /// community pulse a member sees, plus fast access to the officer-only
-/// Analytics and Partnerships modules and event check-in tooling.
+/// Analytics and Partnerships modules plus Career Hub posting.
 class OfficerDashboardScreen extends ConsumerWidget {
   const OfficerDashboardScreen({super.key});
 
@@ -53,23 +53,23 @@ class OfficerDashboardScreen extends ConsumerWidget {
                   icon: Icons.bar_chart_rounded,
                   label: 'Analytics',
                   color: AppColors.googleBlue,
-                  onTap: () => ref.read(selectedTabIndexProvider.notifier).state = 3,
+                  onTap: () => ref.read(selectedTabIndexProvider.notifier).state = 4,
                 ),
                 QuickAction(
                   icon: Icons.handshake_outlined,
                   label: 'Partners',
                   color: AppColors.googleRed,
-                  onTap: () => ref.read(selectedTabIndexProvider.notifier).state = 4,
+                  onTap: () => ref.read(selectedTabIndexProvider.notifier).state = 5,
                 ),
                 QuickAction(
                   icon: Icons.campaign_outlined,
                   label: 'Announce',
                   color: AppColors.googleGreen,
-                  onTap: () => ref.read(selectedTabIndexProvider.notifier).state = 2,
+                  onTap: () => ref.read(selectedTabIndexProvider.notifier).state = 3,
                 ),
                 QuickAction(
-                  icon: Icons.qr_code_scanner_rounded,
-                  label: 'Check-in',
+                  icon: Icons.work_outline_rounded,
+                  label: 'Career Hub',
                   color: AppColors.googleYellow,
                   onTap: () => ref.read(selectedTabIndexProvider.notifier).state = 1,
                 ),
@@ -105,7 +105,7 @@ class OfficerDashboardScreen extends ConsumerWidget {
               ),
             ),
             const SizedBox(height: AppSpacing.xl),
-            SectionHeader(title: 'Upcoming events', onSeeAll: () => ref.read(selectedTabIndexProvider.notifier).state = 1),
+            SectionHeader(title: 'Upcoming events', onSeeAll: () => ref.read(selectedTabIndexProvider.notifier).state = 2),
             const SizedBox(height: AppSpacing.sm),
             eventsAsync.when(
               loading: () => const SizedBox(height: 40, child: Center(child: CircularProgressIndicator())),
@@ -125,7 +125,7 @@ class OfficerDashboardScreen extends ConsumerWidget {
               },
             ),
             const SizedBox(height: AppSpacing.xl),
-            SectionHeader(title: 'Partners', onSeeAll: () => ref.read(selectedTabIndexProvider.notifier).state = 4),
+            SectionHeader(title: 'Partners', onSeeAll: () => ref.read(selectedTabIndexProvider.notifier).state = 5),
             const SizedBox(height: AppSpacing.sm),
             partnersAsync.when(
               loading: () => const SizedBox(height: 40, child: Center(child: CircularProgressIndicator())),

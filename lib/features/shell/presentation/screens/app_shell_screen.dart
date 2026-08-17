@@ -16,9 +16,8 @@ import '../widgets/prismatic_nav_bar.dart';
 
 /// The single post-auth entry point (`/`). Renders a role-aware bottom
 /// navigation shell: Members get the 5-tab experience from the spec (Home,
-/// Opportunities, Events, Community, Profile); Officers get the extended
-/// tab set that adds the Analytics and Partnerships management modules
-/// ("Officer Dashboard may have additional tabs").
+/// Opportunities, Events, Community, Profile); Officers get the same Career
+/// Hub and Events tabs plus Analytics and Partnerships management modules.
 ///
 /// Each tab's root screen is kept alive in an [IndexedStack] so switching
 /// tabs preserves scroll position / in-flight requests instead of
@@ -66,6 +65,7 @@ final _memberScreens = const [
 
 const _officerDestinations = [
   NavDestinationSpec(icon: Icons.home_outlined, selectedIcon: Icons.home_rounded, label: 'Home'),
+  NavDestinationSpec(icon: Icons.work_outline_rounded, selectedIcon: Icons.work_rounded, label: 'Career'),
   NavDestinationSpec(icon: Icons.event_outlined, selectedIcon: Icons.event_rounded, label: 'Events'),
   NavDestinationSpec(icon: Icons.groups_outlined, selectedIcon: Icons.groups_rounded, label: 'Community'),
   NavDestinationSpec(icon: Icons.bar_chart_outlined, selectedIcon: Icons.bar_chart_rounded, label: 'Analytics'),
@@ -75,6 +75,7 @@ const _officerDestinations = [
 
 final _officerScreens = const [
   OfficerDashboardScreen(),
+  OpportunitiesListScreen(),
   EventsListScreen(),
   CommunityScreen(),
   AnalyticsScreen(),
