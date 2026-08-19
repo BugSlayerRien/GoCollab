@@ -1,5 +1,8 @@
+import 'package:image_picker/image_picker.dart';
+
 import '../../../../core/errors/exception_mapper.dart';
 import '../../../../core/errors/failure.dart';
+import '../../../../core/services/storage_service.dart';
 import '../../../../core/utils/result.dart';
 import '../../../auth/data/models/app_user_model.dart';
 import '../../../auth/domain/entities/app_user.dart';
@@ -10,10 +13,11 @@ import '../datasources/github_datasource.dart';
 import '../datasources/profile_remote_datasource.dart';
 
 class ProfileRepositoryImpl implements ProfileRepository {
-  ProfileRepositoryImpl(this._dataSource, this._githubDataSource);
+  ProfileRepositoryImpl(this._dataSource, this._githubDataSource, this._storageService);
 
   final ProfileRemoteDataSource _dataSource;
   final GithubDataSource _githubDataSource;
+  final StorageService _storageService;
 
   @override
   Future<Result<AppUser>> updateProfile(AppUser user) async {
@@ -54,6 +58,17 @@ class ProfileRepositoryImpl implements ProfileRepository {
       return Result.success(await _githubDataSource.fetchAndCache(userId: userId, username: username));
     } catch (e) {
       return Result.failure(ServerFailure(e.toString().replaceFirst('Exception: ', '')));
+    }
+  }
+
+  @override
+  Future<Result<String>> uploadAvatar({required String userId, required dynamic file}) async {
+    try {
+      final url = await _storageService.uploadAvatar(file: file as XFile, userId: userId);
+      await _dataSource.updateProfile(userId, {'avatar_url': url});
+      return Result.success(url);
+    } catch (e) {
+      return Result.failure(mapExceptionToFailure(e));
     }
   }
 

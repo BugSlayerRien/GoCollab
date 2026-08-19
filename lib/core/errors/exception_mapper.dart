@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'failure.dart';
 
@@ -21,7 +22,8 @@ Failure mapExceptionToFailure(Object error) {
   if (error is StorageException) {
     return ServerFailure(error.message);
   }
-  return const UnknownFailure();
+  debugPrint('[ExceptionMapper] Unhandled: ${error.runtimeType} — $error');
+  return UnknownFailure(error.toString());
 }
 
 String _friendlyAuthMessage(AuthException error) {

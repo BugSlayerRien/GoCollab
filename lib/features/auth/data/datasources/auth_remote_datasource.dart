@@ -1,6 +1,5 @@
-import 'package:google_sign_in/google_sign_in.dart';
+import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import '../../../../core/config/env.dart';
 import '../models/app_user_model.dart';
 
 /// Talks directly to Supabase Auth + the `profiles` table. This is the only
@@ -53,57 +52,24 @@ class AuthRemoteDataSource {
     return _ensureProfile(user, fallbackName: fullName);
   }
 
-  /// Google Sign-In via the native Google SDK, exchanged for a Supabase
-  /// session using the ID token flow (`signInWithIdToken`). Requires a Web
-  /// OAuth client id registered both in Google Cloud Console and in the
-  /// Supabase Dashboard (Authentication > Providers > Google) — see
-  /// [Env.googleWebClientId] and README.md for the full setup steps.
-  Future<AppUserModel> signInWithGoogle() async {
-    if (!Env.hasGoogleSignIn) {
-      throw const AuthException(
-        'Google Sign-In is not configured for this build. Please use email & password, '
-        'or ask the maintainer to supply GOOGLE_WEB_CLIENT_ID.',
-      );
-    }
-
-    final googleSignIn = GoogleSignIn(
-      serverClientId: Env.googleWebClientId,
-      scopes: const ['email', 'profile'],
-    );
-
-    final googleUser = await googleSignIn.signIn();
-    if (googleUser == null) {
-      throw const AuthException('Google sign-in was cancelled.');
-    }
-
-    final googleAuth = await googleUser.authentication;
-    final idToken = googleAuth.idToken;
-    final accessToken = googleAuth.accessToken;
-
-    if (idToken == null) {
-      throw const AuthException('Could not retrieve Google ID token. Please try again.');
-    }
-
-    final response = await _auth.signInWithIdToken(
-      provider: OAuthProvider.google,
-      idToken: idToken,
-      accessToken: accessToken,
-    );
-
-    final user = response.user;
-    if (user == null) {
-      throw const AuthException('Google sign-in failed. Please try again.');
-    }
-
-    return _ensureProfile(
-      user,
-      fallbackName: googleUser.displayName,
-      fallbackAvatar: googleUser.photoUrl,
+  /// Google Sign-In using Supabase's built-in OAuth flow. On web this opens
+  /// a redirect to Google's consent page; Supabase handles the token exchange
+  /// server-side and redirects back with a valid session.
+  Future<void> signInWithGoogle() async {
+    await _auth.signInWithOAuth(
+      OAuthProvider.google,
+      redirectTo: kIsWeb ? Uri.base.origin : null,
     );
   }
 
-  Future<void> sendPasswordResetEmail(String email) {
+  /// Sends a password-recovery OTP to the user's email via Supabase Auth.
+  Future<void> sendPasswordResetOtp(String email) {
     return _auth.resetPasswordForEmail(email);
+  }
+
+  /// Verifies the 6-digit OTP and establishes a recovery session.
+  Future<void> verifyPasswordOtp({required String email, required String token}) async {
+    await _auth.verifyOTP(type: OtpType.recovery, email: email, token: token);
   }
 
   Future<void> updatePassword(String newPassword) async {

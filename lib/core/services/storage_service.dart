@@ -9,6 +9,26 @@ class StorageService {
   final SupabaseClient _client;
 
   static const _eventBannersBucket = 'event-banners';
+  static const _avatarsBucket = 'avatars';
+
+  /// Uploads a profile avatar and returns its public URL.
+  Future<String> uploadAvatar({
+    required XFile file,
+    required String userId,
+  }) async {
+    final bytes = await file.readAsBytes();
+    final contentType = _contentTypeForFile(file);
+    final extension = _extensionForContentType(contentType);
+    final objectPath = '$userId/${DateTime.now().millisecondsSinceEpoch}.$extension';
+
+    await _client.storage.from(_avatarsBucket).uploadBinary(
+          objectPath,
+          bytes,
+          fileOptions: FileOptions(contentType: contentType, upsert: true),
+        );
+
+    return _client.storage.from(_avatarsBucket).getPublicUrl(objectPath);
+  }
 
   /// Uploads an event banner and returns its public URL.
   Future<String> uploadEventBanner({

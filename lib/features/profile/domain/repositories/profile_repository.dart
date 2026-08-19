@@ -6,6 +6,8 @@ import '../entities/github_stats.dart';
 abstract class ProfileRepository {
   Future<Result<AppUser>> updateProfile(AppUser user);
 
+  Future<Result<String>> uploadAvatar({required String userId, required dynamic file});
+
   Future<Result<List<EventHistoryItem>>> getEventHistory(String userId);
 
   Future<Result<GithubStats>> syncGithubProfile({required String userId, required String username});

@@ -65,19 +65,29 @@ class AuthRepositoryImpl implements AuthRepository {
   }
 
   @override
-  Future<Result<AppUser>> signInWithGoogle() async {
+  Future<Result<void>> signInWithGoogle() async {
     try {
-      final user = await _dataSource.signInWithGoogle();
-      return Result.success(user);
+      await _dataSource.signInWithGoogle();
+      return const Result.success(null);
     } catch (e) {
       return Result.failure(mapExceptionToFailure(e));
     }
   }
 
   @override
-  Future<Result<void>> sendPasswordResetEmail(String email) async {
+  Future<Result<void>> sendPasswordResetOtp(String email) async {
     try {
-      await _dataSource.sendPasswordResetEmail(email);
+      await _dataSource.sendPasswordResetOtp(email);
+      return const Result.success(null);
+    } catch (e) {
+      return Result.failure(mapExceptionToFailure(e));
+    }
+  }
+
+  @override
+  Future<Result<void>> verifyPasswordOtp({required String email, required String token}) async {
+    try {
+      await _dataSource.verifyPasswordOtp(email: email, token: token);
       return const Result.success(null);
     } catch (e) {
       return Result.failure(mapExceptionToFailure(e));

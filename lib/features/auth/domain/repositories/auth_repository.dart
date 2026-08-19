@@ -23,9 +23,11 @@ abstract class AuthRepository {
     required String fullName,
   });
 
-  Future<Result<AppUser>> signInWithGoogle();
+  Future<Result<void>> signInWithGoogle();
 
-  Future<Result<void>> sendPasswordResetEmail(String email);
+  Future<Result<void>> sendPasswordResetOtp(String email);
+
+  Future<Result<void>> verifyPasswordOtp({required String email, required String token});
 
   Future<Result<void>> updatePassword(String newPassword);
 

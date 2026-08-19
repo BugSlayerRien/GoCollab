@@ -33,14 +33,29 @@ class SignInWithGoogleUseCase {
   const SignInWithGoogleUseCase(this._repository);
   final AuthRepository _repository;
 
-  Future<Result<AppUser>> call() => _repository.signInWithGoogle();
+  Future<Result<void>> call() => _repository.signInWithGoogle();
 }
 
-class SendPasswordResetEmailUseCase {
-  const SendPasswordResetEmailUseCase(this._repository);
+class SendPasswordResetOtpUseCase {
+  const SendPasswordResetOtpUseCase(this._repository);
   final AuthRepository _repository;
 
-  Future<Result<void>> call(String email) => _repository.sendPasswordResetEmail(email);
+  Future<Result<void>> call(String email) => _repository.sendPasswordResetOtp(email);
+}
+
+class VerifyPasswordOtpUseCase {
+  const VerifyPasswordOtpUseCase(this._repository);
+  final AuthRepository _repository;
+
+  Future<Result<void>> call({required String email, required String token}) =>
+      _repository.verifyPasswordOtp(email: email, token: token);
+}
+
+class UpdatePasswordUseCase {
+  const UpdatePasswordUseCase(this._repository);
+  final AuthRepository _repository;
+
+  Future<Result<void>> call(String newPassword) => _repository.updatePassword(newPassword);
 }
 
 class SignOutUseCase {

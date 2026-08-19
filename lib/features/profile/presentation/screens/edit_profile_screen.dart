@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:image_picker/image_picker.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/widgets/app_button.dart';
@@ -54,6 +55,8 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
             child: ListView(
               padding: const EdgeInsets.all(AppSpacing.lg),
               children: [
+                _AvatarPicker(user: user),
+                const SizedBox(height: AppSpacing.lg),
                 AppTextField(label: 'Full name', controller: _nameController),
                 const SizedBox(height: AppSpacing.md),
                 AppTextField(label: 'Bio', controller: _bioController, maxLines: 3),
@@ -145,5 +148,74 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
       _linkedinController.dispose();
     }
     super.dispose();
+  }
+}
+
+class _AvatarPicker extends ConsumerStatefulWidget {
+  const _AvatarPicker({required this.user});
+  final AppUser user;
+
+  @override
+  ConsumerState<_AvatarPicker> createState() => _AvatarPickerState();
+}
+
+class _AvatarPickerState extends ConsumerState<_AvatarPicker> {
+  bool _uploading = false;
+
+  Future<void> _pick() async {
+    final picker = ImagePicker();
+    final file = await picker.pickImage(source: ImageSource.gallery, maxWidth: 512, maxHeight: 512, imageQuality: 80);
+    if (file == null) return;
+
+    setState(() => _uploading = true);
+    final error = await ref.read(profileEditControllerProvider.notifier).uploadAvatar(
+          userId: widget.user.id,
+          file: file,
+        );
+    if (mounted) {
+      setState(() => _uploading = false);
+      if (error != null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(error), backgroundColor: AppColors.googleRed),
+        );
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final latestUser = ref.watch(currentUserProvider).valueOrNull ?? widget.user;
+    return Center(
+      child: GestureDetector(
+        onTap: _uploading ? null : _pick,
+        child: Stack(
+          children: [
+            CircleAvatar(
+              radius: 48,
+              backgroundColor: AppColors.googleBlue,
+              backgroundImage: latestUser.avatarUrl != null ? NetworkImage(latestUser.avatarUrl!) : null,
+              child: _uploading
+                  ? const CircularProgressIndicator(color: Colors.white, strokeWidth: 2)
+                  : latestUser.avatarUrl == null
+                      ? Text(latestUser.initials, style: const TextStyle(color: Colors.white, fontSize: 28, fontWeight: FontWeight.w700))
+                      : null,
+            ),
+            Positioned(
+              bottom: 0,
+              right: 0,
+              child: Container(
+                padding: const EdgeInsets.all(6),
+                decoration: BoxDecoration(
+                  color: AppColors.googleBlue,
+                  shape: BoxShape.circle,
+                  border: Border.all(color: Colors.white, width: 2),
+                ),
+                child: const Icon(Icons.camera_alt_rounded, size: 16, color: Colors.white),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }

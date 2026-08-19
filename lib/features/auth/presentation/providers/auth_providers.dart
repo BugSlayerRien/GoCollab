@@ -19,8 +19,12 @@ final signInUseCaseProvider = Provider((ref) => SignInWithEmailPasswordUseCase(r
 final signUpUseCaseProvider = Provider((ref) => SignUpWithEmailPasswordUseCase(ref.watch(authRepositoryProvider)));
 final signInWithGoogleUseCaseProvider =
     Provider((ref) => SignInWithGoogleUseCase(ref.watch(authRepositoryProvider)));
-final sendPasswordResetUseCaseProvider =
-    Provider((ref) => SendPasswordResetEmailUseCase(ref.watch(authRepositoryProvider)));
+final sendPasswordResetOtpUseCaseProvider =
+    Provider((ref) => SendPasswordResetOtpUseCase(ref.watch(authRepositoryProvider)));
+final verifyPasswordOtpUseCaseProvider =
+    Provider((ref) => VerifyPasswordOtpUseCase(ref.watch(authRepositoryProvider)));
+final updatePasswordUseCaseProvider =
+    Provider((ref) => UpdatePasswordUseCase(ref.watch(authRepositoryProvider)));
 final signOutUseCaseProvider = Provider((ref) => SignOutUseCase(ref.watch(authRepositoryProvider)));
 
 /// Live, app-wide session stream. The router watches this to decide between
@@ -71,10 +75,24 @@ class AuthFormController extends StateNotifier<AuthFormState> {
     return _handle(result);
   }
 
-  Future<bool> sendPasswordReset(String email) async {
+  Future<bool> sendPasswordResetOtp(String email) async {
     state = state.copyWith(isSubmitting: true, errorMessage: null);
-    final useCase = _ref.read(sendPasswordResetUseCaseProvider);
+    final useCase = _ref.read(sendPasswordResetOtpUseCaseProvider);
     final result = await useCase(email);
+    return _handle(result);
+  }
+
+  Future<bool> verifyPasswordOtp({required String email, required String token}) async {
+    state = state.copyWith(isSubmitting: true, errorMessage: null);
+    final useCase = _ref.read(verifyPasswordOtpUseCaseProvider);
+    final result = await useCase(email: email, token: token);
+    return _handle(result);
+  }
+
+  Future<bool> updatePassword(String newPassword) async {
+    state = state.copyWith(isSubmitting: true, errorMessage: null);
+    final useCase = _ref.read(updatePasswordUseCaseProvider);
+    final result = await useCase(newPassword);
     return _handle(result);
   }
 

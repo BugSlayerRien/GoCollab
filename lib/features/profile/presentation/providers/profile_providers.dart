@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:image_picker/image_picker.dart';
 import '../../../../core/di/supabase_providers.dart';
 import '../../../auth/domain/entities/app_user.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
@@ -18,7 +19,11 @@ final githubDataSourceProvider = Provider<GithubDataSource>((ref) {
 });
 
 final profileRepositoryProvider = Provider<ProfileRepository>((ref) {
-  return ProfileRepositoryImpl(ref.watch(profileRemoteDataSourceProvider), ref.watch(githubDataSourceProvider));
+  return ProfileRepositoryImpl(
+    ref.watch(profileRemoteDataSourceProvider),
+    ref.watch(githubDataSourceProvider),
+    ref.watch(storageServiceProvider),
+  );
 });
 
 /// Live community points from `profiles.points` — invalidated after engagement
@@ -76,6 +81,15 @@ class ProfileEditController extends StateNotifier<AsyncValue<void>> {
         return false;
       },
     );
+  }
+
+  Future<String?> uploadAvatar({required String userId, required XFile file}) async {
+    state = const AsyncValue.loading();
+    final repository = _ref.read(profileRepositoryProvider);
+    final result = await repository.uploadAvatar(userId: userId, file: file);
+    state = const AsyncValue.data(null);
+    if (result.isSuccess) _ref.invalidate(currentUserProvider);
+    return result.when(success: (_) => null, failure: (f) => f.message);
   }
 
   Future<String?> syncGithub({required String userId, required String username}) async {
