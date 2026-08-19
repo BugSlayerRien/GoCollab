@@ -55,19 +55,26 @@ class AuthRemoteDataSource {
   /// Google Sign-In using Supabase's built-in OAuth flow. On web this opens
   /// a redirect to Google's consent page; Supabase handles the token exchange
   /// server-side and redirects back with a valid session.
+  static const _googleCalendarScope = 'https://www.googleapis.com/auth/calendar.events';
+
   Future<void> signInWithGoogle() async {
     await _auth.signInWithOAuth(
       OAuthProvider.google,
       redirectTo: kIsWeb ? Uri.base.origin : null,
+      scopes: _googleCalendarScope,
     );
   }
 
-  /// Sends a password-recovery OTP to the user's email via Supabase Auth.
+  /// Sends a password-recovery email (PKCE). User must open the link in the
+  /// same browser where they requested the reset so the PKCE verifier matches.
   Future<void> sendPasswordResetOtp(String email) {
-    return _auth.resetPasswordForEmail(email);
+    return _auth.resetPasswordForEmail(
+      email,
+      redirectTo: kIsWeb ? Uri.base.origin : null,
+    );
   }
 
-  /// Verifies the 6-digit OTP and establishes a recovery session.
+  /// Verifies a 6-digit OTP (requires custom SMTP template with {{ .Token }}).
   Future<void> verifyPasswordOtp({required String email, required String token}) async {
     await _auth.verifyOTP(type: OtpType.recovery, email: email, token: token);
   }

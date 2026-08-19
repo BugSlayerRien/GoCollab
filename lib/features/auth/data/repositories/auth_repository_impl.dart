@@ -10,8 +10,12 @@ class AuthRepositoryImpl implements AuthRepository {
   final AuthRemoteDataSource _dataSource;
 
   @override
-  Stream<AppUser?> watchCurrentUser() {
-    return _dataSource.onAuthStateChange.asyncMap((state) async {
+  Stream<AppUser?> watchCurrentUser() async* {
+    // Emit any session established during startup (e.g. PKCE password-recovery callback
+    // in handleWebAuthCallback) before the auth stream listener is attached.
+    yield await getCurrentUser();
+
+    yield* _dataSource.onAuthStateChange.asyncMap((state) async {
       final user = state.session?.user;
       if (user == null) return null;
       try {

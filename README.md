@@ -20,7 +20,8 @@ This project aligns with **SDG 17 - Partnerships for the Goals**, using technolo
 8. [Firebase Cloud Messaging Setup](#firebase-cloud-messaging-setup)
 9. [Google Sign-In Setup](#google-sign-in-setup)
 10. [GitHub REST API Integration](#github-rest-api-integration)
-11. [Running the App](#running-the-app)
+11. [Google Calendar API Integration](#google-calendar-api-integration)
+12. [Running the App](#running-the-app)
 12. [Testing & Static Analysis](#testing--static-analysis)
 13. [Building for Release](#building-for-release)
 14. [Roles & Promoting an Officer](#roles--promoting-an-officer)
@@ -46,7 +47,7 @@ This project aligns with **SDG 17 - Partnerships for the Goals**, using technolo
 
 - **Frontend:** Flutter (stable channel, Dart ≥ 3.9), Material Design 3, [`flutter_riverpod`](https://pub.dev/packages/flutter_riverpod) for state management, [`go_router`](https://pub.dev/packages/go_router) for declarative/role-based navigation.
 - **Backend:** [Supabase](https://supabase.com) — PostgreSQL, GoTrue Auth, Storage, and Realtime (the in-app notifications inbox streams live via `.stream()` on the `notifications` table) — accessed through `supabase_flutter`.
-- **Integrations:** Google Sign-In (`google_sign_in`), Firebase Cloud Messaging (`firebase_messaging` + `flutter_local_notifications`), in-app maps via OpenStreetMap (`flutter_map`), device calendar sync (`add_2_calendar`), QR scanning (`mobile_scanner`) and generation (`qr_flutter`), charts (`fl_chart`).
+- **Integrations:** Google Sign-In (`google_sign_in`), Google Calendar API v3 (REST via `http` — GET/POST/PATCH/DELETE for event sync), Firebase Cloud Messaging (`firebase_messaging` + `flutter_local_notifications`), in-app maps via OpenStreetMap (`flutter_map`), device calendar sync (`add_2_calendar`), QR scanning (`mobile_scanner`) and generation (`qr_flutter`), charts (`fl_chart`).
 - **Architecture:** Clean Architecture (`presentation` / `domain` / `data`) + Repository Pattern per feature, a shared `core/` layer for cross-cutting concerns, and an explicit `Result<T>`/`Failure` type for error handling instead of throwing across layers.
 
 ## Architecture
@@ -205,6 +206,78 @@ GoCollab loads public GitHub profile data over HTTP (no GitHub OAuth app or API 
 **Flow:** Edit Profile → save a GitHub username → `http.get` → parse JSON → Riverpod invalidates `cachedGithubProfileProvider` → Profile card updates. Opening Profile with a username and no cache also triggers a live GET.
 
 **Error handling:** invalid username format, HTTP 404 (user not found), 403 (rate limit), non-200, invalid JSON, timeout, and network failures. The Profile card shows a spinner while loading and a retry/snackbar on failure.
+
+## Google Calendar API Integration
+
+GoCollab integrates the **Google Calendar API v3** to allow members to synchronize community events with their personal Google Calendar. This is a real, production-quality integration using the official REST API — not a mock or simulated implementation.
+
+| Item | Detail |
+|---|---|
+| **API** | [Google Calendar API v3](https://developers.google.com/calendar/api/v3/reference) |
+| **Base URL** | `https://www.googleapis.com/calendar/v3` |
+| **Authentication** | OAuth 2.0 via `google_sign_in` with `calendar.events` scope (separate from Supabase auth) |
+| **Client** | `package:http` in [`lib/core/services/google_calendar_service.dart`](lib/core/services/google_calendar_service.dart) |
+
+### HTTP Methods Implemented
+
+| Method | Endpoint | Purpose |
+|---|---|---|
+| **GET** | `/calendars/primary/events/{eventId}` | Check if a synced event still exists on the user's Google Calendar |
+| **GET** | `/calendars/primary/events?timeMin=...&orderBy=startTime` | List upcoming events from the user's calendar |
+| **POST** | `/calendars/primary/events` | Create a new Google Calendar event when the user taps "Add to Google Calendar" |
+| **PATCH** | `/calendars/primary/events/{eventId}` | Update the calendar event when GoCollab event details change |
+| **DELETE** | `/calendars/primary/events/{eventId}` | Remove the calendar event when the user taps "Remove" |
+
+### Architecture
+
+```
+Event Detail Screen (UI)
+  → GcalActionsController (Riverpod StateNotifier)
+    → GcalRepository (orchestrates API + DB)
+      → GoogleCalendarService (REST API client — GET/POST/PATCH/DELETE)
+      → GcalDataSource (Supabase gcal_event_sync table — stores event ID mapping)
+```
+
+### Features
+
+- **Add to Google Calendar**: When a member is registered for an event, a sync card appears with an "Add to Google Calendar" button. Creates the event via POST and stores the mapping.
+- **Sync status indicator**: The card shows whether the event is already synced (green checkmark) or not.
+- **Update**: If event details change, the user can tap "Update" to PATCH the calendar event.
+- **Remove**: Tap "Remove" to DELETE the calendar event (with confirmation dialog). Keeps the GoCollab registration.
+- **Duplicate prevention**: Before creating, checks the mapping table and verifies the event still exists on Google Calendar (GET). Prevents duplicate entries.
+- **Optional**: Calendar access is entirely optional. GoCollab works fully without it. Users who deny calendar permission see a graceful error.
+
+### Error Handling
+
+- Authentication errors (denied/expired OAuth) — user is prompted to sign in again
+- HTTP 401 — automatic sign-out and retry prompt
+- HTTP 404 — stale mapping cleaned up automatically
+- Network errors — surfaced via snackbar
+- API errors — status code + response body logged, user-friendly message shown
+- Loading states — spinner on all async operations
+
+### Setup
+
+1. Enable the **Google Calendar API** in [Google Cloud Console](https://console.cloud.google.com/apis/library/calendar-json.googleapis.com) for your project.
+2. The same OAuth Client ID used for Google Sign-In is reused by the `google_sign_in` package for calendar scope.
+3. Apply the migration `supabase/migrations/20260819190000_gcal_sync.sql` to create the `gcal_event_sync` table.
+4. No additional environment variables are needed beyond `GOOGLE_WEB_CLIENT_ID`.
+
+### Database Table
+
+The `gcal_event_sync` table stores the per-user mapping:
+
+```sql
+gcal_event_sync (
+  user_id   uuid  → auth.users(id),
+  event_id  uuid  → events(id),
+  gcal_event_id text,
+  synced_at timestamptz,
+  UNIQUE (user_id, event_id)
+)
+```
+
+Row Level Security ensures each user can only access their own mappings.
 
 ## Running the App
 

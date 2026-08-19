@@ -4,7 +4,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import '../../../../core/animations/prismatic_background.dart';
-import '../../../../core/services/calendar_service.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/theme_extensions.dart';
@@ -182,7 +181,7 @@ class _EventDetailBody extends ConsumerWidget {
                 _MyQrCodeCard(qrData: event.myQrCode!, eventTitle: event.title),
               ],
               const SizedBox(height: AppSpacing.xxl),
-              if (!isOfficer)
+              if (!isOfficer) ...[
                 Row(
                   children: [
                     Expanded(
@@ -196,16 +195,13 @@ class _EventDetailBody extends ConsumerWidget {
                             : null,
                       ),
                     ),
-                    if (event.isRegistered) ...[
-                      const SizedBox(width: AppSpacing.sm),
-                      IconButton.filledTonal(
-                        onPressed: () => CalendarService.addEventToDeviceCalendar(event),
-                        icon: const Icon(Icons.calendar_month_rounded),
-                        tooltip: 'Add to calendar',
-                      ),
-                    ],
                   ],
                 ),
+                if (event.isRegistered) ...[
+                  const SizedBox(height: AppSpacing.lg),
+                  _GoogleCalendarSyncCard(event: event),
+                ],
+              ],
             ]),
           ),
         ),
@@ -253,6 +249,138 @@ class _InfoRow extends StatelessWidget {
         const SizedBox(width: AppSpacing.xs),
         Expanded(child: Text(text, style: Theme.of(context).textTheme.bodyMedium)),
       ],
+    );
+  }
+}
+
+class _GoogleCalendarSyncCard extends ConsumerWidget {
+  const _GoogleCalendarSyncCard({required this.event});
+  final Event event;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final syncStatusAsync = ref.watch(gcalSyncStatusProvider(event.id));
+    final isWorking = ref.watch(gcalActionsControllerProvider);
+
+    return Container(
+      padding: const EdgeInsets.all(AppSpacing.md),
+      decoration: BoxDecoration(
+        color: context.appSurfaceMuted,
+        borderRadius: BorderRadius.circular(AppSpacing.radiusLg),
+        border: Border.all(color: context.appBorder),
+      ),
+      child: syncStatusAsync.when(
+        loading: () => const SizedBox(height: 48, child: Center(child: CircularProgressIndicator())),
+        error: (_, __) => _buildRow(
+          context,
+          ref,
+          isSynced: false,
+          isWorking: isWorking,
+        ),
+        data: (isSynced) => _buildRow(context, ref, isSynced: isSynced, isWorking: isWorking),
+      ),
+    );
+  }
+
+  Widget _buildRow(BuildContext context, WidgetRef ref, {required bool isSynced, required bool isWorking}) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Icon(
+              isSynced ? Icons.event_available_rounded : Icons.event_rounded,
+              color: isSynced ? AppColors.googleGreen : AppColors.googleBlue,
+              size: 20,
+            ),
+            const SizedBox(width: AppSpacing.sm),
+            Expanded(
+              child: Text(
+                isSynced ? 'Synced to Google Calendar' : 'Google Calendar',
+                style: Theme.of(context).textTheme.titleSmall,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: AppSpacing.sm),
+        if (!isSynced)
+          SizedBox(
+            width: double.infinity,
+            child: AppButton(
+              label: 'Add to Google Calendar',
+              icon: Icons.add_rounded,
+              isLoading: isWorking,
+              onPressed: () => _add(context, ref),
+            ),
+          )
+        else
+          Row(
+            children: [
+              Expanded(
+                child: AppButton(
+                  label: 'Update',
+                  icon: Icons.sync_rounded,
+                  variant: AppButtonVariant.outlined,
+                  isLoading: isWorking,
+                  onPressed: () => _update(context, ref),
+                ),
+              ),
+              const SizedBox(width: AppSpacing.sm),
+              Expanded(
+                child: AppButton(
+                  label: 'Remove',
+                  icon: Icons.delete_outline_rounded,
+                  variant: AppButtonVariant.outlined,
+                  color: AppColors.googleRed,
+                  isLoading: isWorking,
+                  onPressed: () => _remove(context, ref),
+                ),
+              ),
+            ],
+          ),
+      ],
+    );
+  }
+
+  Future<void> _add(BuildContext context, WidgetRef ref) async {
+    final controller = ref.read(gcalActionsControllerProvider.notifier);
+    final error = await controller.addToCalendar(event);
+    if (!context.mounted) return;
+    showActionFeedback(
+      context,
+      success: error == null,
+      successMessage: 'Event added to your Google Calendar.',
+      errorMessage: error,
+    );
+  }
+
+  Future<void> _update(BuildContext context, WidgetRef ref) async {
+    final controller = ref.read(gcalActionsControllerProvider.notifier);
+    final error = await controller.updateCalendarEvent(event);
+    if (!context.mounted) return;
+    showActionFeedback(
+      context,
+      success: error == null,
+      successMessage: 'Google Calendar event updated.',
+      errorMessage: error,
+    );
+  }
+
+  Future<void> _remove(BuildContext context, WidgetRef ref) async {
+    final confirmed = await confirmDestructiveAction(
+      context,
+      title: 'Remove from Google Calendar?',
+      message: 'This will delete the event from your Google Calendar but keep your GoCollab registration.',
+    );
+    if (!confirmed) return;
+    final controller = ref.read(gcalActionsControllerProvider.notifier);
+    final error = await controller.removeFromCalendar(event.id);
+    if (!context.mounted) return;
+    showActionFeedback(
+      context,
+      success: error == null,
+      successMessage: 'Event removed from your Google Calendar.',
+      errorMessage: error,
     );
   }
 }

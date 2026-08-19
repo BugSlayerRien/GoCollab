@@ -1,5 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../../core/di/supabase_providers.dart';
+import '../../../../core/services/supabase_service.dart';
 import '../../../../core/utils/result.dart';
 import '../../data/datasources/auth_remote_datasource.dart';
 import '../../data/repositories/auth_repository_impl.dart';
@@ -26,6 +28,23 @@ final verifyPasswordOtpUseCaseProvider =
 final updatePasswordUseCaseProvider =
     Provider((ref) => UpdatePasswordUseCase(ref.watch(authRepositoryProvider)));
 final signOutUseCaseProvider = Provider((ref) => SignOutUseCase(ref.watch(authRepositoryProvider)));
+
+/// Tracks whether the current session was established via a password recovery
+/// link. When true, the router sends the user to `/reset-password` instead of
+/// the main shell so they can set a new password before proceeding.
+final isPasswordRecoveryProvider =
+    StateProvider<bool>((ref) => SupabaseService.pendingPasswordRecovery);
+
+/// Listens for Supabase PASSWORD_RECOVERY auth events (triggered when the
+/// user clicks the magic link in the reset email).
+final passwordRecoveryListenerProvider = Provider<void>((ref) {
+  final client = ref.watch(supabaseClientProvider);
+  client.auth.onAuthStateChange.listen((data) {
+    if (data.event == AuthChangeEvent.passwordRecovery) {
+      ref.read(isPasswordRecoveryProvider.notifier).state = true;
+    }
+  });
+});
 
 /// Live, app-wide session stream. The router watches this to decide between
 /// the auth flow, member shell, and officer shell.

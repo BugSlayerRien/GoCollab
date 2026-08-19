@@ -5,7 +5,9 @@ import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../../notifications/presentation/providers/notification_providers.dart';
 import '../../../profile/presentation/providers/profile_providers.dart';
 import '../../data/datasources/event_remote_datasource.dart';
+import '../../data/datasources/gcal_datasource.dart';
 import '../../data/repositories/event_repository_impl.dart';
+import '../../data/repositories/gcal_repository.dart';
 import '../../domain/entities/event.dart';
 import '../../domain/repositories/event_repository.dart';
 
@@ -16,6 +18,64 @@ final eventRemoteDataSourceProvider = Provider<EventRemoteDataSource>((ref) {
 final eventRepositoryProvider = Provider<EventRepository>((ref) {
   return EventRepositoryImpl(ref.watch(eventRemoteDataSourceProvider));
 });
+
+final gcalDataSourceProvider = Provider<GcalDataSource>((ref) {
+  return GcalDataSource(ref.watch(supabaseClientProvider));
+});
+
+final gcalRepositoryProvider = Provider<GcalRepository>((ref) {
+  return GcalRepository(ref.watch(gcalDataSourceProvider));
+});
+
+/// Whether the current event is synced to Google Calendar for the current user.
+final gcalSyncStatusProvider = FutureProvider.autoDispose.family<bool, String>((ref, eventId) async {
+  final user = await ref.watch(currentUserProvider.future);
+  if (user == null) return false;
+  final repo = ref.watch(gcalRepositoryProvider);
+  final result = await repo.isSynced(userId: user.id, eventId: eventId);
+  return result.dataOrNull ?? false;
+});
+
+class GcalActionsController extends StateNotifier<bool> {
+  GcalActionsController(this._ref) : super(false);
+  final Ref _ref;
+
+  Future<String?> addToCalendar(Event event) async {
+    final user = _ref.read(currentUserProvider).valueOrNull;
+    if (user == null) return 'You must be signed in.';
+    state = true;
+    final repo = _ref.read(gcalRepositoryProvider);
+    final result = await repo.addToCalendar(userId: user.id, event: event);
+    state = false;
+    if (result.isSuccess) _ref.invalidate(gcalSyncStatusProvider(event.id));
+    return result.when(success: (_) => null, failure: (f) => f.message);
+  }
+
+  Future<String?> updateCalendarEvent(Event event) async {
+    final user = _ref.read(currentUserProvider).valueOrNull;
+    if (user == null) return 'You must be signed in.';
+    state = true;
+    final repo = _ref.read(gcalRepositoryProvider);
+    final result = await repo.updateCalendarEvent(userId: user.id, event: event);
+    state = false;
+    if (result.isSuccess) _ref.invalidate(gcalSyncStatusProvider(event.id));
+    return result.when(success: (_) => null, failure: (f) => f.message);
+  }
+
+  Future<String?> removeFromCalendar(String eventId) async {
+    final user = _ref.read(currentUserProvider).valueOrNull;
+    if (user == null) return 'You must be signed in.';
+    state = true;
+    final repo = _ref.read(gcalRepositoryProvider);
+    final result = await repo.removeFromCalendar(userId: user.id, eventId: eventId);
+    state = false;
+    if (result.isSuccess) _ref.invalidate(gcalSyncStatusProvider(eventId));
+    return result.when(success: (_) => null, failure: (f) => f.message);
+  }
+}
+
+final gcalActionsControllerProvider =
+    StateNotifierProvider<GcalActionsController, bool>((ref) => GcalActionsController(ref));
 
 /// All events, sorted by start time, annotated with the current user's own
 /// registration status. `autoDispose` + `keepAlive` pattern isn't needed
