@@ -155,18 +155,47 @@ class GoogleCalendarService {
     return json.decode(response.body) as Map<String, dynamic>;
   }
 
-  /// GET — Lists upcoming calendar events from the user's primary calendar.
-  static Future<List<Map<String, dynamic>>> listUpcomingEvents({int maxResults = 10}) async {
+  /// GET — Lists calendar events within a time range on the user's primary calendar.
+  static Future<List<Map<String, dynamic>>> listEventsInRange({
+    required DateTime timeMin,
+    required DateTime timeMax,
+    int maxResults = 250,
+  }) async {
     final token = await _getAccessToken();
     if (token == null) throw const CalendarAuthException();
 
-    final now = DateTime.now().toUtc().toIso8601String();
+    final min = timeMin.toUtc().toIso8601String();
+    final max = timeMax.toUtc().toIso8601String();
     final url = '$_baseUrl/calendars/primary/events'
-        '?maxResults=$maxResults&orderBy=startTime&singleEvents=true&timeMin=$now';
+        '?timeMin=${Uri.encodeComponent(min)}'
+        '&timeMax=${Uri.encodeComponent(max)}'
+        '&maxResults=$maxResults'
+        '&orderBy=startTime'
+        '&singleEvents=true';
+
+    return _getJsonList(url, token);
+  }
+
+  /// GET — Lists upcoming calendar events from the user's primary calendar.
+  static Future<List<Map<String, dynamic>>> listUpcomingEvents({int maxResults = 10}) async {
+    final now = DateTime.now();
+    final end = now.add(const Duration(days: 90));
+    return listEventsInRange(timeMin: now, timeMax: end, maxResults: maxResults);
+  }
+
+  static Future<List<Map<String, dynamic>>> _getJsonList(String url, String token) async {
     final response = await http.get(Uri.parse(url), headers: _headers(token));
 
     if (response.statusCode == 401) {
-      throw const CalendarAuthException(message: _reauthMessage);
+      final retryToken = await _getAccessTokenAfter401();
+      if (retryToken == null) throw const CalendarAuthException(message: _reauthMessage);
+      final retry = await http.get(Uri.parse(url), headers: _headers(retryToken));
+      if (retry.statusCode == 401) throw const CalendarAuthException(message: _reauthMessage);
+      if (retry.statusCode != 200) {
+        throw CalendarApiException('Failed to list events (${retry.statusCode})', retry.body);
+      }
+      final data = json.decode(retry.body) as Map<String, dynamic>;
+      return (data['items'] as List?)?.cast<Map<String, dynamic>>() ?? [];
     }
     if (response.statusCode != 200) {
       throw CalendarApiException('Failed to list events (${response.statusCode})', response.body);

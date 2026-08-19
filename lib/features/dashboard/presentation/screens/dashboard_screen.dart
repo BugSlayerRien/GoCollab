@@ -98,6 +98,12 @@ class DashboardScreen extends ConsumerWidget {
             QuickActionsGrid(
               actions: [
                 QuickAction(
+                  icon: Icons.calendar_month_rounded,
+                  label: 'My Calendar',
+                  color: AppColors.googleRed,
+                  onTap: () => context.push('/my-calendar'),
+                ),
+                QuickAction(
                   icon: Icons.event_available_rounded,
                   label: 'Events',
                   color: AppColors.googleYellow,
@@ -114,12 +120,6 @@ class DashboardScreen extends ConsumerWidget {
                   label: 'Community',
                   color: AppColors.googleBlue,
                   onTap: () => ref.read(selectedTabIndexProvider.notifier).state = 3,
-                ),
-                QuickAction(
-                  icon: Icons.person_outline_rounded,
-                  label: 'Profile',
-                  color: AppColors.googleRed,
-                  onTap: () => ref.read(selectedTabIndexProvider.notifier).state = 4,
                 ),
               ],
             ),

@@ -36,7 +36,7 @@ This project aligns with **SDG 17 - Partnerships for the Goals**, using technolo
 | **Authentication** | Email/password + Google Sign-In, forgot password | Same |
 | **Dashboard** | Announcements, upcoming events, saved opportunities, community stats, quick actions | Officer-specific quick actions + summary stats |
 | **Career Hub** | Browse/filter internships, scholarships, certifications, hackathons; bookmark; deadline reminders | Create/manage opportunity postings |
-| **Events** | List, detail, register/cancel, QR ticket, calendar sync, venue map | QR check-in scanner, attendance validation |
+| **Events** | List, detail, register/cancel, QR ticket, **My Calendar** (live Google Calendar), calendar sync, venue map | QR check-in scanner, attendance validation |
 | **Community Analytics** | — | Active members, attendance, engagement, event performance, growth charts (`fl_chart`) |
 | **Partnership Management** | — | Partner directory, sponsorship tracking, meeting schedule, communication logs, collaboration status |
 | **Community Announcements** | Feed with category badges, push notifications | Publish/pin announcements |
@@ -95,7 +95,8 @@ lib/
     ├── shell/                     # role-aware bottom navigation shell (IndexedStack)
     ├── dashboard/                  # member + officer dashboards, community stats
     ├── opportunities/             # Career Hub: list, detail, bookmarking, officer create sheet
-    ├── events/                    # list, detail, registration, QR check-in, calendar, venue map
+    ├── events/                    # list, detail, registration, QR check-in, calendar sync, venue map
+    ├── calendar/                  # My Calendar: live Google Calendar GET + table_calendar UI
     ├── announcements/ + community/ # announcements feed + officer publish sheet
     ├── analytics/                 # officer-only charts (growth, event performance)
     ├── partnerships/              # partner directory, sponsorships, meetings, communications
@@ -215,7 +216,7 @@ GoCollab integrates the **Google Calendar API v3** to allow members to synchroni
 |---|---|
 | **API** | [Google Calendar API v3](https://developers.google.com/calendar/api/v3/reference) |
 | **Base URL** | `https://www.googleapis.com/calendar/v3` |
-| **Authentication** | OAuth 2.0 via `google_sign_in` with `calendar.events` scope (separate from Supabase auth) |
+| **Authentication** | OAuth 2.0 via Supabase Google sign-in with `calendar.events` scope; tokens cached in `GoogleTokenStorage` |
 | **Client** | `package:http` in [`lib/core/services/google_calendar_service.dart`](lib/core/services/google_calendar_service.dart) |
 
 ### HTTP Methods Implemented
@@ -223,7 +224,8 @@ GoCollab integrates the **Google Calendar API v3** to allow members to synchroni
 | Method | Endpoint | Purpose |
 |---|---|---|
 | **GET** | `/calendars/primary/events/{eventId}` | Check if a synced event still exists on the user's Google Calendar |
-| **GET** | `/calendars/primary/events?timeMin=...&orderBy=startTime` | List upcoming events from the user's calendar |
+| **GET** | `/calendars/primary/events?timeMin=...&timeMax=...&orderBy=startTime&singleEvents=true` | **My Calendar** — list events in a date range for the calendar screen |
+| **GET** | `/calendars/primary/events?timeMin=...&orderBy=startTime` | List upcoming events (legacy helper, 90-day window) |
 | **POST** | `/calendars/primary/events` | Create a new Google Calendar event when the user taps "Add to Google Calendar" |
 | **PATCH** | `/calendars/primary/events/{eventId}` | Update the calendar event when GoCollab event details change |
 | **DELETE** | `/calendars/primary/events/{eventId}` | Remove the calendar event when the user taps "Remove" |
@@ -231,14 +233,47 @@ GoCollab integrates the **Google Calendar API v3** to allow members to synchroni
 ### Architecture
 
 ```
-Event Detail Screen (UI)
+Event Detail Screen — Add/Update/Remove (UI)
   → GcalActionsController (Riverpod StateNotifier)
     → GcalRepository (orchestrates API + DB)
       → GoogleCalendarService (REST API client — GET/POST/PATCH/DELETE)
       → GcalDataSource (Supabase gcal_event_sync table — stores event ID mapping)
+
+My Calendar Screen (UI)
+  → myCalendarEventsProvider (Riverpod FutureProvider)
+    → MyCalendarRepository
+      → MyCalendarRemoteDataSource
+        → GoogleCalendarService.listEventsInRange (GET primary/events)
+        → GcalDataSource.listUserGcalMappings (GoCollab vs personal detection)
 ```
 
-### Features
+### My Calendar Screen
+
+The **My Calendar** screen (`/my-calendar`) displays the authenticated user's **live** Google Calendar data — no mock or hardcoded events.
+
+| Item | Detail |
+|---|---|
+| **Route** | `/my-calendar` (Home quick action, Events app-bar icon) |
+| **HTTP** | `GET https://www.googleapis.com/calendar/v3/calendars/primary/events` |
+| **Query params** | `timeMin`, `timeMax` (focused month), `singleEvents=true`, `orderBy=startTime`, `maxResults=250` |
+| **Auth** | Reuses `GoogleCalendarService` token resolution (Supabase `providerToken` + `GoogleTokenStorage`) |
+| **UI** | [`table_calendar`](https://pub.dev/packages/table_calendar) month grid + day event list |
+| **GoCollab badge** | Events synced via `gcal_event_sync` or whose description contains `GoCollab Event` show a blue **GoCollab** label; tapping opens the GoCollab event detail when mapped |
+
+**JSON fields parsed** (per item in `items[]`):
+
+| Field | Dart model |
+|---|---|
+| `id` | `GoogleCalendarEvent.id` |
+| `summary` | `GoogleCalendarEvent.title` |
+| `start.dateTime` / `start.date` | `GoogleCalendarEvent.startAt`, `isAllDay` |
+| `end.dateTime` / `end.date` | `GoogleCalendarEvent.endAt` |
+| `location` | `GoogleCalendarEvent.location` |
+| `description` | Used to detect GoCollab-created entries |
+
+**UI states:** loading spinner, connect-calendar prompt (missing OAuth token), network/API error with retry, empty day list, populated day list with title / time / location.
+
+### Event sync (Add to Google Calendar)
 
 - **Add to Google Calendar**: When a member is registered for an event, a sync card appears with an "Add to Google Calendar" button. Creates the event via POST and stores the mapping.
 - **Sync status indicator**: The card shows whether the event is already synced (green checkmark) or not.

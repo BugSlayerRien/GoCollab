@@ -33,6 +33,11 @@ class _EventsListScreenState extends ConsumerState<EventsListScreen> {
         title: Text(_showHistory ? 'Event history' : 'Events'),
         actions: [
           IconButton(
+            icon: const Icon(Icons.calendar_month_outlined),
+            tooltip: 'My Calendar',
+            onPressed: () => context.push('/my-calendar'),
+          ),
+          IconButton(
             icon: Icon(_showHistory ? Icons.event_available_rounded : Icons.history_rounded),
             tooltip: _showHistory ? 'Available events' : 'Event history',
             onPressed: () => setState(() => _showHistory = !_showHistory),
