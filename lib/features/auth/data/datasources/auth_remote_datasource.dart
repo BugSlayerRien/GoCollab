@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../../../core/services/google_token_storage.dart';
 import '../models/app_user_model.dart';
 
 /// Talks directly to Supabase Auth + the `profiles` table. This is the only
@@ -57,11 +58,28 @@ class AuthRemoteDataSource {
   /// server-side and redirects back with a valid session.
   static const _googleCalendarScope = 'https://www.googleapis.com/auth/calendar.events';
 
+  static const _googleOAuthQueryParams = {
+    'access_type': 'offline',
+    'prompt': 'consent',
+  };
+
   Future<void> signInWithGoogle() async {
     await _auth.signInWithOAuth(
       OAuthProvider.google,
       redirectTo: kIsWeb ? Uri.base.origin : null,
       scopes: _googleCalendarScope,
+      queryParams: _googleOAuthQueryParams,
+    );
+  }
+
+  /// Re-runs Google OAuth (same browser tab) to obtain calendar scope and a
+  /// fresh provider token. Safe to call while already signed in.
+  Future<void> requestGoogleCalendarAccess() async {
+    await _auth.signInWithOAuth(
+      OAuthProvider.google,
+      redirectTo: kIsWeb ? '${Uri.base.origin}${Uri.base.path}' : null,
+      scopes: _googleCalendarScope,
+      queryParams: _googleOAuthQueryParams,
     );
   }
 
@@ -84,7 +102,11 @@ class AuthRemoteDataSource {
   }
 
   Future<void> signOut() async {
+    final userId = _auth.currentUser?.id;
     await _auth.signOut();
+    if (userId != null) {
+      await GoogleTokenStorage.clear(userId);
+    }
   }
 
   /// The `handle_new_user` Postgres trigger creates a profile row

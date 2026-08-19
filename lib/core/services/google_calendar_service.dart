@@ -6,6 +6,7 @@ import 'package:http/http.dart' as http;
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../config/env.dart';
+import 'google_token_storage.dart';
 
 /// Direct REST client for the Google Calendar API v3.
 ///
@@ -25,8 +26,7 @@ class GoogleCalendarService {
       );
 
   static const _reauthMessage =
-      'Calendar access is missing or expired. Sign out, then sign in again with Google '
-      'to grant calendar permission.';
+      'Google Calendar is not connected yet. Tap "Connect Google Calendar" to grant access.';
 
   static bool _signedInWithGoogle(User? user) {
     if (user == null) return false;
@@ -34,23 +34,38 @@ class GoogleCalendarService {
     return user.identities?.any((id) => id.provider == 'google') ?? false;
   }
 
-  /// Returns a valid Google access token with calendar scope.
-  ///
-  /// Reuses the Supabase Google OAuth [Session.providerToken] so there is no
-  /// second Google popup (which would use a random dev-server port and fail).
-  static Future<String?> _getAccessToken() async {
+  /// Whether a Google access token is available for Calendar API calls.
+  static Future<bool> hasAccess() async {
+    final token = await _resolveAccessToken();
+    return token != null && token.isNotEmpty;
+  }
+
+  static Future<String?> _resolveAccessToken() async {
     final auth = Supabase.instance.client.auth;
     final session = auth.currentSession;
-    final user = session?.user;
-    final googleUser = _signedInWithGoogle(user);
+    final userId = session?.user.id;
 
     final providerToken = session?.providerToken;
     if (providerToken != null && providerToken.isNotEmpty) {
       return providerToken;
     }
 
-    if (googleUser) {
-      throw const CalendarAuthException(_reauthMessage);
+    if (userId != null) {
+      final stored = await GoogleTokenStorage.getToken(userId);
+      if (stored != null && stored.isNotEmpty) return stored;
+    }
+
+    return null;
+  }
+
+  /// Returns a valid Google access token with calendar scope.
+  static Future<String?> _getAccessToken() async {
+    final token = await _resolveAccessToken();
+    if (token != null) return token;
+
+    final user = Supabase.instance.client.auth.currentUser;
+    if (_signedInWithGoogle(user)) {
+      throw const CalendarAuthException(message: _reauthMessage, needsConsent: true);
     }
 
     if (!Env.hasGoogleSignIn) return null;
@@ -73,14 +88,14 @@ class GoogleCalendarService {
       final msg = e.toString();
       if (msg.contains('origin_mismatch')) {
         throw const CalendarAuthException(
-          'Google OAuth origin mismatch. Sign in with Google from the login screen '
-          'instead of using a separate calendar sign-in.',
+          message: 'Google OAuth origin mismatch. Sign in with Google from the login screen '
+              'instead of using a separate calendar sign-in.',
         );
       }
       if (msg.contains('access_denied') || msg.contains('403')) {
         throw const CalendarAuthException(
-          'Calendar access was denied. Add your email as a Test user in Google Cloud '
-          'Console and enable the Google Calendar API.',
+          message: 'Calendar access was denied. Add your email as a Test user in Google Cloud '
+              'Console and enable the Google Calendar API.',
         );
       }
       return null;
@@ -89,15 +104,21 @@ class GoogleCalendarService {
 
   static Future<String?> _getAccessTokenAfter401() async {
     final auth = Supabase.instance.client.auth;
+    final userId = auth.currentUser?.id;
+
     if (_signedInWithGoogle(auth.currentUser)) {
       try {
         await auth.refreshSession();
-        final token = auth.currentSession?.providerToken;
-        if (token != null && token.isNotEmpty) return token;
+        final refreshed = auth.currentSession;
+        if (refreshed != null) {
+          await GoogleTokenStorage.saveFromSession(refreshed);
+          final token = refreshed.providerToken ?? (userId != null ? await GoogleTokenStorage.getToken(userId) : null);
+          if (token != null && token.isNotEmpty) return token;
+        }
       } catch (e) {
         debugPrint('[GoogleCalendar] refreshSession failed: $e');
       }
-      throw const CalendarAuthException(_reauthMessage);
+      throw const CalendarAuthException(message: _reauthMessage, needsConsent: true);
     }
     await _googleSignIn.signOut();
     return _getAccessToken();
@@ -119,9 +140,9 @@ class GoogleCalendarService {
     if (response.statusCode == 404) return null;
     if (response.statusCode == 401) {
       final retryToken = await _getAccessTokenAfter401();
-      if (retryToken == null) throw const CalendarAuthException(_reauthMessage);
+      if (retryToken == null) throw const CalendarAuthException(message: _reauthMessage);
       final retry = await http.get(Uri.parse(url), headers: _headers(retryToken));
-      if (retry.statusCode == 401) throw const CalendarAuthException(_reauthMessage);
+      if (retry.statusCode == 401) throw const CalendarAuthException(message: _reauthMessage);
       if (retry.statusCode == 404) return null;
       if (retry.statusCode != 200) {
         throw CalendarApiException('Failed to get event (${retry.statusCode})', retry.body);
@@ -145,7 +166,7 @@ class GoogleCalendarService {
     final response = await http.get(Uri.parse(url), headers: _headers(token));
 
     if (response.statusCode == 401) {
-      throw const CalendarAuthException(_reauthMessage);
+      throw const CalendarAuthException(message: _reauthMessage);
     }
     if (response.statusCode != 200) {
       throw CalendarApiException('Failed to list events (${response.statusCode})', response.body);
@@ -185,9 +206,9 @@ class GoogleCalendarService {
 
     if (response.statusCode == 401) {
       final retryToken = await _getAccessTokenAfter401();
-      if (retryToken == null) throw const CalendarAuthException(_reauthMessage);
+      if (retryToken == null) throw const CalendarAuthException(message: _reauthMessage);
       final retry = await http.post(Uri.parse(url), headers: _headers(retryToken), body: body);
-      if (retry.statusCode == 401) throw const CalendarAuthException(_reauthMessage);
+      if (retry.statusCode == 401) throw const CalendarAuthException(message: _reauthMessage);
       if (retry.statusCode != 200) {
         throw CalendarApiException('Failed to create event (${retry.statusCode})', retry.body);
       }
@@ -227,9 +248,9 @@ class GoogleCalendarService {
 
     if (response.statusCode == 401) {
       final retryToken = await _getAccessTokenAfter401();
-      if (retryToken == null) throw const CalendarAuthException(_reauthMessage);
+      if (retryToken == null) throw const CalendarAuthException(message: _reauthMessage);
       final retry = await http.patch(Uri.parse(url), headers: _headers(retryToken), body: body);
-      if (retry.statusCode == 401) throw const CalendarAuthException(_reauthMessage);
+      if (retry.statusCode == 401) throw const CalendarAuthException(message: _reauthMessage);
       if (retry.statusCode != 200) {
         throw CalendarApiException('Failed to update event (${retry.statusCode})', retry.body);
       }
@@ -250,9 +271,9 @@ class GoogleCalendarService {
 
     if (response.statusCode == 401) {
       final retryToken = await _getAccessTokenAfter401();
-      if (retryToken == null) throw const CalendarAuthException(_reauthMessage);
+      if (retryToken == null) throw const CalendarAuthException(message: _reauthMessage);
       final retry = await http.delete(Uri.parse(url), headers: _headers(retryToken));
-      if (retry.statusCode == 401) throw const CalendarAuthException(_reauthMessage);
+      if (retry.statusCode == 401) throw const CalendarAuthException(message: _reauthMessage);
       if (retry.statusCode != 204 && retry.statusCode != 200 && retry.statusCode != 410) {
         throw CalendarApiException('Failed to delete event (${retry.statusCode})', retry.body);
       }
@@ -273,9 +294,10 @@ class GoogleCalendarService {
 }
 
 class CalendarAuthException implements Exception {
-  const CalendarAuthException([this.message]);
+  const CalendarAuthException({this.message, this.needsConsent = false});
 
   final String? message;
+  final bool needsConsent;
 
   @override
   String toString() =>

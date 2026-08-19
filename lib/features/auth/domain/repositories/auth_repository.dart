@@ -25,6 +25,8 @@ abstract class AuthRepository {
 
   Future<Result<void>> signInWithGoogle();
 
+  Future<Result<void>> requestGoogleCalendarAccess();
+
   Future<Result<void>> sendPasswordResetOtp(String email);
 
   Future<Result<void>> verifyPasswordOtp({required String email, required String token});

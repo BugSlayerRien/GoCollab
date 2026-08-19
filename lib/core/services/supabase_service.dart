@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../config/env.dart';
+import 'google_token_storage.dart';
 import 'web_url_cleaner_stub.dart'
     if (dart.library.html) 'web_url_cleaner_web.dart';
 
@@ -51,6 +52,7 @@ class SupabaseService {
           type == 'recovery' ||
           type == 'PASSWORD_RECOVERY';
       authCallbackError = null;
+      await GoogleTokenStorage.saveFromSession(response.session);
       clearAuthParamsFromBrowserUrl();
     } on AuthException catch (e) {
       authCallbackError = e.message.contains('Code verifier')

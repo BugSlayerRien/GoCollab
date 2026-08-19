@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../../core/di/supabase_providers.dart';
+import '../../../../core/services/google_token_storage.dart';
 import '../../../../core/services/supabase_service.dart';
 import '../../../../core/utils/result.dart';
 import '../../data/datasources/auth_remote_datasource.dart';
@@ -21,6 +22,8 @@ final signInUseCaseProvider = Provider((ref) => SignInWithEmailPasswordUseCase(r
 final signUpUseCaseProvider = Provider((ref) => SignUpWithEmailPasswordUseCase(ref.watch(authRepositoryProvider)));
 final signInWithGoogleUseCaseProvider =
     Provider((ref) => SignInWithGoogleUseCase(ref.watch(authRepositoryProvider)));
+final requestGoogleCalendarAccessUseCaseProvider =
+    Provider((ref) => RequestGoogleCalendarAccessUseCase(ref.watch(authRepositoryProvider)));
 final sendPasswordResetOtpUseCaseProvider =
     Provider((ref) => SendPasswordResetOtpUseCase(ref.watch(authRepositoryProvider)));
 final verifyPasswordOtpUseCaseProvider =
@@ -42,6 +45,20 @@ final passwordRecoveryListenerProvider = Provider<void>((ref) {
   client.auth.onAuthStateChange.listen((data) {
     if (data.event == AuthChangeEvent.passwordRecovery) {
       ref.read(isPasswordRecoveryProvider.notifier).state = true;
+    }
+  });
+});
+
+/// Persists Google provider tokens whenever Supabase returns them.
+final googleTokenListenerProvider = Provider<void>((ref) {
+  final client = ref.watch(supabaseClientProvider);
+  client.auth.onAuthStateChange.listen((data) async {
+    final session = data.session;
+    if (session == null) return;
+    if (data.event == AuthChangeEvent.signedIn ||
+        data.event == AuthChangeEvent.tokenRefreshed ||
+        data.event == AuthChangeEvent.initialSession) {
+      await GoogleTokenStorage.saveFromSession(session);
     }
   });
 });

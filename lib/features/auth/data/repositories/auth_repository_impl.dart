@@ -79,6 +79,16 @@ class AuthRepositoryImpl implements AuthRepository {
   }
 
   @override
+  Future<Result<void>> requestGoogleCalendarAccess() async {
+    try {
+      await _dataSource.requestGoogleCalendarAccess();
+      return const Result.success(null);
+    } catch (e) {
+      return Result.failure(mapExceptionToFailure(e));
+    }
+  }
+
+  @override
   Future<Result<void>> sendPasswordResetOtp(String email) async {
     try {
       await _dataSource.sendPasswordResetOtp(email);

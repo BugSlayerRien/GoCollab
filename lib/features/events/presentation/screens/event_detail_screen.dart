@@ -260,6 +260,7 @@ class _GoogleCalendarSyncCard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final syncStatusAsync = ref.watch(gcalSyncStatusProvider(event.id));
+    final calendarAccessAsync = ref.watch(googleCalendarAccessProvider);
     final isWorking = ref.watch(gcalActionsControllerProvider);
 
     return Container(
@@ -275,14 +276,27 @@ class _GoogleCalendarSyncCard extends ConsumerWidget {
           context,
           ref,
           isSynced: false,
+          hasCalendarAccess: calendarAccessAsync.valueOrNull ?? false,
           isWorking: isWorking,
         ),
-        data: (isSynced) => _buildRow(context, ref, isSynced: isSynced, isWorking: isWorking),
+        data: (isSynced) => _buildRow(
+          context,
+          ref,
+          isSynced: isSynced,
+          hasCalendarAccess: calendarAccessAsync.valueOrNull ?? false,
+          isWorking: isWorking,
+        ),
       ),
     );
   }
 
-  Widget _buildRow(BuildContext context, WidgetRef ref, {required bool isSynced, required bool isWorking}) {
+  Widget _buildRow(
+    BuildContext context,
+    WidgetRef ref, {
+    required bool isSynced,
+    required bool hasCalendarAccess,
+    required bool isWorking,
+  }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -303,7 +317,24 @@ class _GoogleCalendarSyncCard extends ConsumerWidget {
           ],
         ),
         const SizedBox(height: AppSpacing.sm),
-        if (!isSynced)
+        if (!hasCalendarAccess && !isSynced)
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text(
+                'Connect your Google account to add events to your calendar.',
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(color: context.appTextSecondary),
+              ),
+              const SizedBox(height: AppSpacing.sm),
+              AppButton(
+                label: 'Connect Google Calendar',
+                icon: Icons.link_rounded,
+                isLoading: isWorking,
+                onPressed: () => _connect(context, ref),
+              ),
+            ],
+          )
+        else if (!isSynced)
           SizedBox(
             width: double.infinity,
             child: AppButton(
@@ -340,6 +371,21 @@ class _GoogleCalendarSyncCard extends ConsumerWidget {
           ),
       ],
     );
+  }
+
+  Future<void> _connect(BuildContext context, WidgetRef ref) async {
+    final controller = ref.read(gcalActionsControllerProvider.notifier);
+    final error = await controller.connectGoogleCalendar();
+    if (!context.mounted) return;
+    if (error != null) {
+      showActionFeedback(
+        context,
+        success: false,
+        successMessage: '',
+        errorMessage: error,
+      );
+    }
+    // On success the browser redirects to Google OAuth; no snackbar needed.
   }
 
   Future<void> _add(BuildContext context, WidgetRef ref) async {

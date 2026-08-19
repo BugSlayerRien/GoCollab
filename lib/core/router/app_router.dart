@@ -26,8 +26,9 @@ final routerProvider = Provider<GoRouter>((ref) {
   final authState = ref.watch(currentUserProvider);
   final isRecovery = ref.watch(isPasswordRecoveryProvider);
 
-  // Initialize the recovery listener once.
+  // Initialize auth side-effect listeners once.
   ref.watch(passwordRecoveryListenerProvider);
+  ref.watch(googleTokenListenerProvider);
 
   return GoRouter(
     initialLocation: '/splash',

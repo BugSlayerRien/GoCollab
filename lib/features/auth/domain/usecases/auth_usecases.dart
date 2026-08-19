@@ -36,6 +36,13 @@ class SignInWithGoogleUseCase {
   Future<Result<void>> call() => _repository.signInWithGoogle();
 }
 
+class RequestGoogleCalendarAccessUseCase {
+  const RequestGoogleCalendarAccessUseCase(this._repository);
+  final AuthRepository _repository;
+
+  Future<Result<void>> call() => _repository.requestGoogleCalendarAccess();
+}
+
 class SendPasswordResetOtpUseCase {
   const SendPasswordResetOtpUseCase(this._repository);
   final AuthRepository _repository;

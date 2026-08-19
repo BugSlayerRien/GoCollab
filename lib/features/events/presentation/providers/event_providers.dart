@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../../../core/di/supabase_providers.dart';
+import '../../../../core/services/google_calendar_service.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../../notifications/presentation/providers/notification_providers.dart';
 import '../../../profile/presentation/providers/profile_providers.dart';
@@ -34,6 +35,13 @@ final gcalSyncStatusProvider = FutureProvider.autoDispose.family<bool, String>((
   final repo = ref.watch(gcalRepositoryProvider);
   final result = await repo.isSynced(userId: user.id, eventId: eventId);
   return result.dataOrNull ?? false;
+});
+
+/// Whether the signed-in user has a Google Calendar token available.
+final googleCalendarAccessProvider = FutureProvider.autoDispose<bool>((ref) async {
+  final user = await ref.watch(currentUserProvider.future);
+  if (user == null) return false;
+  return GoogleCalendarService.hasAccess();
 });
 
 class GcalActionsController extends StateNotifier<bool> {
@@ -70,6 +78,16 @@ class GcalActionsController extends StateNotifier<bool> {
     final result = await repo.removeFromCalendar(userId: user.id, eventId: eventId);
     state = false;
     if (result.isSuccess) _ref.invalidate(gcalSyncStatusProvider(eventId));
+    return result.when(success: (_) => null, failure: (f) => f.message);
+  }
+
+  /// Opens Google OAuth (same tab) to grant calendar scope. Redirects away from
+  /// the app briefly; user returns to the current page with tokens saved.
+  Future<String?> connectGoogleCalendar() async {
+    state = true;
+    final useCase = _ref.read(requestGoogleCalendarAccessUseCaseProvider);
+    final result = await useCase();
+    state = false;
     return result.when(success: (_) => null, failure: (f) => f.message);
   }
 }
