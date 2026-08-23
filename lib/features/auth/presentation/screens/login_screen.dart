@@ -90,7 +90,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             const SizedBox(height: AppSpacing.xxxl),
             const _BrandMark(),
             const SizedBox(height: AppSpacing.xl),
-            Text('Welcome back', style: Theme.of(context).textTheme.displaySmall),
+            Text('Welcome to GoCollab', style: Theme.of(context).textTheme.displaySmall),
             const SizedBox(height: AppSpacing.xs),
             Text(
               'Sign in to continue building with GDGoC Philippines.',

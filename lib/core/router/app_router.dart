@@ -12,6 +12,7 @@ import '../../features/notifications/presentation/screens/notifications_screen.d
 import '../../features/opportunities/presentation/screens/opportunity_detail_screen.dart';
 import '../../features/partnerships/presentation/screens/partner_detail_screen.dart';
 import '../../features/profile/presentation/screens/edit_profile_screen.dart';
+import '../../features/settings/presentation/screens/settings_screen.dart';
 import '../../features/shell/presentation/screens/app_shell_screen.dart';
 import '../../features/splash/presentation/screens/splash_screen.dart';
 
@@ -84,6 +85,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(path: '/profile/edit', builder: (context, state) => const EditProfileScreen()),
       GoRoute(path: '/notifications', builder: (context, state) => const NotificationsScreen()),
       GoRoute(path: '/my-calendar', builder: (context, state) => const MyCalendarScreen()),
+      GoRoute(path: '/settings', builder: (context, state) => const SettingsScreen()),
     ],
   );
 });

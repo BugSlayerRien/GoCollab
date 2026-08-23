@@ -5,9 +5,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/theme_extensions.dart';
-import '../../../../core/theme/theme_mode_provider.dart';
 import '../../../../core/utils/date_formatter.dart';
-import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/confirm_dialog.dart';
 import '../../../../core/widgets/empty_state.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
@@ -20,13 +18,16 @@ class ProfileScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final userAsync = ref.watch(currentUserProvider);
-    final themeMode = ref.watch(themeModeProvider);
-    final isDark = themeMode == ThemeMode.dark;
 
     return Scaffold(
       appBar: AppBar(
         title: const Text('Profile'),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.settings_outlined),
+            tooltip: 'Settings',
+            onPressed: () => context.push('/settings'),
+          ),
           IconButton(
             icon: const Icon(Icons.edit_outlined),
             onPressed: () => context.push('/profile/edit'),
@@ -42,11 +43,6 @@ class ProfileScreen extends ConsumerWidget {
             padding: const EdgeInsets.all(AppSpacing.lg),
             children: [
               ProfileHeader(user: user),
-              const SizedBox(height: AppSpacing.lg),
-              _AppearanceTile(
-                isDark: isDark,
-                onChanged: (value) => ref.read(themeModeProvider.notifier).toggleDark(value),
-              ),
               const SizedBox(height: AppSpacing.lg),
               if (user.bio != null && user.bio!.isNotEmpty) ...[
                 Text('Bio', style: Theme.of(context).textTheme.titleMedium),
@@ -69,54 +65,10 @@ class ProfileScreen extends ConsumerWidget {
               Text('Event history', style: Theme.of(context).textTheme.titleMedium),
               const SizedBox(height: AppSpacing.xs),
               const _EventHistorySection(),
-              const SizedBox(height: AppSpacing.xxl),
-              AppButton(
-                label: 'Sign out',
-                variant: AppButtonVariant.outlined,
-                color: AppColors.googleRed,
-                icon: Icons.logout_rounded,
-                onPressed: () async {
-                  final useCase = ref.read(signOutUseCaseProvider);
-                  await useCase();
-                },
-              ),
               const SizedBox(height: AppSpacing.xl),
             ],
           );
         },
-      ),
-    );
-  }
-}
-
-class _AppearanceTile extends StatelessWidget {
-  const _AppearanceTile({required this.isDark, required this.onChanged});
-
-  final bool isDark;
-  final ValueChanged<bool> onChanged;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: AppSpacing.xs),
-      decoration: BoxDecoration(
-        color: context.appSurfaceMuted,
-        borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
-        border: Border.all(color: context.appBorder),
-      ),
-      child: SwitchListTile(
-        contentPadding: EdgeInsets.zero,
-        secondary: Icon(
-          isDark ? Icons.dark_mode_rounded : Icons.light_mode_rounded,
-          color: AppColors.googleBlue,
-        ),
-        title: Text('Dark mode', style: Theme.of(context).textTheme.titleMedium),
-        subtitle: Text(
-          isDark ? 'Using dark appearance' : 'Using light appearance',
-          style: Theme.of(context).textTheme.bodySmall,
-        ),
-        value: isDark,
-        onChanged: onChanged,
       ),
     );
   }
