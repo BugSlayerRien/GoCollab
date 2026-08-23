@@ -1,3 +1,4 @@
+import '../../../../core/models/content_creator.dart';
 import '../../domain/entities/event.dart';
 
 class EventModel extends Event {
@@ -23,6 +24,8 @@ class EventModel extends Event {
     super.isRegistered,
     super.myQrCode,
     super.createdBy,
+    super.creatorName,
+    super.creatorAvatarUrl,
   });
 
   /// [map] is a raw `events` row. [registeredCount] should be pre-aggregated
@@ -34,6 +37,10 @@ class EventModel extends Event {
     int registeredCount = 0,
     Map<String, dynamic>? registration,
   }) {
+    final creator = ContentCreator.fromProfileMap(
+      map['creator'] as Map<String, dynamic>?,
+      fallbackId: map['created_by'] as String?,
+    );
     return EventModel(
       id: map['id'] as String,
       title: map['title'] as String,
@@ -57,7 +64,9 @@ class EventModel extends Event {
       registeredCount: registeredCount,
       isRegistered: registration != null && registration['status'] != 'cancelled',
       myQrCode: registration?['qr_code'] as String?,
-      createdBy: map['created_by'] as String?,
+      createdBy: creator?.id ?? map['created_by'] as String?,
+      creatorName: creator?.name,
+      creatorAvatarUrl: creator?.avatarUrl,
     );
   }
 }

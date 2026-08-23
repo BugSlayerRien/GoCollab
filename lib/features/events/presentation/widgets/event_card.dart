@@ -4,6 +4,7 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/theme_extensions.dart';
 import '../../../../core/utils/date_formatter.dart';
+import '../../../../core/widgets/creator_attribution.dart';
 import '../../../../core/widgets/status_badge.dart';
 import '../../domain/entities/event.dart';
 
@@ -105,6 +106,10 @@ class _CardContent extends StatelessWidget {
                     ),
                   ],
                 ),
+              ],
+              if (event.creator != null) ...[
+                const SizedBox(height: AppSpacing.sm),
+                CreatorAttribution(label: 'Organizer', creator: event.creator, compact: true),
               ],
             ],
           ),

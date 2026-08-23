@@ -7,8 +7,11 @@ class OpportunityRemoteDataSource {
 
   final SupabaseClient _client;
 
+  static const _opportunitySelect =
+      '*, creator:profiles!opportunities_posted_by_fkey(id, full_name, avatar_url)';
+
   Future<List<OpportunityModel>> getOpportunities({String? currentUserId}) async {
-    final rows = await _client.from('opportunities').select().order('deadline');
+    final rows = await _client.from('opportunities').select(_opportunitySelect).order('deadline');
 
     Set<String> savedIds = {};
     if (currentUserId != null) {
@@ -26,7 +29,7 @@ class OpportunityRemoteDataSource {
   }
 
   Future<OpportunityModel> getOpportunityById(String id, {String? currentUserId}) async {
-    final row = await _client.from('opportunities').select().eq('id', id).single();
+    final row = await _client.from('opportunities').select(_opportunitySelect).eq('id', id).single();
 
     bool isSaved = false;
     if (currentUserId != null) {
@@ -69,7 +72,7 @@ class OpportunityRemoteDataSource {
   Future<List<OpportunityModel>> getSavedOpportunities(String userId) async {
     final rows = await _client
         .from('saved_opportunities')
-        .select('opportunity_id, opportunities(*)')
+        .select('opportunity_id, opportunities($_opportunitySelect)')
         .eq('user_id', userId)
         .order('saved_at', ascending: false);
 

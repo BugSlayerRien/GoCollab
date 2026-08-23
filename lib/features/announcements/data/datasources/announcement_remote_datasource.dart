@@ -10,7 +10,7 @@ class AnnouncementRemoteDataSource {
   Future<List<AnnouncementModel>> getAnnouncements() async {
     final rows = await _client
         .from('announcements')
-        .select('*, author:profiles!announcements_created_by_fkey(full_name)')
+        .select('*, creator:profiles!announcements_created_by_fkey(id, full_name, avatar_url)')
         .order('is_pinned', ascending: false)
         .order('published_at', ascending: false);
 

@@ -1,4 +1,5 @@
 import 'package:equatable/equatable.dart';
+import '../../../../core/models/content_creator.dart';
 
 enum EventCategory {
   workshop,
@@ -72,6 +73,8 @@ class Event extends Equatable {
     this.isRegistered = false,
     this.myQrCode,
     this.createdBy,
+    this.creatorName,
+    this.creatorAvatarUrl,
   });
 
   final String id;
@@ -95,6 +98,14 @@ class Event extends Equatable {
   final bool isRegistered;
   final String? myQrCode;
   final String? createdBy;
+  final String? creatorName;
+  final String? creatorAvatarUrl;
+
+  ContentCreator? get creator => ContentCreator(
+        id: createdBy,
+        name: creatorName,
+        avatarUrl: creatorAvatarUrl,
+      );
 
   bool get hasLocation => latitude != null && longitude != null;
   bool get isFull => capacity != null && registeredCount >= capacity!;
@@ -134,5 +145,7 @@ class Event extends Equatable {
         isRegistered,
         myQrCode,
         createdBy,
+        creatorName,
+        creatorAvatarUrl,
       ];
 }

@@ -1,3 +1,4 @@
+import '../../../../core/models/content_creator.dart';
 import '../../domain/entities/opportunity.dart';
 
 class OpportunityModel extends Opportunity {
@@ -15,9 +16,16 @@ class OpportunityModel extends Opportunity {
     super.deadline,
     super.status,
     super.isSaved,
+    super.postedBy,
+    super.creatorName,
+    super.creatorAvatarUrl,
   });
 
   factory OpportunityModel.fromMap(Map<String, dynamic> map, {bool isSaved = false}) {
+    final creator = ContentCreator.fromProfileMap(
+      map['creator'] as Map<String, dynamic>?,
+      fallbackId: map['posted_by'] as String?,
+    );
     return OpportunityModel(
       id: map['id'] as String,
       title: map['title'] as String,
@@ -32,6 +40,9 @@ class OpportunityModel extends Opportunity {
       deadline: map['deadline'] != null ? DateTime.parse(map['deadline'] as String) : null,
       status: map['status'] as String? ?? 'open',
       isSaved: isSaved,
+      postedBy: creator?.id ?? map['posted_by'] as String?,
+      creatorName: creator?.name,
+      creatorAvatarUrl: creator?.avatarUrl,
     );
   }
 }

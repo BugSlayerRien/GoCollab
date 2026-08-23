@@ -5,6 +5,7 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/theme_extensions.dart';
 import '../../../../core/widgets/confirm_dialog.dart';
+import '../../../../core/widgets/creator_attribution.dart';
 import '../../../../core/widgets/status_badge.dart';
 import '../../domain/entities/opportunity.dart';
 import '../providers/opportunity_providers.dart';
@@ -92,6 +93,10 @@ class OpportunityCard extends ConsumerWidget {
                       ),
                   ],
                 ),
+                if (opportunity.creator != null) ...[
+                  const SizedBox(height: AppSpacing.sm),
+                  CreatorAttribution(label: 'Posted by', creator: opportunity.creator, compact: true),
+                ],
               ],
             ),
           ),

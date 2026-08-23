@@ -1,4 +1,5 @@
 import 'package:equatable/equatable.dart';
+import '../../../../core/models/content_creator.dart';
 
 enum OpportunityType {
   internship,
@@ -37,6 +38,9 @@ class Opportunity extends Equatable {
     this.deadline,
     this.status = 'open',
     this.isSaved = false,
+    this.postedBy,
+    this.creatorName,
+    this.creatorAvatarUrl,
   });
 
   final String id;
@@ -52,6 +56,15 @@ class Opportunity extends Equatable {
   final DateTime? deadline;
   final String status;
   final bool isSaved;
+  final String? postedBy;
+  final String? creatorName;
+  final String? creatorAvatarUrl;
+
+  ContentCreator? get creator => ContentCreator(
+        id: postedBy,
+        name: creatorName,
+        avatarUrl: creatorAvatarUrl,
+      );
 
   bool get isExpired => deadline != null && deadline!.isBefore(DateTime.now());
   bool get isOpen => status == 'open' && !isExpired;
@@ -76,5 +89,8 @@ class Opportunity extends Equatable {
         deadline,
         status,
         isSaved,
+        postedBy,
+        creatorName,
+        creatorAvatarUrl,
       ];
 }

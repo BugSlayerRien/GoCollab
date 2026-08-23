@@ -7,6 +7,7 @@ import '../../../../core/theme/theme_extensions.dart';
 import '../../../../core/utils/date_formatter.dart';
 import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/confirm_dialog.dart';
+import '../../../../core/widgets/creator_attribution.dart';
 import '../../../../core/widgets/empty_state.dart';
 import '../../../../core/widgets/status_badge.dart';
 import '../../../auth/domain/entities/user_role.dart';
@@ -106,6 +107,10 @@ class _DetailBody extends ConsumerWidget {
             opportunity.organization,
             style: Theme.of(context).textTheme.titleMedium?.copyWith(color: context.appTextSecondary),
           ),
+          if (opportunity.creator != null) ...[
+            const SizedBox(height: AppSpacing.sm),
+            CreatorAttribution(label: 'Posted by', creator: opportunity.creator),
+          ],
           const SizedBox(height: AppSpacing.md),
           Wrap(
             spacing: AppSpacing.md,

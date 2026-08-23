@@ -4,6 +4,7 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/theme_extensions.dart';
 import '../../../../core/widgets/status_badge.dart';
+import '../../../../core/widgets/creator_attribution.dart';
 import '../../domain/entities/announcement.dart';
 
 class AnnouncementCard extends StatelessWidget {
@@ -73,12 +74,9 @@ class AnnouncementCard extends StatelessWidget {
           Text(announcement.title, style: Theme.of(context).textTheme.titleMedium),
           const SizedBox(height: 4),
           Text(announcement.body, style: Theme.of(context).textTheme.bodyMedium),
-          if (announcement.authorName != null) ...[
+          if (announcement.creator != null) ...[
             const SizedBox(height: AppSpacing.sm),
-            Text(
-              '— ${announcement.authorName}',
-              style: Theme.of(context).textTheme.labelSmall,
-            ),
+            CreatorAttribution(label: 'Posted by', creator: announcement.creator, compact: true),
           ],
         ],
       ),

@@ -1,4 +1,5 @@
 import 'package:equatable/equatable.dart';
+import '../../../../core/models/content_creator.dart';
 
 enum AnnouncementCategory {
   general,
@@ -29,7 +30,8 @@ class Announcement extends Equatable {
     required this.publishedAt,
     this.imageUrl,
     this.isPinned = false,
-    this.authorName,
+    this.creatorName,
+    this.creatorAvatarUrl,
     this.createdBy,
   });
 
@@ -40,9 +42,17 @@ class Announcement extends Equatable {
   final DateTime publishedAt;
   final String? imageUrl;
   final bool isPinned;
-  final String? authorName;
+  final String? creatorName;
+  final String? creatorAvatarUrl;
   final String? createdBy;
 
+  ContentCreator? get creator => ContentCreator(
+        id: createdBy,
+        name: creatorName,
+        avatarUrl: creatorAvatarUrl,
+      );
+
   @override
-  List<Object?> get props => [id, title, body, category, publishedAt, imageUrl, isPinned, authorName, createdBy];
+  List<Object?> get props =>
+      [id, title, body, category, publishedAt, imageUrl, isPinned, creatorName, creatorAvatarUrl, createdBy];
 }

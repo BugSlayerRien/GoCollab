@@ -7,8 +7,11 @@ class EventRemoteDataSource {
 
   final SupabaseClient _client;
 
+  static const _eventSelect =
+      '*, creator:profiles!events_created_by_fkey(id, full_name, avatar_url)';
+
   Future<List<EventModel>> getEvents({String? currentUserId}) async {
-    final rows = await _client.from('events').select().order('start_at');
+    final rows = await _client.from('events').select(_eventSelect).order('start_at');
 
     final registrationRows = await _client
         .from('event_registrations')
@@ -35,7 +38,7 @@ class EventRemoteDataSource {
   }
 
   Future<EventModel> getEventById(String id, {String? currentUserId}) async {
-    final row = await _client.from('events').select().eq('id', id).single();
+    final row = await _client.from('events').select(_eventSelect).eq('id', id).single();
 
     final registrationRows = await _client
         .from('event_registrations')
