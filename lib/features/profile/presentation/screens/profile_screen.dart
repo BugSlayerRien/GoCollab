@@ -6,6 +6,7 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/theme_extensions.dart';
 import '../../../../core/utils/date_formatter.dart';
+import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/confirm_dialog.dart';
 import '../../../../core/widgets/empty_state.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
@@ -65,12 +66,32 @@ class ProfileScreen extends ConsumerWidget {
               Text('Event history', style: Theme.of(context).textTheme.titleMedium),
               const SizedBox(height: AppSpacing.xs),
               const _EventHistorySection(),
+              const SizedBox(height: AppSpacing.xxl),
+              AppButton(
+                label: 'Sign out',
+                variant: AppButtonVariant.outlined,
+                color: AppColors.googleRed,
+                icon: Icons.logout_rounded,
+                onPressed: () => _signOut(context, ref),
+              ),
               const SizedBox(height: AppSpacing.xl),
             ],
           );
         },
       ),
     );
+  }
+
+  Future<void> _signOut(BuildContext context, WidgetRef ref) async {
+    final confirmed = await confirmDestructiveAction(
+      context,
+      title: 'Sign out?',
+      message: 'You will need to sign in again to access GoCollab.',
+      confirmLabel: 'Sign out',
+    );
+    if (!confirmed) return;
+    await ref.read(signOutUseCaseProvider)();
+    if (context.mounted) context.go('/login');
   }
 }
 
