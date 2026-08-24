@@ -1,0 +1,735 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>GoCollab — Architecture &amp; Database Schema</title>
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+  <style>
+    :root {
+      --blue: #4285f4;
+      --text: #1a1a1a;
+      --muted: #5f6368;
+      --border: #dadce0;
+      --bg: #ffffff;
+      --surface: #f8f9fa;
+    }
+    * { box-sizing: border-box; }
+    body {
+      font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+      color: var(--text);
+      line-height: 1.55;
+      max-width: 920px;
+      margin: 0 auto;
+      padding: 40px 48px;
+      background: var(--bg);
+    }
+    h1 { font-size: 28px; margin: 0 0 8px; color: var(--blue); }
+    h2 {
+      font-size: 20px;
+      margin: 36px 0 12px;
+      padding-bottom: 6px;
+      border-bottom: 2px solid var(--blue);
+      page-break-after: avoid;
+    }
+    h3 { font-size: 16px; margin: 24px 0 8px; page-break-after: avoid; }
+    p, li { font-size: 13px; }
+    .subtitle { color: var(--muted); font-size: 14px; margin-bottom: 32px; }
+    .meta { font-size: 12px; color: var(--muted); margin-bottom: 40px; }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 11px;
+      margin: 12px 0 20px;
+      page-break-inside: avoid;
+    }
+    th, td {
+      border: 1px solid var(--border);
+      padding: 7px 10px;
+      text-align: left;
+      vertical-align: top;
+    }
+    th { background: var(--surface); font-weight: 600; }
+    tr:nth-child(even) td { background: #fafafa; }
+    .diagram {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 16px;
+      margin: 16px 0 24px;
+      overflow-x: auto;
+      page-break-inside: avoid;
+    }
+    .mermaid { text-align: center; }
+    /* ERD: full bleed, large text, no shrink-to-fit */
+    .erd-section {
+      max-width: none;
+      width: 100%;
+      margin-left: calc(50% - 50vw);
+      margin-right: calc(50% - 50vw);
+      padding: 0 24px;
+      box-sizing: border-box;
+    }
+    .erd-section h2 { max-width: 1100px; margin-left: auto; margin-right: auto; }
+    .erd-section > p { max-width: 1100px; margin-left: auto; margin-right: auto; }
+    .diagram-erd {
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 28px 20px;
+      margin: 20px auto 36px;
+      max-width: 1100px;
+      overflow-x: auto;
+      page-break-inside: avoid;
+    }
+    .diagram-erd .mermaid {
+      font-size: 18px !important;
+      min-height: 420px;
+    }
+    .diagram-erd .mermaid svg {
+      max-width: none !important;
+      width: 100% !important;
+      height: auto !important;
+    }
+    .diagram-erd h3 {
+      margin: 0 0 12px;
+      font-size: 15px;
+      color: var(--muted);
+      text-align: left;
+    }
+    .toc { background: var(--surface); padding: 16px 24px; border-radius: 8px; margin-bottom: 32px; }
+    .toc ol { margin: 0; padding-left: 20px; }
+    .toc li { margin: 4px 0; font-size: 13px; }
+    .page-break { page-break-before: always; }
+    code { background: #eef; padding: 1px 5px; border-radius: 3px; font-size: 11px; }
+    @media print {
+      body { padding: 24px 32px; max-width: none; }
+      h2 { margin-top: 24px; }
+      .erd-section {
+        margin-left: 0;
+        margin-right: 0;
+        padding: 0;
+        width: 100%;
+      }
+      .diagram-erd {
+        max-width: none;
+        padding: 12px 8px;
+        border: none;
+      }
+      .diagram-erd .mermaid svg {
+        max-width: 100% !important;
+        width: 100% !important;
+      }
+      .erd-page { page: erd; }
+    }
+    @page erd {
+      size: landscape;
+      margin: 12mm;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>GoCollab</h1>
+  <p class="subtitle">System Architecture, Flowcharts &amp; Database Design</p>
+  <p class="meta">
+    <strong>Project:</strong> GoCollab — GDGoC Philippines Community Management Platform<br />
+    <strong>Stack:</strong> Flutter · Riverpod · Supabase · Google Calendar API · GitHub API<br />
+    <strong>Version:</strong> 1.0.0 &nbsp;|&nbsp; <strong>Generated:</strong> August 2026
+  </p>
+
+  <div class="toc">
+    <strong>Contents</strong>
+    <ol>
+      <li>System Architecture</li>
+      <li>Clean Architecture Layers</li>
+      <li>Role-Based Navigation</li>
+      <li>Use Case Diagrams</li>
+      <li>System Flowcharts</li>
+      <li>Entity-Relationship Diagram (ERD)</li>
+      <li>Database Table Reference</li>
+      <li>Storage Buckets &amp; Security</li>
+    </ol>
+  </div>
+
+  <!-- 1. ARCHITECTURE -->
+  <h2>1. System Architecture</h2>
+  <p>GoCollab follows a <strong>3-tier architecture</strong>: Flutter client, Supabase backend (BaaS), and external APIs. The client uses Clean Architecture with Riverpod state management.</p>
+  <div class="diagram">
+    <pre class="mermaid">
+flowchart TD
+    Launch([User opens app]) --> UI[Presentation — Screens, Widgets, Riverpod]
+    UI --> Domain[Domain — Entities, Use Cases, Repositories]
+    Domain --> Data[Data — Models, DataSources, Repo Impl]
+    Data --> Core[Core — Router, Theme, Services]
+    Data --> Auth[GoTrue Auth]
+    Data --> DB[(PostgreSQL + RLS)]
+    Data --> Storage[Storage Buckets]
+    Data --> RT[Realtime]
+    Core --> GCal[Google Calendar API v3]
+    Core --> GAuth[Google OAuth]
+    Core --> FCM[Firebase Cloud Messaging]
+    Data --> GitHub[GitHub REST API]
+    UI --> OSM[OpenStreetMap]
+    </pre>
+  </div>
+
+  <!-- 2. CLEAN ARCH -->
+  <h2>2. Clean Architecture Layers</h2>
+  <div class="diagram">
+    <pre class="mermaid">
+flowchart TD
+    Screen[Screens / Widgets] --> Provider[Riverpod Providers]
+    Provider --> UseCase[Use Cases]
+    UseCase --> RepoIf[Repository Interface]
+    RepoImpl[Repository Impl] -.implements.-> RepoIf
+    RepoImpl --> DataSource[Remote DataSource]
+    DataSource --> Backend[(Supabase / HTTP)]
+    </pre>
+  </div>
+
+  <!-- 3. NAVIGATION -->
+  <h2>3. Role-Based Navigation</h2>
+  <div class="diagram">
+    <pre class="mermaid">
+flowchart TD
+    Start([App Launch]) --> Splash[/splash/]
+    Splash --> AuthCheck{Authenticated?}
+    AuthCheck -->|No| Login["/login · /register"]
+    AuthCheck -->|Recovery| Reset[/reset-password/]
+    AuthCheck -->|Yes| Shell[/App Shell/]
+    Shell --> Member["Member — 5 tabs"]
+    Shell --> Officer["Officer — 7 tabs"]
+    Member --> M1["Home · Career · Events · Community · Profile"]
+    Officer --> O1["+ Analytics · Partners"]
+    Shell --> Deep["/events/:id · /opportunities/:id · /my-calendar · /settings"]
+    </pre>
+  </div>
+
+  <div class="page-break"></div>
+
+  <!-- 4. USE CASES -->
+  <h2>4. Use Case Diagrams</h2>
+  <p>
+    Primary actors are <strong>Member</strong> and <strong>Officer</strong>.
+    Officers inherit all member capabilities and add management use cases.
+    Secondary actors are external systems (Google, GitHub, FCM, Supabase).
+  </p>
+
+  <h3>4.1 Combined Use Case Diagram</h3>
+  <p>Members access read/participate features only. Officers access everything members can, plus management use cases.</p>
+  <div class="diagram">
+    <pre class="mermaid">
+flowchart LR
+    Member((Member))
+
+    subgraph GoCollab["GoCollab System"]
+        direction TB
+        UC01(Register / Sign in)
+        UC02(Reset password)
+        UC03(Dashboard / Announcements)
+        UC04(Career Hub)
+        UC05(Events and Calendar)
+        UC06(Inbox / Profile / Settings)
+        UC07(Content publishing)
+        UC08(QR check-in)
+        UC09(Manage opportunities)
+        UC10(Community analytics)
+        UC11(Partnerships)
+    end
+
+    Officer((Officer))
+
+    Member --> UC01
+    Member --> UC02
+    Member --> UC03
+    Member --> UC04
+    Member --> UC05
+    Member --> UC06
+
+    Officer --> UC01
+    Officer --> UC02
+    Officer --> UC03
+    Officer --> UC04
+    Officer --> UC05
+    Officer --> UC06
+    Officer --> UC07
+    Officer --> UC08
+    Officer --> UC09
+    Officer --> UC10
+    Officer --> UC11
+    </pre>
+  </div>
+
+  <h3>4.2 Member Use Cases (Detail)</h3>
+  <div class="diagram">
+    <pre class="mermaid">
+flowchart TD
+    Member((Member))
+
+    subgraph GoCollab["GoCollab System"]
+      UC01(Register / Sign in)
+      UC02(Reset password)
+      UC03(View dashboard)
+      UC04(Browse announcements)
+      UC05(Browse opportunities)
+      UC06(Save opportunity)
+      UC07(Browse events)
+      UC08(Register for event)
+      UC09(View QR ticket)
+      UC10(Sync to Google Calendar)
+      UC11(View My Calendar)
+      UC12(Read notifications)
+      UC13(Manage profile)
+      UC14(View GitHub stats)
+      UC15(View certificates)
+      UC16(Open settings / sign out)
+    end
+
+    Member --> UC01
+    Member --> UC02
+    Member --> UC03
+    Member --> UC04
+    Member --> UC05
+    Member --> UC06
+    Member --> UC07
+    Member --> UC08
+    Member --> UC09
+    Member --> UC10
+    Member --> UC11
+    Member --> UC12
+    Member --> UC13
+    Member --> UC14
+    Member --> UC15
+    Member --> UC16
+    </pre>
+  </div>
+
+  <h3>4.3 Officer Use Cases (Detail)</h3>
+  <div class="diagram">
+    <pre class="mermaid">
+flowchart TD
+    Officer((Officer))
+    Member((Member))
+
+    Officer -.inherits member use cases.-> Member
+
+    subgraph GoCollabOfficer["GoCollab System — Officer only"]
+      UC20(Publish / pin announcement)
+      UC21(Create / edit event)
+      UC22(Upload event banner)
+      UC23(Scan QR check-in)
+      UC24(Validate attendance)
+      UC25(Create / manage opportunity)
+      UC26(View community analytics)
+      UC27(Manage partners)
+      UC28(Track sponsorships)
+      UC29(Log meetings / communications)
+    end
+
+    Officer --> UC20
+    Officer --> UC21
+    Officer --> UC22
+    Officer --> UC23
+    Officer --> UC24
+    Officer --> UC25
+    Officer --> UC26
+    Officer --> UC27
+    Officer --> UC28
+    Officer --> UC29
+    </pre>
+  </div>
+
+  <h3>4.4 External System Actors</h3>
+  <div class="diagram">
+    <pre class="mermaid">
+flowchart TD
+    Member((Member))
+    Officer((Officer))
+
+    subgraph GoCollab["GoCollab System"]
+      AuthUC(Authenticate user)
+      CalUC(Calendar sync / My Calendar)
+      GitUC(Fetch GitHub profile)
+      PushUC(Deliver push notification)
+      StoreUC(Upload avatar / banner)
+    end
+
+    Google[Google OAuth / Calendar]
+    GitHub[GitHub REST API]
+    FCM[Firebase Cloud Messaging]
+    Supabase[Supabase Auth / DB / Storage]
+
+    Member --> AuthUC
+    Member --> CalUC
+    Member --> GitUC
+    Member --> PushUC
+    Member --> StoreUC
+    Officer --> StoreUC
+
+    AuthUC --> Google
+    AuthUC --> Supabase
+    CalUC --> Google
+    GitUC --> GitHub
+    PushUC --> FCM
+    StoreUC --> Supabase
+    </pre>
+  </div>
+
+  <h3>4.5 Use Case Summary</h3>
+  <table>
+    <tr><th>ID</th><th>Use Case</th><th>Actor</th><th>Description</th></tr>
+    <tr><td>UC01</td><td>Register / Sign in</td><td>Member, Officer</td><td>Email/password or Google Sign-In via Supabase Auth</td></tr>
+    <tr><td>UC02</td><td>Reset password</td><td>Member, Officer</td><td>Forgot-password email + PKCE recovery flow</td></tr>
+    <tr><td>UC03–UC04</td><td>Dashboard / Announcements</td><td>Member, Officer</td><td>View feed, upcoming events, community stats</td></tr>
+    <tr><td>UC05–UC06</td><td>Career Hub</td><td>Member, Officer</td><td>Browse/filter opportunities; bookmark</td></tr>
+    <tr><td>UC07–UC11</td><td>Events &amp; Calendar</td><td>Member, Officer</td><td>Register, QR ticket, Google Calendar sync, My Calendar</td></tr>
+    <tr><td>UC12–UC16</td><td>Inbox / Profile / Settings</td><td>Member, Officer</td><td>Notifications, profile/GitHub/certificates, dark mode, sign out</td></tr>
+    <tr><td>UC20–UC22</td><td>Content publishing</td><td>Officer</td><td>Announcements, events, banner upload</td></tr>
+    <tr><td>UC23–UC24</td><td>QR check-in</td><td>Officer</td><td>Scan ticket and record attendance</td></tr>
+    <tr><td>UC25</td><td>Manage opportunities</td><td>Officer</td><td>Create and update Career Hub postings</td></tr>
+    <tr><td>UC26</td><td>Community analytics</td><td>Officer</td><td>Engagement, attendance, growth charts</td></tr>
+    <tr><td>UC27–UC29</td><td>Partnerships</td><td>Officer</td><td>Partners, sponsorships, meetings, communications</td></tr>
+  </table>
+
+  <div class="page-break"></div>
+
+  <!-- 5. FLOWCHARTS -->
+  <h2>5. System Flowcharts</h2>
+
+  <h3>5.1 Authentication</h3>
+  <div class="diagram">
+    <pre class="mermaid">
+sequenceDiagram
+    actor User
+    participant App as Flutter App
+    participant Auth as Supabase Auth
+    participant Google as Google OAuth
+    alt Email / Password
+        User->>App: Sign in / Register
+        App->>Auth: signInWithPassword
+        Auth-->>App: JWT Session
+    else Google Sign-In
+        User->>App: Continue with Google
+        App->>Auth: signInWithOAuth + calendar scope
+        Auth->>Google: OAuth consent
+        Google-->>Auth: Tokens
+        Auth-->>App: PKCE redirect + session
+    end
+    App->>App: go_router → App Shell
+    </pre>
+  </div>
+
+  <h3>5.2 Event Registration &amp; QR Check-in</h3>
+  <div class="diagram">
+    <pre class="mermaid">
+flowchart TD
+    A[Member: Event Detail] --> B{Registered?}
+    B -->|No| C[Insert event_registrations + QR code]
+    B -->|Yes| D[Show QR ticket]
+    E[Officer: QR Scanner] --> F[Scan QR code]
+    F --> G[Validate registration]
+    G --> H[Insert attendance record]
+    C --> DB[(Supabase PostgreSQL)]
+    H --> DB
+    DB --> N[Auto-notification trigger]
+    N --> Inbox[In-app notifications]
+    </pre>
+  </div>
+
+  <h3>5.3 Google Calendar Integration</h3>
+  <div class="diagram">
+    <pre class="mermaid">
+flowchart TD
+    Token[Resolve OAuth token] --> T1[Supabase providerToken]
+    Token --> T2[GoogleTokenStorage cache]
+    T1 --> API{Token valid?}
+    T2 --> API
+    API -->|Add to Calendar| POST[POST /calendars/primary/events]
+    POST --> Sync[(gcal_event_sync table)]
+    API -->|My Calendar| GET[GET /calendars/primary/events]
+    GET --> UI[table_calendar UI]
+    </pre>
+  </div>
+
+  <div class="page-break"></div>
+
+  <!-- 5. ERD — split into large domain diagrams for readability -->
+  <div class="erd-section erd-page">
+  <h2>6. Entity-Relationship Diagram (ERD)</h2>
+  <p>Relationships are split by domain so each diagram stays large and readable. Cardinality: <code>||--||</code> one-to-one, <code>||--o{</code> one-to-many, <code>||--o|</code> one-to-zero-or-one.</p>
+
+  <div class="diagram-erd">
+    <h3>6.1 Identity &amp; Profiles</h3>
+    <pre class="mermaid">
+erDiagram
+    AUTH_USERS {
+        uuid id PK
+        string email
+    }
+    ROLES {
+        int id PK
+        string name
+    }
+    CHAPTERS {
+        uuid id PK
+        string name
+        string campus
+    }
+    PROFILES {
+        uuid id PK
+        string full_name
+        string email
+        string avatar_url
+        int role_id FK
+        uuid chapter_id FK
+        string skills
+    }
+    GITHUB_PROFILES {
+        uuid user_id PK
+        string github_username
+        int public_repos
+    }
+    AUTH_USERS ||--|| PROFILES : extends
+    ROLES ||--o{ PROFILES : assigns
+    CHAPTERS ||--o{ PROFILES : hosts
+    PROFILES ||--o| GITHUB_PROFILES : has
+    </pre>
+  </div>
+
+  <div class="diagram-erd">
+    <h3>6.2 Events, Attendance &amp; Career Hub</h3>
+    <pre class="mermaid">
+erDiagram
+    PROFILES {
+        uuid id PK
+        string full_name
+    }
+    CHAPTERS {
+        uuid id PK
+        string name
+    }
+    ANNOUNCEMENTS {
+        uuid id PK
+        string title
+        string category
+        boolean is_pinned
+        uuid created_by FK
+    }
+    EVENTS {
+        uuid id PK
+        string title
+        datetime start_at
+        string status
+        uuid created_by FK
+        string banner_url
+    }
+    EVENT_REGISTRATIONS {
+        uuid id PK
+        uuid event_id FK
+        uuid user_id FK
+        string qr_code
+        string status
+    }
+    ATTENDANCE {
+        uuid id PK
+        uuid event_id FK
+        uuid user_id FK
+        uuid checked_in_by FK
+    }
+    CERTIFICATES {
+        uuid id PK
+        uuid event_id FK
+        uuid user_id FK
+        string certificate_number
+    }
+    OPPORTUNITIES {
+        uuid id PK
+        string title
+        string opp_type
+        date deadline
+        uuid posted_by FK
+    }
+    SAVED_OPPORTUNITIES {
+        uuid user_id FK
+        uuid opportunity_id FK
+    }
+    GCAL_EVENT_SYNC {
+        uuid user_id FK
+        uuid event_id FK
+        string gcal_event_id
+    }
+    PROFILES ||--o{ ANNOUNCEMENTS : creates
+    CHAPTERS ||--o{ ANNOUNCEMENTS : scoped
+    PROFILES ||--o{ EVENTS : organizes
+    CHAPTERS ||--o{ EVENTS : hosts
+    PROFILES ||--o{ EVENT_REGISTRATIONS : registers
+    EVENTS ||--o{ EVENT_REGISTRATIONS : has
+    PROFILES ||--o{ ATTENDANCE : attends
+    EVENTS ||--o{ ATTENDANCE : tracks
+    EVENT_REGISTRATIONS ||--o| ATTENDANCE : links
+    PROFILES ||--o{ CERTIFICATES : earns
+    EVENTS ||--o{ CERTIFICATES : issues
+    PROFILES ||--o{ OPPORTUNITIES : posts
+    PROFILES ||--o{ SAVED_OPPORTUNITIES : bookmarks
+    OPPORTUNITIES ||--o{ SAVED_OPPORTUNITIES : saved
+    PROFILES ||--o{ GCAL_EVENT_SYNC : syncs
+    EVENTS ||--o{ GCAL_EVENT_SYNC : maps
+    </pre>
+  </div>
+
+  <div class="diagram-erd">
+    <h3>6.3 Partnerships, Analytics &amp; Notifications</h3>
+    <pre class="mermaid">
+erDiagram
+    PROFILES {
+        uuid id PK
+        string full_name
+    }
+    EVENTS {
+        uuid id PK
+        string title
+    }
+    PARTNERS {
+        uuid id PK
+        string name
+        string category
+        string collaboration_status
+        uuid created_by FK
+    }
+    SPONSORSHIPS {
+        uuid id PK
+        uuid partner_id FK
+        uuid event_id FK
+        float amount
+        string status
+    }
+    MEETINGS {
+        uuid id PK
+        uuid partner_id FK
+        datetime scheduled_at
+        uuid created_by FK
+    }
+    COMMUNICATIONS {
+        uuid id PK
+        uuid partner_id FK
+        string subject
+        uuid communicated_by FK
+    }
+    ENGAGEMENT_LOGS {
+        uuid id PK
+        uuid user_id FK
+        string action_type
+        uuid reference_id
+    }
+    NOTIFICATIONS {
+        uuid id PK
+        uuid user_id FK
+        string title
+        string notif_type
+        boolean is_read
+    }
+    PROFILES ||--o{ PARTNERS : manages
+    PARTNERS ||--o{ SPONSORSHIPS : provides
+    EVENTS ||--o{ SPONSORSHIPS : receives
+    PARTNERS ||--o{ MEETINGS : schedules
+    PARTNERS ||--o{ COMMUNICATIONS : logs
+    PROFILES ||--o{ COMMUNICATIONS : sends
+    PROFILES ||--o{ ENGAGEMENT_LOGS : performs
+    PROFILES ||--o{ NOTIFICATIONS : receives
+    </pre>
+  </div>
+  </div>
+
+  <div class="page-break"></div>
+
+  <!-- 6. TABLES -->
+  <h2>7. Database Table Reference</h2>
+  <p>All tables live in <code>public</code> schema on Supabase PostgreSQL. Primary keys are UUID unless noted. Row Level Security (RLS) is enabled on every table.</p>
+
+  <h3>7.1 Core &amp; Identity</h3>
+  <table>
+    <tr><th>Table</th><th>Purpose</th><th>Key Columns</th><th>Relationships</th></tr>
+    <tr><td><code>roles</code></td><td>Member (1) / Officer (2)</td><td>id PK, name</td><td>→ profiles.role_id</td></tr>
+    <tr><td><code>chapters</code></td><td>GDGoC campus chapters</td><td>id PK, name, campus</td><td>→ profiles, events, announcements</td></tr>
+    <tr><td><code>profiles</code></td><td>User profile (1:1 auth.users)</td><td>id PK/FK, full_name, email, avatar_url, role_id, skills[]</td><td>Central hub for most FKs</td></tr>
+    <tr><td><code>github_profiles</code></td><td>Cached GitHub API stats</td><td>user_id FK UK, github_username, public_repos</td><td>profiles.id</td></tr>
+  </table>
+
+  <h3>7.2 Community Content</h3>
+  <table>
+    <tr><th>Table</th><th>Purpose</th><th>Key Columns</th><th>Relationships</th></tr>
+    <tr><td><code>announcements</code></td><td>Community feed posts</td><td>title, body, category, is_pinned, created_by FK</td><td>profiles, chapters</td></tr>
+    <tr><td><code>events</code></td><td>Event management</td><td>title, start_at, end_at, status, created_by FK, banner_url</td><td>profiles, chapters</td></tr>
+    <tr><td><code>event_registrations</code></td><td>Member registration + QR</td><td>event_id FK, user_id FK, qr_code UK, status</td><td>events, profiles</td></tr>
+    <tr><td><code>attendance</code></td><td>QR / manual check-in</td><td>event_id FK, user_id FK, checked_in_by FK</td><td>events, profiles, registrations</td></tr>
+    <tr><td><code>certificates</code></td><td>Digital event certificates</td><td>event_id FK, user_id FK, certificate_number UK</td><td>events, profiles</td></tr>
+    <tr><td><code>opportunities</code></td><td>Career Hub postings</td><td>title, organization, type, deadline, posted_by FK</td><td>profiles</td></tr>
+    <tr><td><code>saved_opportunities</code></td><td>Member bookmarks</td><td>user_id FK, opportunity_id FK</td><td>profiles, opportunities</td></tr>
+    <tr><td><code>gcal_event_sync</code></td><td>Google Calendar mapping</td><td>user_id FK, event_id FK, gcal_event_id</td><td>auth.users, events</td></tr>
+  </table>
+
+  <h3>7.3 Partnerships &amp; Analytics</h3>
+  <table>
+    <tr><th>Table</th><th>Purpose</th><th>Key Columns</th><th>Relationships</th></tr>
+    <tr><td><code>partners</code></td><td>Partner directory</td><td>name, category, collaboration_status, created_by FK</td><td>profiles</td></tr>
+    <tr><td><code>sponsorships</code></td><td>Sponsorship tracking</td><td>partner_id FK, event_id FK, amount, status</td><td>partners, events</td></tr>
+    <tr><td><code>meetings</code></td><td>Partner meeting schedule</td><td>partner_id FK, scheduled_at, created_by FK</td><td>partners</td></tr>
+    <tr><td><code>communications</code></td><td>Partner comm logs</td><td>partner_id FK, subject, communicated_by FK</td><td>partners, profiles</td></tr>
+    <tr><td><code>engagement_logs</code></td><td>Member analytics actions</td><td>user_id FK, action_type, reference_id</td><td>profiles</td></tr>
+    <tr><td><code>notifications</code></td><td>In-app + push records</td><td>user_id FK, title, type, is_read</td><td>profiles (Realtime stream)</td></tr>
+  </table>
+
+  <h3>7.4 Migration History</h3>
+  <table>
+    <tr><th>Migration File</th><th>Purpose</th></tr>
+    <tr><td>20260723190000_init_schema.sql</td><td>Core tables, triggers, is_officer()</td></tr>
+    <tr><td>20260723191000_rls_policies.sql</td><td>Row Level Security on all tables</td></tr>
+    <tr><td>20260723192000_seed_data.sql</td><td>Sample chapters, events, opportunities</td></tr>
+    <tr><td>20260817140000_community_points_trigger.sql</td><td>Auto-update profiles.points</td></tr>
+    <tr><td>20260817150000_event_banners_storage.sql</td><td>event-banners storage bucket</td></tr>
+    <tr><td>20260817163000_officer_owned_content_policies.sql</td><td>Officer owns their content CRUD</td></tr>
+    <tr><td>20260817170000_auto_notifications.sql</td><td>DB triggers → notifications</td></tr>
+    <tr><td>20260819180000_avatars_storage.sql</td><td>avatars storage bucket</td></tr>
+    <tr><td>20260819190000_gcal_sync.sql</td><td>gcal_event_sync table</td></tr>
+  </table>
+
+  <!-- 7. SECURITY -->
+  <h2>8. Storage Buckets &amp; Security</h2>
+  <table>
+    <tr><th>Bucket</th><th>Purpose</th><th>Access</th></tr>
+    <tr><td><code>event-banners</code></td><td>Event banner images uploaded by officers</td><td>Authenticated upload; public read</td></tr>
+    <tr><td><code>avatars</code></td><td>Profile pictures for members &amp; officers</td><td>User owns their avatar folder</td></tr>
+  </table>
+
+  <h3>Security Model</h3>
+  <ul>
+    <li><strong>RLS</strong> — Every table has policies scoped to <code>auth.uid()</code></li>
+    <li><strong>is_officer()</strong> — SQL helper grants elevated access to role_id = 2</li>
+    <li><strong>Officer-owned content</strong> — Officers edit/delete only their own announcements &amp; events</li>
+    <li><strong>PKCE auth</strong> — Password recovery and OAuth use PKCE on web</li>
+    <li><strong>Google tokens</strong> — Cached locally in GoogleTokenStorage; never hardcoded</li>
+  </ul>
+
+  <p style="margin-top:48px;font-size:11px;color:#888;text-align:center;">
+    GoCollab · GDGoC Philippines · SDG 17 — Partnerships for the Goals
+  </p>
+
+  <script>
+    mermaid.initialize({
+      startOnLoad: true,
+      theme: 'neutral',
+      securityLevel: 'loose',
+      themeVariables: {
+        fontSize: '16px',
+        fontFamily: 'Segoe UI, system-ui, sans-serif'
+      },
+      flowchart: { useMaxWidth: true, htmlLabels: true },
+      er: {
+        useMaxWidth: false,
+        layoutDirection: 'TB'
+      }
+    });
+  </script>
+</body>
+</html>

@@ -125,6 +125,16 @@ supabase db push
 
 (or paste each file, in order, into the Supabase Dashboard's SQL editor).
 
+### Architecture & ERD Documentation
+
+Full system architecture diagrams, flowcharts, ERD, and table reference are in [`docs/`](docs/):
+
+| File | Description |
+|---|---|
+| [`GoCollab-Architecture-and-Schema.pdf`](docs/GoCollab-Architecture-and-Schema.pdf) | Printable PDF (diagrams + schema tables) |
+| [`GoCollab-Architecture-and-Schema.html`](docs/GoCollab-Architecture-and-Schema.html) | Self-contained HTML with Mermaid diagrams |
+| [`GoCollab-Architecture-and-Schema.md`](docs/GoCollab-Architecture-and-Schema.md) | Markdown source (GitHub renders Mermaid) |
+
 ## Getting Started
 
 ### Prerequisites

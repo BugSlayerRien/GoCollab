@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>GoCollab — System Flowcharts</title>
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+  <style>
+    :root {
+      --blue: #4285f4;
+      --text: #1a1a1a;
+      --muted: #5f6368;
+      --border: #dadce0;
+      --bg: #ffffff;
+      --surface: #f8f9fa;
+    }
+    * { box-sizing: border-box; }
+    body {
+      font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+      color: var(--text);
+      line-height: 1.55;
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 40px 48px;
+      background: var(--bg);
+    }
+    h1 { font-size: 28px; margin: 0 0 8px; color: var(--blue); }
+    h2 {
+      font-size: 20px;
+      margin: 36px 0 12px;
+      padding-bottom: 6px;
+      border-bottom: 2px solid var(--blue);
+      page-break-after: avoid;
+    }
+    h3 { font-size: 16px; margin: 24px 0 8px; page-break-after: avoid; }
+    p, li { font-size: 13px; }
+    .subtitle { color: var(--muted); font-size: 14px; margin-bottom: 32px; }
+    .meta { font-size: 12px; color: var(--muted); margin-bottom: 40px; }
+    .diagram {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 20px;
+      margin: 16px 0 28px;
+      overflow-x: auto;
+      page-break-inside: avoid;
+    }
+    .mermaid { text-align: center; }
+    .toc { background: var(--surface); padding: 16px 24px; border-radius: 8px; margin-bottom: 32px; }
+    .toc ol { margin: 0; padding-left: 20px; }
+    .toc li { margin: 4px 0; font-size: 13px; }
+    .page-break { page-break-before: always; }
+    code { background: #eef; padding: 1px 5px; border-radius: 3px; font-size: 11px; }
+    .note {
+      background: #e8f0fe;
+      border-left: 4px solid var(--blue);
+      padding: 10px 14px;
+      margin: 12px 0 20px;
+      border-radius: 0 6px 6px 0;
+      font-size: 12px;
+    }
+    @media print {
+      body { padding: 24px 32px; max-width: none; }
+      h2 { margin-top: 24px; }
+    }
+  </style>
+</head>
+<body>
+
+  <h1>GoCollab</h1>
+  <p class="subtitle">System Flowcharts — Complete Process Diagrams</p>
+  <p class="meta">
+    <strong>Project:</strong> GoCollab — GDGoC Philippines Community Management Platform<br />
+    <strong>Version:</strong> 1.0.0 &nbsp;|&nbsp; <strong>Generated:</strong> August 2026
+  </p>
+
+  <div class="toc">
+    <strong>Contents</strong>
+    <ol>
+      <li>App Startup &amp; Session Detection</li>
+      <li>Authentication (Email &amp; Google OAuth)</li>
+      <li>Password Recovery (PKCE)</li>
+      <li>User Registration &amp; Profile Creation</li>
+      <li>Dashboard Loading</li>
+      <li>Event Browsing &amp; Registration</li>
+      <li>QR Ticket Generation &amp; Check-in</li>
+      <li>Google Calendar Sync</li>
+      <li>My Calendar View</li>
+      <li>Career Hub &amp; Opportunity Bookmarking</li>
+      <li>Announcement Publishing</li>
+      <li>Notifications Flow</li>
+      <li>Profile &amp; GitHub Stats</li>
+      <li>Community Analytics (Officer)</li>
+      <li>Partnership Management (Officer)</li>
+      <li>Settings &amp; Sign Out</li>
+    </ol>
+  </div>
+
+  <!-- 1 -->
+  <h2>1. App Startup &amp; Session Detection</h2>
+  <div class="diagram">
+    <pre class="mermaid">
+flowchart TD
+    Start([App Launch]) --> Init[Initialize Supabase Client]
+    Init --> PKCE{URL has recovery/auth code?}
+    PKCE -->|Yes| Handle[handleWebAuthCallback]
+    Handle --> Session2{Session recovered?}
+    Session2 -->|Reset password| Reset[/reset-password/]
+    Session2 -->|Valid session| Shell[App Shell]
+    PKCE -->|No| Check{Existing session?}
+    Check -->|Yes| Role{Check role_id}
+    Role -->|1 Member| MemberShell[Member Shell — 5 tabs]
+    Role -->|2 Officer| OfficerShell[Officer Shell — 7 tabs]
+    Check -->|No| Login[/login/]
+    </pre>
+  </div>
+
+  <!-- 2 -->
+  <h2>2. Authentication (Email &amp; Google OAuth)</h2>
+  <div class="diagram">
+    <pre class="mermaid">
+sequenceDiagram
+    actor User
+    participant App as Flutter App
+    participant Auth as Supabase GoTrue
+    participant Google as Google OAuth
+
+    alt Email / Password
+        User->>App: Enter email + password
+        App->>Auth: signInWithPassword()
+        Auth-->>App: JWT session + user
+        App->>App: Save session, route to Shell
+    else Google Sign-In
+        User->>App: Tap Continue with Google
+        App->>Auth: signInWithOAuth(google, scopes: calendar.events)
+        Auth->>Google: OAuth consent screen
+        Google-->>Auth: Access + refresh tokens
+        Auth-->>App: PKCE redirect with session
+        App->>App: Store providerToken for Calendar API
+        App->>App: Route to Shell
+    end
+    </pre>
+  </div>
+
+  <!-- 3 -->
+  <h2>3. Password Recovery (PKCE)</h2>
+  <div class="diagram">
+    <pre class="mermaid">
+flowchart TD
+    A[User taps Forgot Password] --> B[Enter email]
+    B --> C[App calls resetPasswordForEmail]
+    C --> D[Supabase sends recovery email]
+    D --> E[User clicks link in email]
+    E --> F[Browser opens localhost:5000/?code=...]
+    F --> G[handleWebAuthCallback extracts code]
+    G --> H{Code valid?}
+    H -->|Yes| I[Exchange code for session]
+    I --> J[Route to /reset-password]
+    J --> K[User enters new password]
+    K --> L[updateUser with new password]
+    L --> M[Success — redirect to login]
+    H -->|No| N[Show error snackbar on login]
+    </pre>
+  </div>
+
+  <div class="page-break"></div>
+
+  <!-- 4 -->
+  <h2>4. User Registration &amp; Profile Creation</h2>
+  <div class="diagram">
+    <pre class="mermaid">
+flowchart TD
+    A[User taps Register] --> B[Enter name, email, password]
+    B --> C[App calls signUp]
+    C --> D[Supabase creates auth.users row]
+    D --> E[handle_new_user trigger fires]
+    E --> F[Auto-insert profiles row]
+    F --> G[role_id = 1 Member by default]
+    G --> H{Email confirmed?}
+    H -->|Yes| I[Route to App Shell]
+    H -->|Needs confirmation| J[Show check email message]
+    </pre>
+  </div>
+
+  <!-- 5 -->
+  <h2>5. Dashboard Loading</h2>
+  <div class="diagram">
+    <pre class="mermaid">
+flowchart TD
+    Shell[App Shell loaded] --> P{Is Officer?}
+    P -->|Member| M1[Fetch announcements]
+    P -->|Officer| O1[Fetch announcements + stats]
+    M1 --> M2[Fetch upcoming events]
+    O1 --> O2[Fetch upcoming events + summary counts]
+    M2 --> M3[Fetch saved opportunities]
+    O2 --> O3[Fetch saved opportunities]
+    M3 --> Render[Render Dashboard widgets]
+    O3 --> Render
+    Render --> QA{Quick Actions}
+    QA -->|Member| QAM[Events / Career Hub / Calendar]
+    QA -->|Officer| QAO[+ Create Event / Announcement / Analytics]
+    </pre>
+  </div>
+
+  <!-- 6 -->
+  <h2>6. Event Browsing &amp; Registration</h2>
+  <div class="diagram">
+    <pre class="mermaid">
+flowchart TD
+    A[Events Tab] --> B[Fetch events list from Supabase]
+    B --> C[Display list with filters]
+    C --> D[User taps event card]
+    D --> E[Event Detail Screen]
+    E --> F{Already registered?}
+    F -->|No| G[Show Register button]
+    G --> H[User taps Register]
+    H --> I[Insert into event_registrations]
+    I --> J[Generate unique QR code]
+    J --> K[Show success + QR ticket]
+    I --> N[DB trigger fires notification]
+    F -->|Yes| L{Registration status}
+    L -->|registered| M[Show QR ticket + Cancel option]
+    L -->|cancelled| G
+    M --> Cancel[User cancels registration]
+    Cancel --> Update[Update status to cancelled]
+    </pre>
+  </div>
+
+  <div class="page-break"></div>
+
+  <!-- 7 -->
+  <h2>7. QR Ticket Generation &amp; Check-in</h2>
+  <div class="diagram">
+    <pre class="mermaid">
+flowchart TD
+    subgraph Member Side
+        R[Registered member] --> QR[QR code generated on registration]
+        QR --> Show[Display QR on event detail]
+    end
+
+    subgraph Officer Side
+        O[Officer opens QR Scanner] --> Scan[Scan member QR code]
+        Scan --> Lookup[Query event_registrations by qr_code]
+        Lookup --> Valid{Registration valid?}
+        Valid -->|Yes| CheckDup{Already checked in?}
+        CheckDup -->|No| Insert[Insert attendance record]
+        Insert --> Method[method = qr, checked_in_by = officer]
+        Insert --> Notif[Trigger notification to member]
+        CheckDup -->|Yes| Msg1[Show already checked in]
+        Valid -->|No| Msg2[Show invalid QR error]
+    end
+    </pre>
+  </div>
+
+  <!-- 8 -->
+  <h2>8. Google Calendar Sync</h2>
+  <div class="diagram">
+    <pre class="mermaid">
+flowchart TD
+    A[Event Detail — Add to Calendar] --> B{Google token available?}
+    B -->|providerToken exists| C[Use Supabase providerToken]
+    B -->|Cached token| D[Use GoogleTokenStorage]
+    B -->|No token| E[Prompt Connect Google Calendar]
+    E --> F[requestGoogleCalendarAccess]
+    F --> C
+    C --> G{Already synced?}
+    D --> G
+    G -->|No — gcal_event_sync empty| H[POST /calendars/primary/events]
+    H --> I[Store gcal_event_id in gcal_event_sync]
+    I --> J[Show success snackbar]
+    G -->|Yes — event exists| K[PATCH to update event]
+    K --> J
+    </pre>
+  </div>
+
+  <!-- 9 -->
+  <h2>9. My Calendar View</h2>
+  <div class="diagram">
+    <pre class="mermaid">
+flowchart TD
+    A[User opens My Calendar] --> B{Google token available?}
+    B -->|Yes| C[GET /calendars/primary/events]
+    C --> D[Parse event list for date range]
+    D --> E[Display on table_calendar widget]
+    E --> F[User taps a date]
+    F --> G[Show events for selected day]
+    G --> H[Tap event to view details]
+    B -->|No| I[Show Connect Google Calendar prompt]
+    I --> J[User signs in with Google]
+    J --> C
+    </pre>
+  </div>
+
+  <div class="page-break"></div>
+
+  <!-- 10 -->
+  <h2>10. Career Hub &amp; Opportunity Bookmarking</h2>
+  <div class="diagram">
+    <pre class="mermaid">
+flowchart TD
+    A[Career Hub Tab] --> B[Fetch opportunities from Supabase]
+    B --> C[Display filterable list]
+    C --> D[User taps opportunity card]
+    D --> E[Opportunity Detail Screen]
+    E --> F{Actions}
+    F --> G[Bookmark / Unbookmark]
+    G -->|Save| H[Insert saved_opportunities]
+    G -->|Unsave| I[Delete saved_opportunities]
+    F --> J[Open application URL]
+    F --> K[View organizer profile]
+
+    subgraph Officer Only
+        OC[Officer taps Create] --> OE[Fill title, org, type, deadline]
+        OE --> OS[Insert into opportunities table]
+        OS --> ON[Trigger career_opportunity notification]
+    end
+    </pre>
+  </div>
+
+  <!-- 11 -->
+  <h2>11. Announcement Publishing</h2>
+  <div class="diagram">
+    <pre class="mermaid">
+flowchart TD
+    subgraph Member View
+        MV[Community Tab] --> MA[Fetch announcements]
+        MA --> MB[Display feed with category badges]
+        MB --> MC[Tap to read full announcement]
+    end
+
+    subgraph Officer Publishing
+        OP[Officer taps Create Announcement] --> OF[Fill title, body, category]
+        OF --> OG{Pin announcement?}
+        OG -->|Yes| OH[Set is_pinned = true]
+        OG -->|No| OI[is_pinned = false]
+        OH --> OJ[Insert into announcements table]
+        OI --> OJ
+        OJ --> OK[DB trigger sends notification to all members]
+        OK --> OL[Appears in notification inbox + feed]
+    end
+    </pre>
+  </div>
+
+  <!-- 12 -->
+  <h2>12. Notifications Flow</h2>
+  <div class="diagram">
+    <pre class="mermaid">
+flowchart TD
+    subgraph Triggers["DB Triggers — auto_notifications.sql"]
+        T1[New announcement] --> NT[Insert notification]
+        T2[Event registration] --> NT
+        T3[Event reminder] --> NT
+        T4[New opportunity] --> NT
+        T5[Partnership update] --> NT
+    end
+
+    NT --> DB[(notifications table)]
+    DB --> RT[Supabase Realtime .stream]
+    RT --> Badge[Pulsing unread badge on bell icon]
+    RT --> Inbox[Notifications Inbox screen]
+    Inbox --> Read[User taps — mark is_read = true]
+    Inbox --> Nav[Navigate to referenced item]
+
+    subgraph Push["Push Notifications — optional"]
+        DB --> FCM[Firebase Cloud Messaging]
+        FCM --> Device[Device notification tray]
+    end
+    </pre>
+  </div>
+
+  <div class="page-break"></div>
+
+  <!-- 13 -->
+  <h2>13. Profile &amp; GitHub Stats</h2>
+  <div class="diagram">
+    <pre class="mermaid">
+flowchart TD
+    A[Profile Tab] --> B[Fetch profiles row]
+    B --> C[Display name, avatar, bio, skills]
+    C --> D{github_username set?}
+    D -->|Yes| E[Fetch from GitHub REST API]
+    E --> F[Upsert github_profiles row]
+    F --> G[Display repos, followers, profile link]
+    D -->|No| H[Show add GitHub username prompt]
+
+    C --> I[Fetch certificates for user]
+    I --> J[Display certificate list]
+    C --> K[Fetch event history via attendance]
+    K --> L[Display past events attended]
+    C --> M[Fetch saved_opportunities]
+    M --> N[Display bookmarked opportunities]
+
+    C --> Edit[Edit Profile button]
+    Edit --> EP[Edit name, bio, skills, avatar]
+    EP --> Save[Update profiles + upload avatar to storage]
+    </pre>
+  </div>
+
+  <!-- 14 -->
+  <h2>14. Community Analytics (Officer)</h2>
+  <div class="diagram">
+    <pre class="mermaid">
+flowchart TD
+    A[Officer: Analytics Tab] --> B[Fetch engagement_logs]
+    B --> C[Aggregate by action_type]
+
+    A --> D[Fetch profiles count]
+    D --> E[Active members card]
+
+    A --> F[Fetch attendance grouped by event]
+    F --> G[Attendance rate chart — fl_chart]
+
+    A --> H[Fetch event_registrations trends]
+    H --> I[Event performance chart]
+
+    A --> J[Fetch profiles by created_at]
+    J --> K[Member growth chart]
+
+    C --> L[Engagement breakdown — logins, views, registrations]
+    L --> M[Render dashboard with charts and stats]
+    E --> M
+    G --> M
+    I --> M
+    K --> M
+    </pre>
+  </div>
+
+  <div class="page-break"></div>
+
+  <!-- 15 -->
+  <h2>15. Partnership Management (Officer)</h2>
+  <div class="diagram">
+    <pre class="mermaid">
+flowchart TD
+    A[Officer: Partners Tab] --> B[Fetch partners list]
+    B --> C[Display partner directory]
+    C --> D[Tap partner card]
+    D --> E[Partner Detail Screen]
+
+    E --> F[View sponsorships]
+    F --> F1[List sponsorships for partner]
+    F --> F2[Add new sponsorship — amount, type, event link]
+
+    E --> G[View meetings]
+    G --> G1[List scheduled meetings]
+    G --> G2[Schedule new meeting — date, agenda, attendees]
+
+    E --> H[View communications]
+    H --> H1[Log history — email, call, chat]
+    H --> H2[Add new communication log]
+
+    E --> Status[Update collaboration_status]
+    Status --> S1[prospect / active / on-hold / ended]
+
+    A --> Create[Create new partner]
+    Create --> Fill[Fill name, category, contact info]
+    Fill --> Insert[Insert into partners table]
+    </pre>
+  </div>
+
+  <!-- 16 -->
+  <h2>16. Settings &amp; Sign Out</h2>
+  <div class="diagram">
+    <pre class="mermaid">
+flowchart TD
+    A[User opens Settings] --> B[Settings Screen]
+
+    B --> C[Appearance — Dark mode toggle]
+    C --> C1[Save to SharedPreferences]
+    C1 --> C2[ThemeMode updates app-wide]
+
+    B --> D[Notifications preferences]
+    D --> D1[Toggle push notification categories]
+    D1 --> D2[Save to SharedPreferences]
+
+    B --> E[Privacy and Security]
+    E --> E1[Change password]
+    E --> E2[Manage sessions]
+
+    B --> F[About — version, terms, privacy]
+
+    B --> G[Sign Out]
+    G --> H[Show confirmation dialog]
+    H -->|Confirm| I[Supabase signOut]
+    I --> J[Clear local session + tokens]
+    J --> K[Route to /login]
+    H -->|Cancel| B
+    </pre>
+  </div>
+
+  <p style="margin-top:48px;font-size:11px;color:#888;text-align:center;">
+    GoCollab · GDGoC Philippines · SDG 17 — Partnerships for the Goals
+  </p>
+
+  <script>
+    mermaid.initialize({
+      startOnLoad: true,
+      theme: 'neutral',
+      securityLevel: 'loose',
+      themeVariables: {
+        fontSize: '14px',
+        fontFamily: 'Segoe UI, system-ui, sans-serif'
+      },
+      flowchart: { useMaxWidth: true, htmlLabels: true, curve: 'basis' },
+      sequence: { useMaxWidth: true }
+    });
+  </script>
+</body>
+</html>
