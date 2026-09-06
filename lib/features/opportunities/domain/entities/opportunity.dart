@@ -1,5 +1,6 @@
 import 'package:equatable/equatable.dart';
 import '../../../../core/models/content_creator.dart';
+import 'opportunity_applicant.dart';
 
 enum OpportunityType {
   internship,
@@ -38,6 +39,10 @@ class Opportunity extends Equatable {
     this.deadline,
     this.status = 'open',
     this.isSaved = false,
+    this.hasApplied = false,
+    this.appliedAt,
+    this.applicationNote,
+    this.applicants = const [],
     this.postedBy,
     this.creatorName,
     this.creatorAvatarUrl,
@@ -56,6 +61,19 @@ class Opportunity extends Equatable {
   final DateTime? deadline;
   final String status;
   final bool isSaved;
+
+  /// Whether the current user has self-reported applying via "Mark as
+  /// applied". This is an honest self-report, not a verified action — see
+  /// [applicants] for the officer-visible list used for manual follow-up.
+  final bool hasApplied;
+  final DateTime? appliedAt;
+  final String? applicationNote;
+
+  /// Populated only on the detail fetch. RLS restricts this to the current
+  /// user's own record unless they are an officer, in which case it is the
+  /// full applicant list for this opportunity.
+  final List<OpportunityApplicant> applicants;
+
   final String? postedBy;
   final String? creatorName;
   final String? creatorAvatarUrl;
@@ -89,6 +107,10 @@ class Opportunity extends Equatable {
         deadline,
         status,
         isSaved,
+        hasApplied,
+        appliedAt,
+        applicationNote,
+        applicants,
         postedBy,
         creatorName,
         creatorAvatarUrl,

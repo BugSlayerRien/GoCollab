@@ -1,7 +1,10 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
+import '../../../../core/services/place_search_service.dart';
 import '../../../../core/theme/app_spacing.dart';
+import '../../../../core/theme/theme_extensions.dart';
 import '../../../../core/utils/date_formatter.dart';
 import '../../../../core/utils/validators.dart';
 import '../../../../core/widgets/app_button.dart';
@@ -31,6 +34,11 @@ class _EventEditorSheet extends ConsumerStatefulWidget {
 class _EventEditorSheetState extends ConsumerState<_EventEditorSheet> {
   final _formKey = GlobalKey<FormState>();
   final _imagePicker = ImagePicker();
+  final _placeSearchService = PlaceSearchService();
+  final _placeSearchController = TextEditingController();
+  Timer? _placeSearchDebounce;
+  List<PlaceSuggestion> _placeSuggestions = [];
+  bool _placeSearching = false;
   late final TextEditingController _titleController;
   late final TextEditingController _descriptionController;
   late final TextEditingController _venueController;
@@ -78,6 +86,8 @@ class _EventEditorSheetState extends ConsumerState<_EventEditorSheet> {
 
   @override
   void dispose() {
+    _placeSearchDebounce?.cancel();
+    _placeSearchController.dispose();
     _titleController.dispose();
     _descriptionController.dispose();
     _venueController.dispose();
@@ -87,6 +97,37 @@ class _EventEditorSheetState extends ConsumerState<_EventEditorSheet> {
     _capacityController.dispose();
     _onlineUrlController.dispose();
     super.dispose();
+  }
+
+  void _onPlaceSearchChanged(String query) {
+    _placeSearchDebounce?.cancel();
+    if (query.trim().length < 3) {
+      setState(() {
+        _placeSuggestions = [];
+        _placeSearching = false;
+      });
+      return;
+    }
+    setState(() => _placeSearching = true);
+    _placeSearchDebounce = Timer(const Duration(milliseconds: 500), () async {
+      final results = await _placeSearchService.search(query);
+      if (!mounted) return;
+      setState(() {
+        _placeSuggestions = results;
+        _placeSearching = false;
+      });
+    });
+  }
+
+  void _selectPlace(PlaceSuggestion place) {
+    setState(() {
+      _venueAddressController.text = place.displayName;
+      _latitudeController.text = place.latitude.toString();
+      _longitudeController.text = place.longitude.toString();
+      _placeSuggestions = [];
+      _placeSearchController.clear();
+    });
+    FocusScope.of(context).unfocus();
   }
 
   Future<DateTime?> _pickDateTime(DateTime initial) async {
@@ -357,35 +398,79 @@ class _EventEditorSheetState extends ConsumerState<_EventEditorSheet> {
               AppTextField(label: 'Venue name', controller: _venueController),
               const SizedBox(height: AppSpacing.md),
               AppTextField(
+                label: 'Search for a place',
+                hint: 'Type a venue or address, e.g. "SM City Baliwag"',
+                controller: _placeSearchController,
+                prefixIcon: Icons.search_rounded,
+                onChanged: _onPlaceSearchChanged,
+              ),
+              if (_placeSearching)
+                const Padding(
+                  padding: EdgeInsets.symmetric(vertical: AppSpacing.xs),
+                  child: LinearProgressIndicator(),
+                ),
+              if (_placeSuggestions.isNotEmpty)
+                Container(
+                  margin: const EdgeInsets.only(top: AppSpacing.xs),
+                  decoration: BoxDecoration(
+                    border: Border.all(color: context.appBorder),
+                    borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: _placeSuggestions
+                        .map((place) => ListTile(
+                              dense: true,
+                              leading: const Icon(Icons.location_on_outlined),
+                              title: Text(place.displayName, maxLines: 2, overflow: TextOverflow.ellipsis),
+                              onTap: () => _selectPlace(place),
+                            ))
+                        .toList(),
+                  ),
+                ),
+              Text(
+                'Powered by OpenStreetMap. Pick a result to auto-fill the address and coordinates below.',
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(color: context.appTextSecondary),
+              ),
+              const SizedBox(height: AppSpacing.md),
+              AppTextField(
                 label: 'Venue address (optional)',
                 controller: _venueAddressController,
                 maxLines: 2,
               ),
               const SizedBox(height: AppSpacing.md),
-              Row(
+              ExpansionTile(
+                tilePadding: EdgeInsets.zero,
+                initiallyExpanded: _latitudeController.text.isNotEmpty,
+                title: Text('Fine-tune coordinates', style: Theme.of(context).textTheme.bodyMedium),
+                subtitle: Text(
+                  'Auto-filled by search above — edit manually only if needed.',
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(color: context.appTextSecondary),
+                ),
                 children: [
-                  Expanded(
-                    child: AppTextField(
-                      label: 'Latitude',
-                      controller: _latitudeController,
-                      keyboardType: const TextInputType.numberWithOptions(decimal: true, signed: true),
-                      validator: (v) => Validators.optionalCoordinate(v, isLatitude: true),
-                    ),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: AppTextField(
+                          label: 'Latitude',
+                          controller: _latitudeController,
+                          keyboardType: const TextInputType.numberWithOptions(decimal: true, signed: true),
+                          validator: (v) => Validators.optionalCoordinate(v, isLatitude: true),
+                        ),
+                      ),
+                      const SizedBox(width: AppSpacing.sm),
+                      Expanded(
+                        child: AppTextField(
+                          label: 'Longitude',
+                          controller: _longitudeController,
+                          keyboardType: const TextInputType.numberWithOptions(decimal: true, signed: true),
+                          validator: (v) => Validators.optionalCoordinate(v, isLatitude: false),
+                        ),
+                      ),
+                    ],
                   ),
-                  const SizedBox(width: AppSpacing.sm),
-                  Expanded(
-                    child: AppTextField(
-                      label: 'Longitude',
-                      controller: _longitudeController,
-                      keyboardType: const TextInputType.numberWithOptions(decimal: true, signed: true),
-                      validator: (v) => Validators.optionalCoordinate(v, isLatitude: false),
-                    ),
-                  ),
+                  const SizedBox(height: AppSpacing.sm),
                 ],
-              ),
-              Text(
-                'Add coordinates to show the venue map (copy from Google Maps).',
-                style: Theme.of(context).textTheme.bodySmall,
               ),
               Material(
                 color: Colors.transparent,

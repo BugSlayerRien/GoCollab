@@ -55,7 +55,7 @@ class OpportunityDetailScreen extends ConsumerWidget {
           message: 'Could not load this opportunity.',
           onRetry: () => ref.invalidate(opportunityDetailProvider(opportunityId)),
         ),
-        data: (opportunity) => _DetailBody(opportunity: opportunity),
+        data: (opportunity) => _DetailBody(opportunity: opportunity, isOfficer: isOfficer),
       ),
     );
   }
@@ -80,13 +80,68 @@ class OpportunityDetailScreen extends ConsumerWidget {
 }
 
 class _DetailBody extends ConsumerWidget {
-  const _DetailBody({required this.opportunity});
+  const _DetailBody({required this.opportunity, required this.isOfficer});
 
   final Opportunity opportunity;
+  final bool isOfficer;
+
+  Future<void> _markApplied(BuildContext context, WidgetRef ref) async {
+    final note = await _showMarkAppliedDialog(context);
+    if (note == null || !context.mounted) return;
+    final error = await ref
+        .read(applyOpportunityControllerProvider.notifier)
+        .markApplied(opportunity, note: note.isEmpty ? null : note);
+    if (!context.mounted) return;
+    showActionFeedback(
+      context,
+      success: error == null,
+      successMessage: 'Marked as applied. You can find this under Career Hub → Applied.',
+      errorMessage: error,
+    );
+  }
+
+  Future<String?> _showMarkAppliedDialog(BuildContext context) async {
+    final controller = TextEditingController();
+    final result = await showDialog<String>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Mark as applied?'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              "GoCollab can't verify actions taken on an external site, so this is a self-report. "
+              'Officers can see who applied to follow up with the partner if needed.',
+            ),
+            const SizedBox(height: AppSpacing.md),
+            TextField(
+              controller: controller,
+              maxLines: 2,
+              decoration: const InputDecoration(
+                labelText: 'Confirmation note (optional)',
+                hintText: 'e.g. confirmation email subject, reference number',
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Cancel')),
+          FilledButton(
+            onPressed: () => Navigator.of(context).pop(controller.text.trim()),
+            child: const Text('Confirm'),
+          ),
+        ],
+      ),
+    );
+    controller.dispose();
+    return result;
+  }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final isSaving = ref.watch(savedOpportunityControllerProvider);
+    final isApplying = ref.watch(applyOpportunityControllerProvider);
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(AppSpacing.lg),
@@ -170,6 +225,66 @@ class _DetailBody extends ConsumerWidget {
               ),
             ],
           ),
+          if (opportunity.applicationUrl != null) ...[
+            const SizedBox(height: AppSpacing.sm),
+            if (opportunity.hasApplied)
+              Row(
+                children: [
+                  Icon(Icons.check_circle_rounded, size: 16, color: context.appTextSecondary),
+                  const SizedBox(width: 4),
+                  Expanded(
+                    child: Text(
+                      'You marked this as applied'
+                      '${opportunity.appliedAt != null ? ' on ${DateFormatter.date(opportunity.appliedAt!)}' : ''}.'
+                      ' Find it anytime under Career Hub → Applied.',
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(color: context.appTextSecondary),
+                    ),
+                  ),
+                ],
+              )
+            else
+              Align(
+                alignment: Alignment.centerLeft,
+                child: TextButton.icon(
+                  onPressed: isApplying ? null : () => _markApplied(context, ref),
+                  icon: const Icon(Icons.fact_check_outlined, size: 18),
+                  label: const Text('Mark as applied'),
+                ),
+              ),
+          ],
+          if (isOfficer) ...[
+            const SizedBox(height: AppSpacing.xl),
+            Text(
+              'Applicants (self-reported) · ${opportunity.applicants.length}',
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
+            const SizedBox(height: AppSpacing.xs),
+            Text(
+              'GoCollab cannot verify actions on the external site — use this list to follow up with '
+              'the partner organization if you need to confirm an application.',
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(color: context.appTextSecondary),
+            ),
+            const SizedBox(height: AppSpacing.sm),
+            if (opportunity.applicants.isEmpty)
+              Text('No one has marked this as applied yet.', style: Theme.of(context).textTheme.bodySmall)
+            else
+              ...opportunity.applicants.map(
+                (a) => ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  leading: CircleAvatar(
+                    backgroundImage: a.applicant?.avatarUrl != null ? NetworkImage(a.applicant!.avatarUrl!) : null,
+                    child: a.applicant?.avatarUrl == null ? const Icon(Icons.person_outline_rounded) : null,
+                  ),
+                  title: Text(a.applicant?.name ?? 'Member'),
+                  subtitle: Text(
+                    [
+                      'Applied ${DateFormatter.date(a.appliedAt)}',
+                      if (a.note != null && a.note!.trim().isNotEmpty) a.note!.trim(),
+                    ].join(' · '),
+                  ),
+                ),
+              ),
+          ],
         ],
       ),
     );
