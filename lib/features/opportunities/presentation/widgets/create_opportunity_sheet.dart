@@ -5,6 +5,7 @@ import '../../../../core/utils/validators.dart';
 import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_text_field.dart';
 import '../../../../core/widgets/confirm_dialog.dart';
+import '../../../../core/widgets/sheet_messenger.dart';
 import '../../domain/entities/opportunity.dart';
 import '../providers/opportunity_providers.dart';
 
@@ -13,10 +14,13 @@ void showOpportunityEditorSheet(
   required String postedBy,
   Opportunity? existing,
 }) {
+  final messenger = ScaffoldMessenger.of(context);
   showModalBottomSheet(
     context: context,
     isScrollControlled: true,
-    builder: (context) => _OpportunityEditorSheet(postedBy: postedBy, existing: existing),
+    builder: (context) => SheetMessenger(
+      child: _OpportunityEditorSheet(postedBy: postedBy, existing: existing, messenger: messenger),
+    ),
   );
 }
 
@@ -26,8 +30,9 @@ void showCreateOpportunitySheet(BuildContext context, {required String postedBy}
 }
 
 class _OpportunityEditorSheet extends ConsumerStatefulWidget {
-  const _OpportunityEditorSheet({required this.postedBy, this.existing});
+  const _OpportunityEditorSheet({required this.postedBy, required this.messenger, this.existing});
   final String postedBy;
+  final ScaffoldMessengerState messenger;
   final Opportunity? existing;
 
   @override
@@ -108,6 +113,7 @@ class _OpportunityEditorSheetState extends ConsumerState<_OpportunityEditorSheet
     if (!mounted) return;
     showActionFeedback(
       context,
+      messenger: error == null ? widget.messenger : null,
       success: error == null,
       successMessage: _isEditing ? 'Opportunity updated.' : 'Opportunity published.',
       errorMessage: error,

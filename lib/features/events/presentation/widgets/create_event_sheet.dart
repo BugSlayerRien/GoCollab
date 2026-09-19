@@ -10,6 +10,7 @@ import '../../../../core/utils/validators.dart';
 import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_text_field.dart';
 import '../../../../core/widgets/confirm_dialog.dart';
+import '../../../../core/widgets/sheet_messenger.dart';
 import '../../../partnerships/domain/entities/partner.dart';
 import '../../../partnerships/presentation/providers/partnership_providers.dart';
 import '../../domain/entities/event.dart';
@@ -20,7 +21,7 @@ void showEventEditorSheet(BuildContext context, {Event? existing}) {
   showModalBottomSheet(
     context: context,
     isScrollControlled: true,
-    builder: (context) => _EventEditorSheet(existing: existing, messenger: messenger),
+    builder: (context) => SheetMessenger(child: _EventEditorSheet(existing: existing, messenger: messenger)),
   );
 }
 
@@ -188,7 +189,6 @@ class _EventEditorSheetState extends ConsumerState<_EventEditorSheet> {
     if (id == null) {
       showActionFeedback(
         context,
-        messenger: widget.messenger,
         success: false,
         successMessage: '',
         errorMessage: error ?? 'Could not add partner.',
@@ -249,7 +249,6 @@ class _EventEditorSheetState extends ConsumerState<_EventEditorSheet> {
     if (!_formKey.currentState!.validate()) {
       showActionFeedback(
         context,
-        messenger: widget.messenger,
         success: false,
         successMessage: '',
         errorMessage: 'Please fix the highlighted fields before saving.',
@@ -261,7 +260,6 @@ class _EventEditorSheetState extends ConsumerState<_EventEditorSheet> {
     if (coordinateError != null) {
       showActionFeedback(
         context,
-        messenger: widget.messenger,
         success: false,
         successMessage: '',
         errorMessage: coordinateError,
@@ -272,7 +270,6 @@ class _EventEditorSheetState extends ConsumerState<_EventEditorSheet> {
     if (!_endAt.isAfter(_startAt)) {
       showActionFeedback(
         context,
-        messenger: widget.messenger,
         success: false,
         successMessage: '',
         errorMessage: 'End time must be after the start time.',
@@ -283,7 +280,6 @@ class _EventEditorSheetState extends ConsumerState<_EventEditorSheet> {
     if (_registrationDeadline != null && !_registrationDeadline!.isBefore(_startAt)) {
       showActionFeedback(
         context,
-        messenger: widget.messenger,
         success: false,
         successMessage: '',
         errorMessage: 'Registration deadline must be before the event starts.',
@@ -366,7 +362,6 @@ class _EventEditorSheetState extends ConsumerState<_EventEditorSheet> {
 
     showActionFeedback(
       context,
-      messenger: widget.messenger,
       success: false,
       successMessage: '',
       errorMessage: resultMessage,

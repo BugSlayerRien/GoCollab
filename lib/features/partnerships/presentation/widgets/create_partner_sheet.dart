@@ -5,14 +5,16 @@ import '../../../../core/utils/validators.dart';
 import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_text_field.dart';
 import '../../../../core/widgets/confirm_dialog.dart';
+import '../../../../core/widgets/sheet_messenger.dart';
 import '../../domain/entities/partner.dart';
 import '../providers/partnership_providers.dart';
 
 void showPartnerEditorSheet(BuildContext context, {Partner? existing}) {
+  final messenger = ScaffoldMessenger.of(context);
   showModalBottomSheet(
     context: context,
     isScrollControlled: true,
-    builder: (context) => _PartnerEditorSheet(existing: existing),
+    builder: (context) => SheetMessenger(child: _PartnerEditorSheet(existing: existing, messenger: messenger)),
   );
 }
 
@@ -21,7 +23,8 @@ void showCreatePartnerSheet(BuildContext context) {
 }
 
 class _PartnerEditorSheet extends ConsumerStatefulWidget {
-  const _PartnerEditorSheet({this.existing});
+  const _PartnerEditorSheet({required this.messenger, this.existing});
+  final ScaffoldMessengerState messenger;
   final Partner? existing;
 
   @override
@@ -88,6 +91,7 @@ class _PartnerEditorSheetState extends ConsumerState<_PartnerEditorSheet> {
     if (!mounted) return;
     showActionFeedback(
       context,
+      messenger: error == null ? widget.messenger : null,
       success: error == null,
       successMessage: _isEditing ? 'Partner updated.' : 'Partner added.',
       errorMessage: error,
