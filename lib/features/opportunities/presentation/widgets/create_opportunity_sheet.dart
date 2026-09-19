@@ -127,6 +127,7 @@ class _OpportunityEditorSheetState extends ConsumerState<_OpportunityEditorSheet
       ),
       child: Form(
         key: _formKey,
+        autovalidateMode: AutovalidateMode.onUserInteraction,
         child: SingleChildScrollView(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -166,12 +167,16 @@ class _OpportunityEditorSheetState extends ConsumerState<_OpportunityEditorSheet
               const SizedBox(height: AppSpacing.md),
               AppTextField(label: 'Requirements', controller: _requirementsController, maxLines: 2),
               const SizedBox(height: AppSpacing.md),
-              AppTextField(label: 'Location', controller: _locationController),
+              AppTextField(
+                label: _isRemote ? 'Location (optional)' : 'Location',
+                controller: _locationController,
+                validator: (v) => _isRemote ? null : Validators.required(v, fieldName: 'Location'),
+              ),
               const SizedBox(height: AppSpacing.md),
               AppTextField(
                 label: 'Application URL',
                 controller: _urlController,
-                validator: Validators.url,
+                validator: (v) => Validators.requiredUrl(v, fieldName: 'Application URL'),
               ),
               if (_isEditing) ...[
                 const SizedBox(height: AppSpacing.sm),

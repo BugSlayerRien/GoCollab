@@ -8,7 +8,8 @@ class EventRemoteDataSource {
   final SupabaseClient _client;
 
   static const _eventSelect =
-      '*, creator:profiles!events_created_by_fkey(id, full_name, avatar_url)';
+      '*, creator:profiles!events_created_by_fkey(id, full_name, avatar_url), '
+      'partner:partners(id, name, logo_url)';
 
   Future<List<EventModel>> getEvents({String? currentUserId}) async {
     final rows = await _client.from('events').select(_eventSelect).order('start_at');
@@ -163,6 +164,7 @@ class EventRemoteDataSource {
     DateTime? registrationDeadline,
     String? bannerUrl,
     required String createdBy,
+    String? partnerId,
   }) async {
     await _client.from('events').insert({
       'title': title,
@@ -181,6 +183,7 @@ class EventRemoteDataSource {
       'banner_url': bannerUrl,
       'status': 'upcoming',
       'created_by': createdBy,
+      'partner_id': partnerId,
     });
   }
 
@@ -201,6 +204,7 @@ class EventRemoteDataSource {
     DateTime? registrationDeadline,
     String? bannerUrl,
     required EventStatus status,
+    String? partnerId,
   }) async {
     await _client.from('events').update({
       'title': title,
@@ -218,6 +222,7 @@ class EventRemoteDataSource {
       'registration_deadline': registrationDeadline?.toIso8601String(),
       'banner_url': bannerUrl,
       'status': status.name,
+      'partner_id': partnerId,
     }).eq('id', id);
   }
 

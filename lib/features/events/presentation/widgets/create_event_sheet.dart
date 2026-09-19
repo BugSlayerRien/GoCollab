@@ -10,6 +10,8 @@ import '../../../../core/utils/validators.dart';
 import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_text_field.dart';
 import '../../../../core/widgets/confirm_dialog.dart';
+import '../../../partnerships/domain/entities/partner.dart';
+import '../../../partnerships/presentation/providers/partnership_providers.dart';
 import '../../domain/entities/event.dart';
 import '../providers/event_providers.dart';
 
@@ -55,6 +57,7 @@ class _EventEditorSheetState extends ConsumerState<_EventEditorSheet> {
   DateTime? _registrationDeadline;
   XFile? _bannerFile;
   bool _removeBanner = false;
+  String? _partnerId;
 
   bool get _isEditing => widget.existing != null;
 
@@ -82,6 +85,7 @@ class _EventEditorSheetState extends ConsumerState<_EventEditorSheet> {
     _startAt = existing?.startAt ?? DateTime.now().add(const Duration(days: 7, hours: 2));
     _endAt = existing?.endAt ?? _startAt.add(const Duration(hours: 3));
     _registrationDeadline = existing?.registrationDeadline;
+    _partnerId = existing?.partnerId;
   }
 
   @override
@@ -128,6 +132,70 @@ class _EventEditorSheetState extends ConsumerState<_EventEditorSheet> {
       _placeSearchController.clear();
     });
     FocusScope.of(context).unfocus();
+  }
+
+  Future<void> _addPartnerInline() async {
+    final nameController = TextEditingController();
+    var category = PartnerCategory.industry;
+    final created = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => StatefulBuilder(
+        builder: (dialogContext, setDialogState) => AlertDialog(
+          title: const Text('New partner'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              TextField(
+                controller: nameController,
+                autofocus: true,
+                decoration: const InputDecoration(labelText: 'Organization name'),
+              ),
+              const SizedBox(height: AppSpacing.md),
+              DropdownButtonFormField<PartnerCategory>(
+                initialValue: category,
+                decoration: const InputDecoration(labelText: 'Category'),
+                items: PartnerCategory.values
+                    .map((c) => DropdownMenuItem(value: c, child: Text(c.label)))
+                    .toList(),
+                onChanged: (value) {
+                  if (value != null) setDialogState(() => category = value);
+                },
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(onPressed: () => Navigator.of(dialogContext).pop(false), child: const Text('Cancel')),
+            FilledButton(
+              onPressed: nameController.text.trim().isEmpty
+                  ? null
+                  : () => Navigator.of(dialogContext).pop(true),
+              child: const Text('Add'),
+            ),
+          ],
+        ),
+      ),
+    );
+    if (created != true || !mounted) return;
+
+    String? error;
+    final id = await ref.read(partnershipActionsControllerProvider.notifier).createPartnerMinimal(
+          name: nameController.text.trim(),
+          category: category,
+          onError: (message) => error = message,
+        );
+    if (!mounted) return;
+    if (id == null) {
+      showActionFeedback(
+        context,
+        messenger: widget.messenger,
+        success: false,
+        successMessage: '',
+        errorMessage: error ?? 'Could not add partner.',
+      );
+      return;
+    }
+    setState(() => _partnerId = id);
   }
 
   Future<DateTime?> _pickDateTime(DateTime initial) async {
@@ -250,6 +318,7 @@ class _EventEditorSheetState extends ConsumerState<_EventEditorSheet> {
             existingBannerUrl: widget.existing!.bannerUrl,
             bannerFile: _bannerFile,
             removeBanner: _removeBanner,
+            partnerId: _partnerId,
           )
         : await controller.createEvent(
             title: _titleController.text.trim(),
@@ -266,6 +335,7 @@ class _EventEditorSheetState extends ConsumerState<_EventEditorSheet> {
             capacity: capacity,
             registrationDeadline: _registrationDeadline,
             bannerFile: _bannerFile,
+            partnerId: _partnerId,
           );
 
     if (!mounted) return;
@@ -395,7 +465,12 @@ class _EventEditorSheetState extends ConsumerState<_EventEditorSheet> {
                 validator: (v) => Validators.optionalPositiveInt(v, fieldName: 'Capacity'),
               ),
               const SizedBox(height: AppSpacing.md),
-              AppTextField(label: 'Venue name', controller: _venueController),
+              AppTextField(
+                label: _isOnline ? 'Venue name (optional)' : 'Venue name',
+                controller: _venueController,
+                validator: (v) =>
+                    _isOnline ? null : Validators.required(v, fieldName: 'Venue name'),
+              ),
               const SizedBox(height: AppSpacing.md),
               AppTextField(
                 label: 'Search for a place',
@@ -486,7 +561,7 @@ class _EventEditorSheetState extends ConsumerState<_EventEditorSheet> {
                 AppTextField(
                   label: 'Online URL',
                   controller: _onlineUrlController,
-                  validator: Validators.url,
+                  validator: (v) => Validators.requiredUrl(v, fieldName: 'Online URL'),
                 ),
               if (_isEditing) ...[
                 const SizedBox(height: AppSpacing.sm),
@@ -540,6 +615,45 @@ class _EventEditorSheetState extends ConsumerState<_EventEditorSheet> {
                 onTap: () async {
                   final picked = await _pickDateTime(_registrationDeadline ?? _startAt.subtract(const Duration(days: 1)));
                   if (picked != null) setState(() => _registrationDeadline = picked);
+                },
+              ),
+              const SizedBox(height: AppSpacing.md),
+              Text('Partner / sponsor (optional)', style: Theme.of(context).textTheme.titleSmall),
+              const SizedBox(height: AppSpacing.xs),
+              Consumer(
+                builder: (context, ref, _) {
+                  final partnersAsync = ref.watch(partnersListProvider);
+                  return partnersAsync.when(
+                    loading: () => const LinearProgressIndicator(),
+                    error: (_, __) => Text(
+                      'Could not load partners.',
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(color: context.appTextSecondary),
+                    ),
+                    data: (partners) {
+                      final hasCurrent = partners.any((p) => p.id == _partnerId);
+                      return Row(
+                        children: [
+                          Expanded(
+                            child: DropdownButtonFormField<String?>(
+                              initialValue: hasCurrent ? _partnerId : null,
+                              decoration: const InputDecoration(labelText: 'Partner'),
+                              items: [
+                                const DropdownMenuItem<String?>(value: null, child: Text('None')),
+                                ...partners.map((p) => DropdownMenuItem<String?>(value: p.id, child: Text(p.name))),
+                              ],
+                              onChanged: (value) => setState(() => _partnerId = value),
+                            ),
+                          ),
+                          const SizedBox(width: AppSpacing.sm),
+                          TextButton.icon(
+                            onPressed: _addPartnerInline,
+                            icon: const Icon(Icons.add_rounded, size: 18),
+                            label: const Text('New'),
+                          ),
+                        ],
+                      );
+                    },
+                  );
                 },
               ),
               const SizedBox(height: AppSpacing.md),

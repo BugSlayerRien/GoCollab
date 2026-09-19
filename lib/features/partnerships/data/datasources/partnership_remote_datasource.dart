@@ -24,6 +24,17 @@ class PartnershipRemoteDataSource {
     await _client.from('partners').insert(partner.toInsertMap());
   }
 
+  /// Quick-add used from the event editor's "New partner" inline flow —
+  /// only name/category are collected there, so this returns the new id
+  /// to auto-select it without a full partner-management round trip.
+  Future<String> createPartnerMinimal({required String name, required PartnerCategory category}) async {
+    final row = await _client.from('partners').insert({
+      'name': name,
+      'category': category.name,
+    }).select('id').single();
+    return row['id'] as String;
+  }
+
   Future<void> updatePartner(String id, PartnerModel partner) async {
     await _client.from('partners').update(partner.toInsertMap()).eq('id', id);
   }

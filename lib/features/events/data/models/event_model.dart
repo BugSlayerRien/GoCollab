@@ -26,6 +26,9 @@ class EventModel extends Event {
     super.createdBy,
     super.creatorName,
     super.creatorAvatarUrl,
+    super.partnerId,
+    super.partnerName,
+    super.partnerLogoUrl,
   });
 
   /// [map] is a raw `events` row. [registeredCount] should be pre-aggregated
@@ -41,6 +44,7 @@ class EventModel extends Event {
       map['creator'] as Map<String, dynamic>?,
       fallbackId: map['created_by'] as String?,
     );
+    final partner = map['partner'] as Map<String, dynamic>?;
     return EventModel(
       id: map['id'] as String,
       title: map['title'] as String,
@@ -67,6 +71,9 @@ class EventModel extends Event {
       createdBy: creator?.id ?? map['created_by'] as String?,
       creatorName: creator?.name,
       creatorAvatarUrl: creator?.avatarUrl,
+      partnerId: partner?['id'] as String? ?? map['partner_id'] as String?,
+      partnerName: partner?['name'] as String?,
+      partnerLogoUrl: partner?['logo_url'] as String?,
     );
   }
 }

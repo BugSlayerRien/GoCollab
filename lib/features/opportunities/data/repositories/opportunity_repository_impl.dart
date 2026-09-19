@@ -125,27 +125,4 @@ class OpportunityRepositoryImpl implements OpportunityRepository {
       return Result.failure(mapExceptionToFailure(e));
     }
   }
-
-  @override
-  Future<Result<void>> markApplied({
-    required String opportunityId,
-    required String userId,
-    String? note,
-  }) async {
-    try {
-      await _dataSource.markApplied(opportunityId: opportunityId, userId: userId, note: note);
-      return const Result.success(null);
-    } catch (e) {
-      return Result.failure(mapExceptionToFailure(e));
-    }
-  }
-
-  @override
-  Future<Result<List<Opportunity>>> getAppliedOpportunities(String userId) async {
-    try {
-      return Result.success(await _dataSource.getAppliedOpportunities(userId));
-    } catch (e) {
-      return Result.failure(mapExceptionToFailure(e));
-    }
-  }
 }

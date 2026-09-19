@@ -44,6 +44,12 @@ abstract final class Validators {
     return null;
   }
 
+  static String? requiredUrl(String? value, {String fieldName = 'URL'}) {
+    final v = value?.trim() ?? '';
+    if (v.isEmpty) return '$fieldName is required';
+    return url(v);
+  }
+
   static String? optionalPositiveInt(String? value, {String fieldName = 'Value'}) {
     final v = value?.trim() ?? '';
     if (v.isEmpty) return null;

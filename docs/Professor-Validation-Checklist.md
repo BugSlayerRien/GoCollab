@@ -42,23 +42,17 @@ Professor review items. Use this as a pass/fail checklist for demo and documenta
 - [x] Officers can scan and see check-in success/failure
 - [ ] Demo: member registers → show QR → officer scans → attendance recorded
 
-### Opportunities — implemented: self-report + officer follow-up
-**Honest answer for the defense:** GoCollab cannot verify an action taken on a third-party site without an API integration with that specific partner, which isn't realistic for arbitrary postings. No platform can do this without owning the destination site. The fix applies the same honesty model events already use — registration is a self-report, attendance is the verified step — except here there is no in-app equivalent of "scanning," so verification is manual, not automatic:
-- [x] "Mark as applied" button (`opportunity_detail_screen.dart`) writes a record to a new `opportunity_applications` table (self-reported, with an optional confirmation note e.g. a reference number or confirmation email subject)
-- [x] Awards community points once per opportunity (`opportunity_apply`, +5), same idempotency guard as other point actions
-- [x] Officer-visible applicants list on the opportunity detail screen (name, avatar, note, date) so officers can manually cross-check with the partner organization
-- [x] Member-visible "Applied" tab in Career Hub (`opportunities_list_screen.dart`) — answers "how does the user get back to it": every opportunity they marked applied is listed there with a link back to the external `application_url`
-- [x] Bookmarking (`saved_opportunities`) remains separate from applying — a bookmark is not counted as an application
-- [ ] Requires running the new migration: `supabase/migrations/20260904000000_opportunity_applications.sql`
-- [ ] Document clearly: **external link ≠ verified application; it's an honest self-report, mirrored by an officer-visible list for manual follow-up**
+### Opportunities — external apply (self-report feature removed)
+**Status:** a self-report "Mark as applied" feature (with an officer-visible applicant list) was built and then deliberately removed on request — the honesty-model answer wasn't the direction wanted. The gap is open again pending a different approach.
+- [ ] Opportunity "Apply" currently uses external `application_url` (leaves the app)
+- [ ] Bookmarking (`saved_opportunities`) is tracked, but **not** a formal application status
+- [ ] See the brainstorm section at the bottom of this doc for the next direction under consideration
 
 ### Demo / defense checklist
 - [ ] Show event registration row in app/DB as proof of interest
 - [ ] Show attendance row as proof of actual event attendance
-- [ ] Demo: member applies externally → returns → taps "Mark as applied" → appears in Career Hub → Applied
-- [ ] Demo: officer opens the same opportunity → sees the applicant + note in the officer-only list
-- [ ] State plainly: no external verification is technically possible without a partner API; self-report + officer visibility is the honest, defensible middle ground
-- [ ] Explain that centralization = GoCollab DB (registrations, attendance, bookmarks, applications), not the partner website
+- [ ] Honestly state opportunity apply is external today, with the proposed fix still under discussion
+- [ ] Explain that centralization = GoCollab DB (registrations, attendance, bookmarks), not the partner website
 
 ---
 

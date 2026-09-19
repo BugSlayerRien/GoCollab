@@ -42,10 +42,6 @@ class OpportunityCard extends ConsumerWidget {
                 Row(
                   children: [
                     StatusBadge.success(opportunity.type.label),
-                    if (opportunity.hasApplied) ...[
-                      const SizedBox(width: AppSpacing.xs),
-                      const StatusBadge(label: 'Applied', color: AppColors.googleBlue, icon: Icons.fact_check_rounded),
-                    ],
                     const Spacer(),
                     IconButton(
                       visualDensity: VisualDensity.compact,

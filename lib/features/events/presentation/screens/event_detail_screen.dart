@@ -167,6 +167,10 @@ class _EventDetailBody extends ConsumerWidget {
                 const SizedBox(height: AppSpacing.xs),
                 _InfoRow(icon: Icons.groups_outlined, text: '${event.registeredCount} / ${event.capacity} registered'),
               ],
+              if (event.partnerId != null && event.partnerName != null) ...[
+                const SizedBox(height: AppSpacing.md),
+                _PartnerRow(name: event.partnerName!, logoUrl: event.partnerLogoUrl),
+              ],
               const SizedBox(height: AppSpacing.lg),
               Text('About this event', style: Theme.of(context).textTheme.titleMedium),
               const SizedBox(height: AppSpacing.xs),
@@ -237,6 +241,35 @@ class _EventDetailBody extends ConsumerWidget {
       return event.venueAddress!;
     }
     return 'Venue TBA';
+  }
+}
+
+class _PartnerRow extends StatelessWidget {
+  const _PartnerRow({required this.name, this.logoUrl});
+  final String name;
+  final String? logoUrl;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm, vertical: AppSpacing.xs),
+      decoration: BoxDecoration(
+        color: context.appSurfaceMuted,
+        borderRadius: BorderRadius.circular(AppSpacing.radiusPill),
+        border: Border.all(color: context.appBorder),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (logoUrl != null && logoUrl!.isNotEmpty)
+            CircleAvatar(radius: 10, backgroundImage: CachedNetworkImageProvider(logoUrl!))
+          else
+            const Icon(Icons.handshake_outlined, size: 16),
+          const SizedBox(width: AppSpacing.xs),
+          Text('In partnership with $name', style: Theme.of(context).textTheme.bodySmall),
+        ],
+      ),
+    );
   }
 }
 

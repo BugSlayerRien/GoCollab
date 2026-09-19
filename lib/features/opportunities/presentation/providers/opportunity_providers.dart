@@ -38,40 +38,6 @@ final savedOpportunitiesProvider = FutureProvider.autoDispose<List<Opportunity>>
   return result.when(success: (data) => data, failure: (f) => throw f);
 });
 
-/// Opportunities the current user has self-reported applying to — lets them
-/// find their way back to an application after leaving to the external site.
-final appliedOpportunitiesProvider = FutureProvider.autoDispose<List<Opportunity>>((ref) async {
-  final currentUser = await ref.watch(currentUserProvider.future);
-  if (currentUser == null) return [];
-  final repository = ref.watch(opportunityRepositoryProvider);
-  final result = await repository.getAppliedOpportunities(currentUser.id);
-  return result.when(success: (data) => data, failure: (f) => throw f);
-});
-
-class ApplyOpportunityController extends StateNotifier<bool> {
-  ApplyOpportunityController(this._ref) : super(false);
-  final Ref _ref;
-
-  Future<String?> markApplied(Opportunity opportunity, {String? note}) async {
-    final user = _ref.read(currentUserProvider).valueOrNull;
-    if (user == null) return 'You must be signed in.';
-    state = true;
-    final repository = _ref.read(opportunityRepositoryProvider);
-    final result = await repository.markApplied(opportunityId: opportunity.id, userId: user.id, note: note);
-    state = false;
-    if (result.isSuccess) {
-      _ref.invalidate(opportunitiesListProvider);
-      _ref.invalidate(opportunityDetailProvider(opportunity.id));
-      _ref.invalidate(appliedOpportunitiesProvider);
-      _ref.invalidate(communityPointsProvider);
-    }
-    return result.when(success: (_) => null, failure: (f) => f.message);
-  }
-}
-
-final applyOpportunityControllerProvider =
-    StateNotifierProvider<ApplyOpportunityController, bool>((ref) => ApplyOpportunityController(ref));
-
 class SavedOpportunityController extends StateNotifier<bool> {
   SavedOpportunityController(this._ref) : super(false);
   final Ref _ref;

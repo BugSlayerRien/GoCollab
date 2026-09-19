@@ -164,6 +164,7 @@ class EventActionsController extends StateNotifier<bool> {
     int? capacity,
     DateTime? registrationDeadline,
     XFile? bannerFile,
+    String? partnerId,
   }) async {
     state = true;
     final user = _ref.read(currentUserProvider).valueOrNull;
@@ -199,6 +200,7 @@ class EventActionsController extends StateNotifier<bool> {
           registrationDeadline: registrationDeadline,
           bannerUrl: bannerUrl,
           createdBy: user.id,
+          partnerId: partnerId,
         );
     state = false;
     if (result.isSuccess) {
@@ -228,6 +230,7 @@ class EventActionsController extends StateNotifier<bool> {
     String? existingBannerUrl,
     XFile? bannerFile,
     bool removeBanner = false,
+    String? partnerId,
   }) async {
     state = true;
 
@@ -260,6 +263,7 @@ class EventActionsController extends StateNotifier<bool> {
           registrationDeadline: registrationDeadline,
           bannerUrl: bannerUrl,
           status: status,
+          partnerId: partnerId,
         );
     state = false;
     if (result.isSuccess) {

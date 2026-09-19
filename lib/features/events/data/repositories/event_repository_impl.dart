@@ -80,6 +80,7 @@ class EventRepositoryImpl implements EventRepository {
     DateTime? registrationDeadline,
     String? bannerUrl,
     required String createdBy,
+    String? partnerId,
   }) async {
     try {
       await _dataSource.createEvent(
@@ -98,6 +99,7 @@ class EventRepositoryImpl implements EventRepository {
         registrationDeadline: registrationDeadline,
         bannerUrl: bannerUrl,
         createdBy: createdBy,
+        partnerId: partnerId,
       );
       return const Result.success(null);
     } catch (e) {
@@ -123,6 +125,7 @@ class EventRepositoryImpl implements EventRepository {
     DateTime? registrationDeadline,
     String? bannerUrl,
     required EventStatus status,
+    String? partnerId,
   }) async {
     try {
       await _dataSource.updateEvent(
@@ -142,6 +145,7 @@ class EventRepositoryImpl implements EventRepository {
         registrationDeadline: registrationDeadline,
         bannerUrl: bannerUrl,
         status: status,
+        partnerId: partnerId,
       );
       return const Result.success(null);
     } catch (e) {

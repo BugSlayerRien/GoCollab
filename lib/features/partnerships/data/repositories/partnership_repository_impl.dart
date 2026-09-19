@@ -40,6 +40,15 @@ class PartnershipRepositoryImpl implements PartnershipRepository {
     }
   }
 
+  @override
+  Future<Result<String>> createPartnerMinimal({required String name, required PartnerCategory category}) async {
+    try {
+      return Result.success(await _dataSource.createPartnerMinimal(name: name, category: category));
+    } catch (e) {
+      return Result.failure(mapExceptionToFailure(e));
+    }
+  }
+
   PartnerModel _toModel(Partner partner) {
     return PartnerModel(
       id: partner.id,

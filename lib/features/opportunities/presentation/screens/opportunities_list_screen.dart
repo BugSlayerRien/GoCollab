@@ -18,22 +18,16 @@ class OpportunitiesListScreen extends ConsumerStatefulWidget {
   ConsumerState<OpportunitiesListScreen> createState() => _OpportunitiesListScreenState();
 }
 
-enum _OpportunityView { all, saved, applied }
-
 class _OpportunitiesListScreenState extends ConsumerState<OpportunitiesListScreen>
     with SingleTickerProviderStateMixin {
   OpportunityType? _filter;
-  _OpportunityView _view = _OpportunityView.all;
+  bool _savedOnly = false;
 
   @override
   Widget build(BuildContext context) {
-    final opportunitiesAsync = switch (_view) {
-      _OpportunityView.all => ref.watch(opportunitiesListProvider),
-      _OpportunityView.saved => ref.watch(savedOpportunitiesProvider),
-      _OpportunityView.applied => ref.watch(appliedOpportunitiesProvider),
-    };
+    final opportunitiesAsync =
+        _savedOnly ? ref.watch(savedOpportunitiesProvider) : ref.watch(opportunitiesListProvider);
     ref.watch(savedOpportunityControllerProvider);
-    ref.watch(applyOpportunityControllerProvider);
     final currentUser = ref.watch(currentUserProvider).valueOrNull;
     final isOfficer = currentUser?.role == UserRole.officer;
 
@@ -42,18 +36,9 @@ class _OpportunitiesListScreenState extends ConsumerState<OpportunitiesListScree
         title: const Text('Career Hub'),
         actions: [
           IconButton(
-            icon: Icon(_view == _OpportunityView.applied ? Icons.fact_check_rounded : Icons.fact_check_outlined),
-            tooltip: 'My applications',
-            onPressed: () => setState(
-              () => _view = _view == _OpportunityView.applied ? _OpportunityView.all : _OpportunityView.applied,
-            ),
-          ),
-          IconButton(
-            icon: Icon(_view == _OpportunityView.saved ? Icons.bookmark_rounded : Icons.bookmark_border_rounded),
+            icon: Icon(_savedOnly ? Icons.bookmark_rounded : Icons.bookmark_border_rounded),
             tooltip: 'Saved opportunities',
-            onPressed: () => setState(
-              () => _view = _view == _OpportunityView.saved ? _OpportunityView.all : _OpportunityView.saved,
-            ),
+            onPressed: () => setState(() => _savedOnly = !_savedOnly),
           ),
         ],
       ),
@@ -65,11 +50,7 @@ class _OpportunitiesListScreenState extends ConsumerState<OpportunitiesListScree
             )
           : null,
       body: RefreshIndicator(
-        onRefresh: () async => ref.invalidate(switch (_view) {
-          _OpportunityView.all => opportunitiesListProvider,
-          _OpportunityView.saved => savedOpportunitiesProvider,
-          _OpportunityView.applied => appliedOpportunitiesProvider,
-        }),
+        onRefresh: () async => ref.invalidate(_savedOnly ? savedOpportunitiesProvider : opportunitiesListProvider),
         child: opportunitiesAsync.when(
           loading: () => ListView.separated(
             padding: const EdgeInsets.all(AppSpacing.md),
@@ -79,18 +60,14 @@ class _OpportunitiesListScreenState extends ConsumerState<OpportunitiesListScree
           ),
           error: (error, _) => ErrorStateView(
             message: 'Could not load opportunities. Pull down to retry.',
-            onRetry: () => ref.invalidate(switch (_view) {
-              _OpportunityView.all => opportunitiesListProvider,
-              _OpportunityView.saved => savedOpportunitiesProvider,
-              _OpportunityView.applied => appliedOpportunitiesProvider,
-            }),
+            onRetry: () => ref.invalidate(_savedOnly ? savedOpportunitiesProvider : opportunitiesListProvider),
           ),
           data: (opportunities) {
             final filtered =
                 _filter == null ? opportunities : opportunities.where((o) => o.type == _filter).toList();
             return Column(
               children: [
-                if (_view == _OpportunityView.all)
+                if (!_savedOnly)
                   SizedBox(
                     height: 44,
                     child: ListView(
@@ -105,24 +82,11 @@ class _OpportunitiesListScreenState extends ConsumerState<OpportunitiesListScree
                 Expanded(
                   child: filtered.isEmpty
                       ? EmptyState(
-                          icon: switch (_view) {
-                            _OpportunityView.saved => Icons.bookmark_border_rounded,
-                            _OpportunityView.applied => Icons.fact_check_outlined,
-                            _OpportunityView.all => Icons.work_outline_rounded,
-                          },
-                          title: switch (_view) {
-                            _OpportunityView.saved => 'No saved opportunities yet',
-                            _OpportunityView.applied => 'No applications marked yet',
-                            _OpportunityView.all => 'No opportunities found',
-                          },
-                          message: switch (_view) {
-                            _OpportunityView.saved =>
-                              'Bookmark internships, scholarships, or hackathons to find them here.',
-                            _OpportunityView.applied =>
-                              'After you apply on a partner site, use "Mark as applied" to keep a record and '
-                                  'come back to it here.',
-                            _OpportunityView.all => 'New career opportunities are posted regularly — check back soon.',
-                          },
+                          icon: _savedOnly ? Icons.bookmark_border_rounded : Icons.work_outline_rounded,
+                          title: _savedOnly ? 'No saved opportunities yet' : 'No opportunities found',
+                          message: _savedOnly
+                              ? 'Bookmark internships, scholarships, or hackathons to find them here.'
+                              : 'New career opportunities are posted regularly — check back soon.',
                         )
                       : ListView.separated(
                           padding: const EdgeInsets.all(AppSpacing.md),

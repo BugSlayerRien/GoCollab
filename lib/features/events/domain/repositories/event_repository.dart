@@ -35,6 +35,7 @@ abstract class EventRepository {
     DateTime? registrationDeadline,
     String? bannerUrl,
     required String createdBy,
+    String? partnerId,
   });
 
   Future<Result<void>> updateEvent({
@@ -54,6 +55,7 @@ abstract class EventRepository {
     DateTime? registrationDeadline,
     String? bannerUrl,
     required EventStatus status,
+    String? partnerId,
   });
 
   Future<Result<void>> deleteEvent(String id);

@@ -59,6 +59,27 @@ class PartnershipActionsController extends StateNotifier<bool> {
     return result.when(success: (_) => null, failure: (f) => f.message);
   }
 
+  /// Quick-add from the event editor. Returns the new partner id on
+  /// success, or null on failure (with [errorOut] set, if provided).
+  Future<String?> createPartnerMinimal({
+    required String name,
+    required PartnerCategory category,
+    void Function(String)? onError,
+  }) async {
+    state = true;
+    final repository = _ref.read(partnershipRepositoryProvider);
+    final result = await repository.createPartnerMinimal(name: name, category: category);
+    state = false;
+    if (result.isSuccess) _ref.invalidate(partnersListProvider);
+    return result.when(
+      success: (id) => id,
+      failure: (f) {
+        onError?.call(f.message);
+        return null;
+      },
+    );
+  }
+
   Future<String?> updatePartner(Partner partner) async {
     state = true;
     final repository = _ref.read(partnershipRepositoryProvider);

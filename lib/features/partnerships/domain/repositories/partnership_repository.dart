@@ -11,6 +11,10 @@ abstract class PartnershipRepository {
 
   Future<Result<void>> createPartner(Partner partner);
 
+  /// Quick-add from the event editor's inline "New partner" flow. Returns
+  /// the new partner's id so the event form can auto-select it.
+  Future<Result<String>> createPartnerMinimal({required String name, required PartnerCategory category});
+
   Future<Result<void>> updatePartner(Partner partner);
 
   Future<Result<void>> deletePartner(String id);

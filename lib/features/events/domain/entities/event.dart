@@ -75,6 +75,9 @@ class Event extends Equatable {
     this.createdBy,
     this.creatorName,
     this.creatorAvatarUrl,
+    this.partnerId,
+    this.partnerName,
+    this.partnerLogoUrl,
   });
 
   final String id;
@@ -100,6 +103,12 @@ class Event extends Equatable {
   final String? createdBy;
   final String? creatorName;
   final String? creatorAvatarUrl;
+
+  /// Optional partner/sponsor attached to this event (from Partnerships),
+  /// shown on the event detail screen when set.
+  final String? partnerId;
+  final String? partnerName;
+  final String? partnerLogoUrl;
 
   ContentCreator? get creator => ContentCreator(
         id: createdBy,
@@ -147,5 +156,8 @@ class Event extends Equatable {
         createdBy,
         creatorName,
         creatorAvatarUrl,
+        partnerId,
+        partnerName,
+        partnerLogoUrl,
       ];
 }

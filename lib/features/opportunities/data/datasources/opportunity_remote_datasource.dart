@@ -1,6 +1,5 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../domain/entities/opportunity.dart';
-import '../../domain/entities/opportunity_applicant.dart';
 import '../models/opportunity_model.dart';
 
 class OpportunityRemoteDataSource {
@@ -11,39 +10,20 @@ class OpportunityRemoteDataSource {
   static const _opportunitySelect =
       '*, creator:profiles!opportunities_posted_by_fkey(id, full_name, avatar_url)';
 
-  static const _applicantSelect =
-      'user_id, note, applied_at, applicant:profiles!opportunity_applications_user_id_fkey(id, full_name, avatar_url)';
-
-  /// Own application rows for the given user, keyed by opportunity_id. RLS
-  /// already restricts `opportunity_applications` to the caller's own rows
-  /// (or all rows for officers), so this is safe to call unfiltered by role.
-  Future<Map<String, Map<String, dynamic>>> _myApplicationsByOpportunity(String userId) async {
-    final rows = await _client
-        .from('opportunity_applications')
-        .select('opportunity_id, note, applied_at')
-        .eq('user_id', userId);
-    return {
-      for (final r in rows as List) (r as Map<String, dynamic>)['opportunity_id'] as String: r,
-    };
-  }
-
   Future<List<OpportunityModel>> getOpportunities({String? currentUserId}) async {
     final rows = await _client.from('opportunities').select(_opportunitySelect).order('deadline');
 
     Set<String> savedIds = {};
-    Map<String, Map<String, dynamic>> myApplications = {};
     if (currentUserId != null) {
       final savedRows =
           await _client.from('saved_opportunities').select('opportunity_id').eq('user_id', currentUserId);
       savedIds = (savedRows as List).map((r) => r['opportunity_id'] as String).toSet();
-      myApplications = await _myApplicationsByOpportunity(currentUserId);
     }
 
     return (rows as List)
         .map((row) => OpportunityModel.fromMap(
               row as Map<String, dynamic>,
               isSaved: savedIds.contains(row['id']),
-              myApplication: myApplications[row['id']],
             ))
         .toList();
   }
@@ -61,70 +41,7 @@ class OpportunityRemoteDataSource {
           .maybeSingle();
       isSaved = saved != null;
     }
-
-    // RLS returns only the caller's own row for members, or every row for
-    // officers — so this single query doubles as "did I apply?" and "who
-    // applied?" depending on who's asking.
-    final applicationRows =
-        await _client.from('opportunity_applications').select(_applicantSelect).eq('opportunity_id', id).order(
-              'applied_at',
-              ascending: false,
-            );
-
-    Map<String, dynamic>? myApplication;
-    final applicants = <OpportunityApplicant>[];
-    for (final r in applicationRows as List) {
-      final map = r as Map<String, dynamic>;
-      applicants.add(OpportunityApplicantModel.fromMap(map));
-      if (currentUserId != null && map['user_id'] == currentUserId) {
-        myApplication = map;
-      }
-    }
-
-    return OpportunityModel.fromMap(row, isSaved: isSaved, myApplication: myApplication, applicants: applicants);
-  }
-
-  Future<void> markApplied({required String opportunityId, required String userId, String? note}) async {
-    await _client.from('opportunity_applications').upsert({
-      'opportunity_id': opportunityId,
-      'user_id': userId,
-      'note': note,
-      'applied_at': DateTime.now().toIso8601String(),
-    }, onConflict: 'opportunity_id,user_id');
-
-    try {
-      await _client.from('engagement_logs').insert({
-        'user_id': userId,
-        'action_type': 'opportunity_apply',
-        'reference_type': 'opportunity',
-        'reference_id': opportunityId,
-      });
-    } catch (_) {
-      // Application record is already persisted; points/analytics must not roll it back.
-    }
-  }
-
-  Future<List<OpportunityModel>> getAppliedOpportunities(String userId) async {
-    final rows = await _client
-        .from('opportunity_applications')
-        .select('opportunity_id, note, applied_at, opportunities($_opportunitySelect)')
-        .eq('user_id', userId)
-        .order('applied_at', ascending: false);
-
-    final savedRows = await _client.from('saved_opportunities').select('opportunity_id').eq('user_id', userId);
-    final savedIds = (savedRows as List).map((r) => r['opportunity_id'] as String).toSet();
-
-    return (rows as List)
-        .where((r) => r['opportunities'] != null)
-        .map((r) {
-          final map = r as Map<String, dynamic>;
-          return OpportunityModel.fromMap(
-            map['opportunities'] as Map<String, dynamic>,
-            isSaved: savedIds.contains(map['opportunity_id']),
-            myApplication: map,
-          );
-        })
-        .toList();
+    return OpportunityModel.fromMap(row, isSaved: isSaved);
   }
 
   Future<void> toggleSaved({required String opportunityId, required String userId, required bool save}) async {
