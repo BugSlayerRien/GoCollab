@@ -61,6 +61,18 @@ class ProfileHeader extends ConsumerWidget {
                         ),
                       ),
                     ),
+                    if (user.isVerified) ...[
+                      const SizedBox(width: AppSpacing.xs),
+                      Icon(Icons.verified_rounded, size: 14, color: AppColors.googleGreen),
+                      const SizedBox(width: 2),
+                      Text(
+                        'Verified',
+                        style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                              color: AppColors.googleGreen,
+                              fontWeight: FontWeight.w600,
+                            ),
+                      ),
+                    ],
                     const SizedBox(width: AppSpacing.xs),
                     Icon(Icons.star_rounded, size: 14, color: AppColors.googleYellow),
                     const SizedBox(width: 2),

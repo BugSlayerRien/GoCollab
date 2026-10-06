@@ -15,19 +15,23 @@ Professor review items. Use this as a pass/fail checklist for demo and documenta
 - [ ] New accounts default to `role_id = 1` (member)
 - [ ] Officer access requires role promotion (`role_id = 2`)
 
-### Gaps to address / decide
-- [ ] **Student identity proof** — decide one (or more) of:
-  - [ ] School email domain only (e.g. `@students.nu-baliwag.edu.ph`)
-  - [ ] Officer/admin approval queue before full access
-  - [ ] Chapter membership request + officer approve
-  - [ ] Student ID / enrollment upload for officer review
-- [ ] Document who can promote members → officers
-- [ ] Document what unverified users can / cannot do
-- [ ] Demo script: register → verify → show member role vs officer role
+### Implemented: automatic school-email verification + officer fallback
+The design goal was verification with **minimal manual input from the user**, so it runs in two layers:
+- [x] **School email domain = instant automatic verification.** A `BEFORE INSERT` trigger on `profiles` checks the signup email's domain against the `school_email_domains` table and marks the account verified on the spot. Zero extra steps for the user, and it runs server-side so it cannot be forged from the client.
+- [x] **Student ID + officer review for everyone else.** Members signing up with a personal Gmail submit a student number and a photo of their school ID, which lands in an officer-only review queue (approve / reject with a reason).
+- [x] **Unverified members can browse but not participate** — blocked from registering for events and therefore from earning points.
+- [x] **Enforced in RLS, not just the UI** — the `event_registrations` insert policy requires `public.is_verified()`. A disabled button is cosmetic; the policy is the actual gate.
+- [x] **Privilege-escalation hole closed** — `profiles_update_own` granted UPDATE on the whole row, so a member could previously PATCH their own `role_id` straight against the REST API. A `BEFORE UPDATE` guard trigger now rejects non-officer changes to `role_id`, `verification_status`, `verified_at`, `verified_by`, and `student_number`.
+- [x] **ID photos stored privately** — unlike avatars/banners, the `verification-docs` bucket is non-public; officers view submissions through short-lived signed URLs.
+- [ ] Requires running `supabase/migrations/20260924000000_member_verification.sql` and `20260924000001_verification_docs_storage.sql`
+- [ ] Confirm the seeded domains in that migration match your real campus domains
 
 ### Defense answer (ready)
-- [ ] Explain: login ≠ membership verification; membership is role/chapter-based and must be controlled by officers/admins
-- [ ] State chosen verification method and why it fits GDGoC chapters
+- [x] Login ≠ membership verification: a Google account proves only that the email exists. Verification here means the account is tied to a school-issued identity.
+- [x] Why school email first: it's the only signal that needs *no* user effort at all and can't be self-asserted — the school controls who holds one.
+- [x] Why an officer queue as fallback: it covers members whose Google account is personal, without forcing everyone through manual review.
+- [ ] Demo script: sign up with school email → already verified · sign up with Gmail → submit ID → officer approves → verified
+- [ ] Known limit to state honestly: this proves *school enrolment*, not *GDGoC club membership* — officer approval is what confirms the latter. OCR of the ID is a planned upgrade to reduce officer effort further.
 
 ---
 
@@ -87,7 +91,7 @@ Professor review items. Use this as a pass/fail checklist for demo and documenta
 
 | # | Topic | Status today | Action needed |
 |---|---|---|---|
-| 1 | Member/student verification | Login + role only; no school proof | Choose & implement verification rule |
+| 1 | Member/student verification | School-email auto-verify + officer ID review ✅ | Run the two migrations; confirm campus domains |
 | 2 | Centralized proof | Events: registration + QR attendance ✅ · Opportunities: external apply ⚠️ | Add in-app application tracking |
 | 3 | Location usability | Manual lat/long ⚠️ | Place search / map pin; hide coordinates |
 

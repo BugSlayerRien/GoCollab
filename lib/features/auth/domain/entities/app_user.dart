@@ -1,5 +1,6 @@
 import 'package:equatable/equatable.dart';
 import 'user_role.dart';
+import 'verification_status.dart';
 
 /// The authenticated identity used throughout the app — a merge of the
 /// Supabase `auth.users` session and the corresponding `public.profiles`
@@ -21,6 +22,8 @@ class AppUser extends Equatable {
     this.githubUsername,
     this.linkedinUrl,
     this.points = 0,
+    this.verificationStatus = VerificationStatus.unverified,
+    this.studentNumber,
   });
 
   final String id;
@@ -37,6 +40,13 @@ class AppUser extends Equatable {
   final String? githubUsername;
   final String? linkedinUrl;
   final int points;
+
+  /// Set server-side only — by the school-email auto-verify trigger or by an
+  /// officer reviewing a request. Never written from the client.
+  final VerificationStatus verificationStatus;
+  final String? studentNumber;
+
+  bool get isVerified => verificationStatus.isVerified;
 
   String get initials {
     final parts = fullName.trim().split(RegExp(r'\s+'));
@@ -73,6 +83,8 @@ class AppUser extends Equatable {
       githubUsername: githubUsername ?? this.githubUsername,
       linkedinUrl: linkedinUrl ?? this.linkedinUrl,
       points: points ?? this.points,
+      verificationStatus: verificationStatus,
+      studentNumber: studentNumber,
     );
   }
 
@@ -92,5 +104,7 @@ class AppUser extends Equatable {
         githubUsername,
         linkedinUrl,
         points,
+        verificationStatus,
+        studentNumber,
       ];
 }

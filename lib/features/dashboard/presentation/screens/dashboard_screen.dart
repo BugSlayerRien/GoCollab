@@ -16,6 +16,7 @@ import '../../../opportunities/presentation/providers/opportunity_providers.dart
 import '../../../opportunities/presentation/widgets/opportunity_card.dart';
 import '../../../profile/presentation/providers/profile_providers.dart';
 import '../../../shell/presentation/providers/shell_providers.dart';
+import '../../../verification/presentation/widgets/verification_prompt_card.dart';
 import '../providers/dashboard_providers.dart';
 import '../widgets/dashboard_header.dart';
 import '../widgets/quick_actions_grid.dart';
@@ -57,6 +58,7 @@ class DashboardScreen extends ConsumerWidget {
               onNotificationsTap: () => context.push('/notifications'),
             ),
             const SizedBox(height: AppSpacing.lg),
+            const VerificationPromptCard(),
             statsAsync.when(
               loading: () => const SizedBox(height: 72, child: Center(child: CircularProgressIndicator())),
               error: (_, __) => const SizedBox.shrink(),

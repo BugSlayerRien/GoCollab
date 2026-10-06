@@ -10,6 +10,7 @@ import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/confirm_dialog.dart';
 import '../../../../core/widgets/empty_state.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
+import '../../../verification/presentation/widgets/verification_prompt_card.dart';
 import '../providers/profile_providers.dart';
 import '../widgets/profile_header.dart';
 
@@ -45,6 +46,7 @@ class ProfileScreen extends ConsumerWidget {
             children: [
               ProfileHeader(user: user),
               const SizedBox(height: AppSpacing.lg),
+              const VerificationPromptCard(),
               if (user.bio != null && user.bio!.isNotEmpty) ...[
                 Text('Bio', style: Theme.of(context).textTheme.titleMedium),
                 const SizedBox(height: AppSpacing.xs),

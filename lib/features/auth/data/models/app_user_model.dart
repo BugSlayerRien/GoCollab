@@ -1,5 +1,6 @@
 import '../../domain/entities/app_user.dart';
 import '../../domain/entities/user_role.dart';
+import '../../domain/entities/verification_status.dart';
 
 /// Maps a `public.profiles` row (joined implicitly with `auth.users` via
 /// the session) into the domain [AppUser] entity.
@@ -19,6 +20,8 @@ class AppUserModel extends AppUser {
     super.githubUsername,
     super.linkedinUrl,
     super.points,
+    super.verificationStatus,
+    super.studentNumber,
   });
 
   factory AppUserModel.fromMap(Map<String, dynamic> map) {
@@ -37,9 +40,14 @@ class AppUserModel extends AppUser {
       githubUsername: map['github_username'] as String?,
       linkedinUrl: map['linkedin_url'] as String?,
       points: (map['points'] as num?)?.toInt() ?? 0,
+      verificationStatus: VerificationStatus.fromKey(map['verification_status'] as String?),
+      studentNumber: map['student_number'] as String?,
     );
   }
 
+  /// Whitelist of self-editable columns. `verification_status`,
+  /// `student_number`, `role_id` and `points` are intentionally absent —
+  /// a BEFORE UPDATE trigger on `profiles` rejects them from non-officers.
   Map<String, dynamic> toUpdateMap() {
     return {
       'full_name': fullName,

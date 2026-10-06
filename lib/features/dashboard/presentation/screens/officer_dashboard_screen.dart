@@ -11,6 +11,7 @@ import '../../../events/presentation/providers/event_providers.dart';
 import '../../../notifications/presentation/providers/notification_providers.dart';
 import '../../../partnerships/presentation/providers/partnership_providers.dart';
 import '../../../shell/presentation/providers/shell_providers.dart';
+import '../../../verification/presentation/providers/verification_providers.dart';
 import '../widgets/dashboard_header.dart';
 import '../widgets/quick_actions_grid.dart';
 
@@ -27,6 +28,8 @@ class OfficerDashboardScreen extends ConsumerWidget {
     final eventsAsync = ref.watch(eventsListProvider);
     final partnersAsync = ref.watch(partnersListProvider);
     final unreadCount = ref.watch(unreadNotificationCountProvider);
+    final pendingVerifications =
+        ref.watch(pendingVerificationRequestsProvider).valueOrNull?.length ?? 0;
 
     final user = userAsync.valueOrNull;
     if (user == null) return const Scaffold(body: Center(child: CircularProgressIndicator()));
@@ -37,6 +40,7 @@ class OfficerDashboardScreen extends ConsumerWidget {
           ref.invalidate(analyticsSnapshotProvider);
           ref.invalidate(eventsListProvider);
           ref.invalidate(partnersListProvider);
+          ref.invalidate(pendingVerificationRequestsProvider);
         },
         child: ListView(
           padding: const EdgeInsets.all(AppSpacing.lg),
@@ -72,6 +76,12 @@ class OfficerDashboardScreen extends ConsumerWidget {
                   label: 'Career Hub',
                   color: AppColors.googleYellow,
                   onTap: () => ref.read(selectedTabIndexProvider.notifier).state = 1,
+                ),
+                QuickAction(
+                  icon: Icons.verified_user_outlined,
+                  label: pendingVerifications > 0 ? 'Verify ($pendingVerifications)' : 'Verify',
+                  color: AppColors.googleGreen,
+                  onTap: () => context.push('/verification-requests'),
                 ),
               ],
             ),

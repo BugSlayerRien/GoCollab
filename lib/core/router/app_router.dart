@@ -15,6 +15,8 @@ import '../../features/profile/presentation/screens/edit_profile_screen.dart';
 import '../../features/settings/presentation/screens/settings_screen.dart';
 import '../../features/shell/presentation/screens/app_shell_screen.dart';
 import '../../features/splash/presentation/screens/splash_screen.dart';
+import '../../features/verification/presentation/screens/verification_requests_screen.dart';
+import '../../features/verification/presentation/screens/verification_screen.dart';
 
 const _authRoutes = {'/login', '/register', '/forgot-password'};
 
@@ -81,6 +83,11 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/partners/:id',
         builder: (context, state) => PartnerDetailScreen(partnerId: state.pathParameters['id']!),
+      ),
+      GoRoute(path: '/verify', builder: (context, state) => const VerificationScreen()),
+      GoRoute(
+        path: '/verification-requests',
+        builder: (context, state) => const VerificationRequestsScreen(),
       ),
       GoRoute(path: '/profile/edit', builder: (context, state) => const EditProfileScreen()),
       GoRoute(path: '/notifications', builder: (context, state) => const NotificationsScreen()),

@@ -15,6 +15,7 @@ import '../../../../core/widgets/empty_state.dart';
 import '../../../../core/widgets/status_badge.dart';
 import '../../../auth/domain/entities/user_role.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
+import '../../../verification/presentation/widgets/verification_prompt_card.dart';
 import '../../domain/entities/event.dart';
 import '../providers/event_providers.dart';
 import '../widgets/create_event_sheet.dart';
@@ -42,6 +43,7 @@ class EventDetailScreen extends ConsumerWidget {
           event: event,
           isOfficer: isOfficer,
           canManage: isOfficer && currentUser != null && event.createdBy == currentUser.id,
+          isVerified: currentUser?.isVerified ?? false,
         ),
       ),
     );
@@ -53,11 +55,13 @@ class _EventDetailBody extends ConsumerWidget {
     required this.event,
     required this.isOfficer,
     required this.canManage,
+    required this.isVerified,
   });
 
   final Event event;
   final bool isOfficer;
   final bool canManage;
+  final bool isVerified;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -191,6 +195,10 @@ class _EventDetailBody extends ConsumerWidget {
               ],
               const SizedBox(height: AppSpacing.xxl),
               if (!isOfficer) ...[
+                // Unverified members can browse everything but cannot join.
+                // The real gate is the RLS policy on event_registrations —
+                // this card just explains why the button is disabled.
+                if (!isVerified && !event.isRegistered) const VerificationPromptCard(),
                 Row(
                   children: [
                     Expanded(
@@ -199,9 +207,11 @@ class _EventDetailBody extends ConsumerWidget {
                         variant: event.isRegistered ? AppButtonVariant.outlined : AppButtonVariant.filled,
                         color: event.isRegistered ? AppColors.googleRed : null,
                         isLoading: isSubmitting,
-                        onPressed: (event.isRegistered && !event.isPast) || event.registrationOpen
-                            ? () => _handleRegistration(context, ref)
-                            : null,
+                        onPressed: event.isRegistered
+                            ? (!event.isPast ? () => _handleRegistration(context, ref) : null)
+                            : (event.registrationOpen && isVerified
+                                ? () => _handleRegistration(context, ref)
+                                : null),
                       ),
                     ),
                   ],
