@@ -11,6 +11,7 @@ class StorageService {
   static const _eventBannersBucket = 'event-banners';
   static const _avatarsBucket = 'avatars';
   static const _verificationDocsBucket = 'verification-docs';
+  static const _applicationProofsBucket = 'application-proofs';
 
   /// Uploads a profile avatar and returns its public URL.
   Future<String> uploadAvatar({
@@ -75,6 +76,26 @@ class StorageService {
   /// bucket ever being public. Defaults to 5 minutes.
   Future<String> signedVerificationDocumentUrl(String objectPath, {int expiresInSeconds = 300}) {
     return _client.storage.from(_verificationDocsBucket).createSignedUrl(objectPath, expiresInSeconds);
+  }
+
+  /// Uploads a screenshot proving an external application to the PRIVATE
+  /// proofs bucket; returns the object path.
+  Future<String> uploadApplicationProof({required XFile file, required String userId}) async {
+    final bytes = await file.readAsBytes();
+    final contentType = _contentTypeForFile(file);
+    final extension = _extensionForContentType(contentType);
+    final objectPath = '$userId/${DateTime.now().millisecondsSinceEpoch}.$extension';
+
+    await _client.storage.from(_applicationProofsBucket).uploadBinary(
+          objectPath,
+          bytes,
+          fileOptions: FileOptions(contentType: contentType, upsert: true),
+        );
+    return objectPath;
+  }
+
+  Future<String> signedApplicationProofUrl(String objectPath, {int expiresInSeconds = 300}) {
+    return _client.storage.from(_applicationProofsBucket).createSignedUrl(objectPath, expiresInSeconds);
   }
 
   String _contentTypeForFile(XFile file) {

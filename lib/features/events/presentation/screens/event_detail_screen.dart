@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:qr_flutter/qr_flutter.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../../../core/animations/prismatic_background.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
@@ -106,6 +107,12 @@ class _EventDetailBody extends ConsumerWidget {
           actions: [
             if (canManage)
               IconButton(
+                icon: const Icon(Icons.fact_check_outlined),
+                tooltip: 'Attendance list',
+                onPressed: () => context.push('/events/${event.id}/attendees'),
+              ),
+            if (canManage)
+              IconButton(
                 icon: const Icon(Icons.qr_code_scanner_rounded),
                 tooltip: 'Scan attendance',
                 onPressed: () => context.push('/events/${event.id}/check-in'),
@@ -148,7 +155,10 @@ class _EventDetailBody extends ConsumerWidget {
                 children: [
                   StatusBadge.pending(event.category.label),
                   const SizedBox(width: AppSpacing.xs),
-                  if (event.isRegistered) StatusBadge.success('You are registered'),
+                  if (event.isAttended)
+                    StatusBadge.success('Attended ✓')
+                  else if (event.isRegistered)
+                    StatusBadge.success('You are registered'),
                   if (!event.registrationOpen && !event.isRegistered) StatusBadge.alert('Registration closed'),
                 ],
               ),
@@ -173,7 +183,11 @@ class _EventDetailBody extends ConsumerWidget {
               ],
               if (event.partnerId != null && event.partnerName != null) ...[
                 const SizedBox(height: AppSpacing.md),
-                _PartnerRow(name: event.partnerName!, logoUrl: event.partnerLogoUrl),
+                _PartnerRow(
+                  name: event.partnerName!,
+                  logoUrl: event.partnerLogoUrl,
+                  onTap: () => _showPartner(context, event),
+                ),
               ],
               const SizedBox(height: AppSpacing.lg),
               Text('About this event', style: Theme.of(context).textTheme.titleMedium),
@@ -254,14 +268,61 @@ class _EventDetailBody extends ConsumerWidget {
   }
 }
 
+void _showPartner(BuildContext context, Event event) {
+  showModalBottomSheet<void>(
+    context: context,
+    builder: (sheetContext) => Padding(
+      padding: const EdgeInsets.all(AppSpacing.lg),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              if (event.partnerLogoUrl != null && event.partnerLogoUrl!.isNotEmpty)
+                CircleAvatar(radius: 24, backgroundImage: CachedNetworkImageProvider(event.partnerLogoUrl!))
+              else
+                const CircleAvatar(radius: 24, child: Icon(Icons.handshake_outlined)),
+              const SizedBox(width: AppSpacing.md),
+              Expanded(
+                child: Text(event.partnerName ?? 'Partner', style: Theme.of(sheetContext).textTheme.titleLarge),
+              ),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.md),
+          Text(
+            event.partnerDescription?.trim().isNotEmpty == true
+                ? event.partnerDescription!
+                : 'Proud partner of this GDGoC event.',
+            style: Theme.of(sheetContext).textTheme.bodyMedium,
+          ),
+          if (event.partnerWebsite?.trim().isNotEmpty == true) ...[
+            const SizedBox(height: AppSpacing.md),
+            AppButton(
+              label: 'Visit website',
+              icon: Icons.open_in_new_rounded,
+              variant: AppButtonVariant.outlined,
+              onPressed: () => launchUrl(Uri.parse(event.partnerWebsite!), mode: LaunchMode.externalApplication),
+            ),
+          ],
+        ],
+      ),
+    ),
+  );
+}
+
 class _PartnerRow extends StatelessWidget {
-  const _PartnerRow({required this.name, this.logoUrl});
+  const _PartnerRow({required this.name, this.logoUrl, this.onTap});
   final String name;
   final String? logoUrl;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(AppSpacing.radiusPill),
+      child: Container(
       padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm, vertical: AppSpacing.xs),
       decoration: BoxDecoration(
         color: context.appSurfaceMuted,
@@ -277,8 +338,11 @@ class _PartnerRow extends StatelessWidget {
             const Icon(Icons.handshake_outlined, size: 16),
           const SizedBox(width: AppSpacing.xs),
           Text('In partnership with $name', style: Theme.of(context).textTheme.bodySmall),
+          const SizedBox(width: 2),
+          const Icon(Icons.chevron_right_rounded, size: 16),
         ],
       ),
+    ),
     );
   }
 }

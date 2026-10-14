@@ -9,6 +9,8 @@ import '../../../../core/utils/date_formatter.dart';
 import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/confirm_dialog.dart';
 import '../../../../core/widgets/empty_state.dart';
+import '../../../../core/widgets/status_badge.dart';
+import '../../data/services/id_ocr_service.dart';
 import '../../domain/entities/verification_request.dart';
 import '../providers/verification_providers.dart';
 
@@ -197,6 +199,16 @@ class _RequestCard extends ConsumerWidget {
               ),
             ],
           ),
+          const SizedBox(height: AppSpacing.sm),
+          Builder(builder: (_) {
+            final ocr = OcrResult.fromKey(request.ocrResult);
+            return switch (ocr) {
+              OcrResult.matched => StatusBadge.success(ocr.label),
+              OcrResult.partial => StatusBadge.pending(ocr.label),
+              OcrResult.mismatch => StatusBadge.alert(ocr.label),
+              OcrResult.notRun => StatusBadge.info(ocr.label),
+            };
+          }),
           const SizedBox(height: AppSpacing.md),
           ClipRRect(
             borderRadius: BorderRadius.circular(AppSpacing.radiusMd),

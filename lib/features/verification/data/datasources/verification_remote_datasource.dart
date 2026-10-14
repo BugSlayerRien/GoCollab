@@ -28,6 +28,7 @@ class VerificationRemoteDataSource {
     required String userId,
     required String studentNumber,
     required XFile idDocument,
+    String ocrResult = 'not_run',
   }) async {
     final objectPath = await _storage.uploadVerificationDocument(file: idDocument, userId: userId);
 
@@ -36,6 +37,7 @@ class VerificationRemoteDataSource {
       'student_number': studentNumber,
       'id_document_path': objectPath,
       'status': 'pending',
+      'ocr_result': ocrResult,
     });
   }
 

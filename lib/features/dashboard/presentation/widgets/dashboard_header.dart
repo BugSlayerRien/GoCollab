@@ -14,12 +14,14 @@ class DashboardHeader extends StatelessWidget {
     super.key,
     required this.user,
     this.onNotificationsTap,
+    this.onProfileTap,
     this.unreadNotificationCount = 0,
     this.communityPoints,
   });
 
   final AppUser user;
   final VoidCallback? onNotificationsTap;
+  final VoidCallback? onProfileTap;
   final int unreadNotificationCount;
   final int? communityPoints;
 
@@ -72,6 +74,30 @@ class DashboardHeader extends StatelessWidget {
                   unreadCount: unreadNotificationCount,
                   onPressed: onNotificationsTap ?? () {},
                 ),
+                if (onProfileTap != null) ...[
+                  const SizedBox(width: AppSpacing.xs),
+                  Tooltip(
+                    message: 'Profile',
+                    child: InkWell(
+                      onTap: onProfileTap,
+                      customBorder: const CircleBorder(),
+                      child: Padding(
+                        padding: const EdgeInsets.all(4),
+                        child: CircleAvatar(
+                          radius: 18,
+                          backgroundColor: AppColors.googleBlue,
+                          backgroundImage: user.avatarUrl != null ? NetworkImage(user.avatarUrl!) : null,
+                          child: user.avatarUrl == null
+                              ? Text(
+                                  user.initials,
+                                  style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w700),
+                                )
+                              : null,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
               ],
             ),
           ),

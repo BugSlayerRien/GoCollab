@@ -56,6 +56,7 @@ class DashboardScreen extends ConsumerWidget {
               communityPoints: pointsAsync.valueOrNull,
               unreadNotificationCount: unreadCount,
               onNotificationsTap: () => context.push('/notifications'),
+              onProfileTap: () => ref.read(selectedTabIndexProvider.notifier).state = 4,
             ),
             const SizedBox(height: AppSpacing.lg),
             const VerificationPromptCard(),

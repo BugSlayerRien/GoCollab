@@ -12,6 +12,7 @@ abstract class VerificationRepository {
     required String userId,
     required String studentNumber,
     required XFile idDocument,
+    String ocrResult = 'not_run',
   });
 
   /// Officer queue — pending requests, oldest first.

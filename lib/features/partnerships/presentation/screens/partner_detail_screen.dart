@@ -142,6 +142,29 @@ class _OverviewTab extends ConsumerWidget {
           const SizedBox(height: AppSpacing.lg),
           LocationMapPreview(latitude: partner.latitude!, longitude: partner.longitude!, label: partner.name),
         ],
+        const SizedBox(height: AppSpacing.lg),
+        Text('Events promoting this partner', style: Theme.of(context).textTheme.titleMedium),
+        const SizedBox(height: AppSpacing.xs),
+        ref.watch(partnerEventsProvider(partner.id)).when(
+              loading: () => const LinearProgressIndicator(),
+              error: (_, __) => const Text('Could not load events.'),
+              data: (events) => events.isEmpty
+                  ? Text(
+                      'No events linked yet. Pick this partner when creating or editing an event to feature them on it.',
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(color: context.appTextSecondary),
+                    )
+                  : Column(
+                      children: events
+                          .map((e) => ListTile(
+                                contentPadding: EdgeInsets.zero,
+                                leading: const Icon(Icons.event_outlined),
+                                title: Text(e.title),
+                                subtitle: Text(DateFormatter.date(e.startAt)),
+                                onTap: () => context.push('/events/${e.id}'),
+                              ))
+                          .toList(),
+                    ),
+            ),
       ],
     );
   }

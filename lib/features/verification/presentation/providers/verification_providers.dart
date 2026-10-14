@@ -59,7 +59,11 @@ class VerificationActionsController extends StateNotifier<bool> {
   VerificationActionsController(this._ref) : super(false);
   final Ref _ref;
 
-  Future<String?> submit({required String studentNumber, required XFile idDocument}) async {
+  Future<String?> submit({
+    required String studentNumber,
+    required XFile idDocument,
+    String ocrResult = 'not_run',
+  }) async {
     final user = _ref.read(currentUserProvider).valueOrNull;
     if (user == null) return 'You must be signed in.';
     state = true;
@@ -67,6 +71,7 @@ class VerificationActionsController extends StateNotifier<bool> {
           userId: user.id,
           studentNumber: studentNumber,
           idDocument: idDocument,
+          ocrResult: ocrResult,
         );
     state = false;
     if (result.isSuccess) {

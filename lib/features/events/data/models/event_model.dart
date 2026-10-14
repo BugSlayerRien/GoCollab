@@ -29,6 +29,9 @@ class EventModel extends Event {
     super.partnerId,
     super.partnerName,
     super.partnerLogoUrl,
+    super.partnerDescription,
+    super.partnerWebsite,
+    super.isAttended,
   });
 
   /// [map] is a raw `events` row. [registeredCount] should be pre-aggregated
@@ -74,6 +77,9 @@ class EventModel extends Event {
       partnerId: partner?['id'] as String? ?? map['partner_id'] as String?,
       partnerName: partner?['name'] as String?,
       partnerLogoUrl: partner?['logo_url'] as String?,
+      partnerDescription: partner?['description'] as String?,
+      partnerWebsite: partner?['website'] as String?,
+      isAttended: registration?['status'] == 'attended',
     );
   }
 }

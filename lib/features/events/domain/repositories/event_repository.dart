@@ -1,5 +1,6 @@
 import '../../../../core/utils/result.dart';
 import '../entities/event.dart';
+import '../entities/event_attendee.dart';
 
 abstract class EventRepository {
   Future<Result<List<Event>>> getEvents({String? currentUserId});
@@ -18,6 +19,11 @@ abstract class EventRepository {
     required String qrCode,
     required String officerId,
   });
+
+  /// Manual check-in for a registered member (no QR available).
+  Future<Result<String>> checkInMember({required String eventId, required String userId});
+
+  Future<Result<List<EventAttendee>>> getAttendees(String eventId);
 
   Future<Result<void>> createEvent({
     required String title,

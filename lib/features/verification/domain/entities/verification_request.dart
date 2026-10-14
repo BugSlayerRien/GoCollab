@@ -16,6 +16,7 @@ class VerificationRequest extends Equatable {
     this.reviewedAt,
     this.rejectionReason,
     this.applicant,
+    this.ocrResult = 'not_run',
   });
 
   final String id;
@@ -30,6 +31,9 @@ class VerificationRequest extends Equatable {
   final DateTime? reviewedAt;
   final String? rejectionReason;
   final ContentCreator? applicant;
+
+  /// Advisory on-device OCR hint: not_run | matched | partial | mismatch.
+  final String ocrResult;
 
   bool get isPending => status == 'pending';
   bool get isApproved => status == 'approved';
@@ -48,5 +52,6 @@ class VerificationRequest extends Equatable {
         applicant?.id,
         applicant?.name,
         applicant?.avatarUrl,
+        ocrResult,
       ];
 }

@@ -1,11 +1,13 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../features/application_claims/presentation/screens/application_claims_screen.dart';
 import '../../features/auth/presentation/providers/auth_providers.dart';
 import '../../features/auth/presentation/screens/forgot_password_screen.dart';
 import '../../features/auth/presentation/screens/login_screen.dart';
 import '../../features/auth/presentation/screens/register_screen.dart';
 import '../../features/auth/presentation/screens/reset_password_screen.dart';
 import '../../features/calendar/presentation/screens/my_calendar_screen.dart';
+import '../../features/events/presentation/screens/event_attendees_screen.dart';
 import '../../features/events/presentation/screens/event_detail_screen.dart';
 import '../../features/events/presentation/screens/qr_checkin_screen.dart';
 import '../../features/notifications/presentation/screens/notifications_screen.dart';
@@ -77,6 +79,10 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => QrCheckInScreen(eventId: state.pathParameters['id']!),
       ),
       GoRoute(
+        path: '/events/:id/attendees',
+        builder: (context, state) => EventAttendeesScreen(eventId: state.pathParameters['id']!),
+      ),
+      GoRoute(
         path: '/opportunities/:id',
         builder: (context, state) => OpportunityDetailScreen(opportunityId: state.pathParameters['id']!),
       ),
@@ -84,6 +90,7 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: '/partners/:id',
         builder: (context, state) => PartnerDetailScreen(partnerId: state.pathParameters['id']!),
       ),
+      GoRoute(path: '/application-claims', builder: (context, state) => const ApplicationClaimsScreen()),
       GoRoute(path: '/verify', builder: (context, state) => const VerificationScreen()),
       GoRoute(
         path: '/verification-requests',

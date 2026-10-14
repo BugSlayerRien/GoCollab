@@ -12,6 +12,8 @@ import '../../../../core/widgets/empty_state.dart';
 import '../../../../core/widgets/status_badge.dart';
 import '../../../auth/domain/entities/user_role.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
+import '../../../application_claims/presentation/providers/claim_providers.dart';
+import '../../../application_claims/presentation/widgets/application_claim_card.dart';
 import '../../domain/entities/opportunity.dart';
 import '../providers/opportunity_providers.dart';
 import '../widgets/create_opportunity_sheet.dart';
@@ -146,7 +148,12 @@ class _DetailBody extends ConsumerWidget {
                   icon: Icons.open_in_new_rounded,
                   onPressed: opportunity.applicationUrl == null
                       ? null
-                      : () => launchUrl(Uri.parse(opportunity.applicationUrl!), mode: LaunchMode.externalApplication),
+                      : () {
+                          // Launch first (popup blockers need a direct user gesture),
+                          // then record the server-timestamped click.
+                          launchUrl(Uri.parse(opportunity.applicationUrl!), mode: LaunchMode.externalApplication);
+                          ref.read(claimActionsControllerProvider.notifier).recordClick(opportunity.id);
+                        },
                 ),
               ),
               const SizedBox(width: AppSpacing.sm),
@@ -170,6 +177,7 @@ class _DetailBody extends ConsumerWidget {
               ),
             ],
           ),
+          if (opportunity.applicationUrl != null) ApplicationClaimCard(opportunityId: opportunity.id),
         ],
       ),
     );

@@ -24,12 +24,14 @@ class VerificationRepositoryImpl implements VerificationRepository {
     required String userId,
     required String studentNumber,
     required XFile idDocument,
+    String ocrResult = 'not_run',
   }) async {
     try {
       await _dataSource.submitRequest(
         userId: userId,
         studentNumber: studentNumber,
         idDocument: idDocument,
+        ocrResult: ocrResult,
       );
       return const Result.success(null);
     } catch (e) {

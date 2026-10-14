@@ -12,6 +12,7 @@ class VerificationRequestModel extends VerificationRequest {
     super.reviewedAt,
     super.rejectionReason,
     super.applicant,
+    super.ocrResult,
   });
 
   factory VerificationRequestModel.fromMap(Map<String, dynamic> map) {
@@ -28,6 +29,7 @@ class VerificationRequestModel extends VerificationRequest {
         map['applicant'] as Map<String, dynamic>?,
         fallbackId: map['user_id'] as String?,
       ),
+      ocrResult: map['ocr_result'] as String? ?? 'not_run',
     );
   }
 }

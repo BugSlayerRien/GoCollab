@@ -6,6 +6,7 @@ import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/widgets/section_header.dart';
 import '../../../analytics/presentation/providers/analytics_providers.dart';
 import '../../../analytics/presentation/widgets/stat_summary_card.dart';
+import '../../../application_claims/presentation/providers/claim_providers.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../../events/presentation/providers/event_providers.dart';
 import '../../../notifications/presentation/providers/notification_providers.dart';
@@ -31,6 +32,8 @@ class OfficerDashboardScreen extends ConsumerWidget {
     final pendingVerifications =
         ref.watch(pendingVerificationRequestsProvider).valueOrNull?.length ?? 0;
 
+    final pendingClaims = ref.watch(pendingClaimsProvider).valueOrNull?.length ?? 0;
+
     final user = userAsync.valueOrNull;
     if (user == null) return const Scaffold(body: Center(child: CircularProgressIndicator()));
 
@@ -41,6 +44,7 @@ class OfficerDashboardScreen extends ConsumerWidget {
           ref.invalidate(eventsListProvider);
           ref.invalidate(partnersListProvider);
           ref.invalidate(pendingVerificationRequestsProvider);
+          ref.invalidate(pendingClaimsProvider);
         },
         child: ListView(
           padding: const EdgeInsets.all(AppSpacing.lg),
@@ -49,6 +53,7 @@ class OfficerDashboardScreen extends ConsumerWidget {
               user: user,
               unreadNotificationCount: unreadCount,
               onNotificationsTap: () => context.push('/notifications'),
+              onProfileTap: () => ref.read(selectedTabIndexProvider.notifier).state = 6,
             ),
             const SizedBox(height: AppSpacing.lg),
             QuickActionsGrid(
@@ -76,6 +81,12 @@ class OfficerDashboardScreen extends ConsumerWidget {
                   label: 'Career Hub',
                   color: AppColors.googleYellow,
                   onTap: () => ref.read(selectedTabIndexProvider.notifier).state = 1,
+                ),
+                QuickAction(
+                  icon: Icons.redeem_rounded,
+                  label: pendingClaims > 0 ? 'Claims ($pendingClaims)' : 'Claims',
+                  color: AppColors.googleBlue,
+                  onTap: () => context.push('/application-claims'),
                 ),
                 QuickAction(
                   icon: Icons.verified_user_outlined,

@@ -11,6 +11,7 @@ import '../../../../core/widgets/confirm_dialog.dart';
 import '../../../../core/widgets/status_badge.dart';
 import '../../../auth/domain/entities/verification_status.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
+import '../../data/services/id_ocr_service.dart';
 import '../providers/verification_providers.dart';
 
 /// Member-facing verification. Most members never see this — signing up with
@@ -53,9 +54,19 @@ class _VerificationScreenState extends ConsumerState<VerificationScreen> {
       return;
     }
 
+    final user = ref.read(currentUserProvider).valueOrNull;
+    final studentNumber = _studentNumberController.text.trim();
+    final ocr = await const IdOcrService().check(
+      image: _idDocument!,
+      studentNumber: studentNumber,
+      fullName: user?.fullName ?? '',
+    );
+    if (!mounted) return;
+
     final error = await ref.read(verificationActionsControllerProvider.notifier).submit(
-          studentNumber: _studentNumberController.text.trim(),
+          studentNumber: studentNumber,
           idDocument: _idDocument!,
+          ocrResult: ocr.key,
         );
     if (!mounted) return;
     showActionFeedback(

@@ -22,6 +22,24 @@ final partnersListProvider = FutureProvider.autoDispose<List<Partner>>((ref) asy
   return result.when(success: (data) => data, failure: (f) => throw f);
 });
 
+/// Events an officer has linked to this partner (promotion history).
+final partnerEventsProvider =
+    FutureProvider.autoDispose.family<List<({String id, String title, DateTime startAt})>, String>((ref, partnerId) async {
+  final rows = await ref
+      .watch(supabaseClientProvider)
+      .from('events')
+      .select('id, title, start_at')
+      .eq('partner_id', partnerId)
+      .order('start_at', ascending: false);
+  return (rows as List)
+      .map((r) => (
+            id: r['id'] as String,
+            title: r['title'] as String,
+            startAt: DateTime.parse(r['start_at'] as String),
+          ))
+      .toList();
+});
+
 final partnerDetailProvider = FutureProvider.autoDispose.family<Partner, String>((ref, id) async {
   final repository = ref.watch(partnershipRepositoryProvider);
   final result = await repository.getPartnerById(id);

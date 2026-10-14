@@ -10,6 +10,7 @@ import '../../data/datasources/gcal_datasource.dart';
 import '../../data/repositories/event_repository_impl.dart';
 import '../../data/repositories/gcal_repository.dart';
 import '../../domain/entities/event.dart';
+import '../../domain/entities/event_attendee.dart';
 import '../../domain/repositories/event_repository.dart';
 
 final eventRemoteDataSourceProvider = Provider<EventRemoteDataSource>((ref) {
@@ -113,6 +114,12 @@ final eventDetailProvider = FutureProvider.autoDispose.family<Event, String>((re
   return result.when(success: (data) => data, failure: (f) => throw f);
 });
 
+/// Officer attendee list for one event.
+final eventAttendeesProvider = FutureProvider.autoDispose.family<List<EventAttendee>, String>((ref, eventId) async {
+  final result = await ref.watch(eventRepositoryProvider).getAttendees(eventId);
+  return result.when(success: (data) => data, failure: (f) => throw f);
+});
+
 class EventActionsController extends StateNotifier<bool> {
   EventActionsController(this._ref) : super(false);
   final Ref _ref;
@@ -130,6 +137,18 @@ class EventActionsController extends StateNotifier<bool> {
       _ref.invalidate(eventHistoryProvider);
       _ref.invalidate(communityPointsProvider);
       _ref.invalidate(notificationsProvider);
+    }
+    return result.when(success: (_) => null, failure: (f) => f.message);
+  }
+
+  /// Officer manual check-in. Returns an error message, or null on success.
+  Future<String?> checkInMember(String eventId, String userId) async {
+    state = true;
+    final result = await _ref.read(eventRepositoryProvider).checkInMember(eventId: eventId, userId: userId);
+    state = false;
+    if (result.isSuccess) {
+      _ref.invalidate(eventAttendeesProvider(eventId));
+      _ref.invalidate(eventDetailProvider(eventId));
     }
     return result.when(success: (_) => null, failure: (f) => f.message);
   }

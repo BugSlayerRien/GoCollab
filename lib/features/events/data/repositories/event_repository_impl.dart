@@ -1,6 +1,7 @@
 import '../../../../core/errors/exception_mapper.dart';
 import '../../../../core/utils/result.dart';
 import '../../domain/entities/event.dart';
+import '../../domain/entities/event_attendee.dart';
 import '../../domain/repositories/event_repository.dart';
 import '../datasources/event_remote_datasource.dart';
 
@@ -58,6 +59,24 @@ class EventRepositoryImpl implements EventRepository {
     try {
       final name = await _dataSource.checkInWithQrCode(eventId: eventId, qrCode: qrCode, officerId: officerId);
       return Result.success(name);
+    } catch (e) {
+      return Result.failure(mapExceptionToFailure(e));
+    }
+  }
+
+  @override
+  Future<Result<String>> checkInMember({required String eventId, required String userId}) async {
+    try {
+      return Result.success(await _dataSource.checkInMember(eventId: eventId, userId: userId));
+    } catch (e) {
+      return Result.failure(mapExceptionToFailure(e));
+    }
+  }
+
+  @override
+  Future<Result<List<EventAttendee>>> getAttendees(String eventId) async {
+    try {
+      return Result.success(await _dataSource.getAttendees(eventId));
     } catch (e) {
       return Result.failure(mapExceptionToFailure(e));
     }

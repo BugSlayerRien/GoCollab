@@ -78,6 +78,9 @@ class Event extends Equatable {
     this.partnerId,
     this.partnerName,
     this.partnerLogoUrl,
+    this.partnerDescription,
+    this.partnerWebsite,
+    this.isAttended = false,
   });
 
   final String id;
@@ -109,6 +112,11 @@ class Event extends Equatable {
   final String? partnerId;
   final String? partnerName;
   final String? partnerLogoUrl;
+  final String? partnerDescription;
+  final String? partnerWebsite;
+
+  /// The member was checked in at the event (registration status 'attended').
+  final bool isAttended;
 
   ContentCreator? get creator => ContentCreator(
         id: createdBy,
@@ -159,5 +167,8 @@ class Event extends Equatable {
         partnerId,
         partnerName,
         partnerLogoUrl,
+        partnerDescription,
+        partnerWebsite,
+        isAttended,
       ];
 }
