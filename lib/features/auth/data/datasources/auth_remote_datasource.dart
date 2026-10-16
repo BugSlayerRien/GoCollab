@@ -14,6 +14,11 @@ class AuthRemoteDataSource {
 
   GoTrueClient get _auth => _client.auth;
 
+  /// Where Supabase sends the user after Google / email-link flows. On web it
+  /// is the current origin; on Android it is the deep link registered in
+  /// AndroidManifest.xml (must also be in Supabase's Redirect URLs).
+  static const _mobileRedirect = 'ph.gdgoc.gocollab://login-callback';
+
   Stream<AuthState> get onAuthStateChange => _auth.onAuthStateChange;
 
   User? get currentSupabaseUser => _auth.currentUser;
@@ -66,7 +71,7 @@ class AuthRemoteDataSource {
   Future<void> signInWithGoogle() async {
     await _auth.signInWithOAuth(
       OAuthProvider.google,
-      redirectTo: kIsWeb ? Uri.base.origin : null,
+      redirectTo: kIsWeb ? Uri.base.origin : _mobileRedirect,
       scopes: _googleCalendarScope,
       queryParams: _googleOAuthQueryParams,
     );
@@ -77,7 +82,7 @@ class AuthRemoteDataSource {
   Future<void> requestGoogleCalendarAccess() async {
     await _auth.signInWithOAuth(
       OAuthProvider.google,
-      redirectTo: kIsWeb ? '${Uri.base.origin}${Uri.base.path}' : null,
+      redirectTo: kIsWeb ? '${Uri.base.origin}${Uri.base.path}' : _mobileRedirect,
       scopes: _googleCalendarScope,
       queryParams: _googleOAuthQueryParams,
     );
@@ -88,7 +93,7 @@ class AuthRemoteDataSource {
   Future<void> sendPasswordResetOtp(String email) {
     return _auth.resetPasswordForEmail(
       email,
-      redirectTo: kIsWeb ? Uri.base.origin : null,
+      redirectTo: kIsWeb ? Uri.base.origin : _mobileRedirect,
     );
   }
 

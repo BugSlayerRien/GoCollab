@@ -8,6 +8,7 @@ import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_text_field.dart';
 import '../providers/auth_providers.dart';
 import '../widgets/auth_scaffold.dart';
+import '../widgets/community_guidelines_sheet.dart';
 import '../widgets/google_sign_in_button.dart';
 
 class RegisterScreen extends ConsumerStatefulWidget {
@@ -127,6 +128,17 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
               title: Text(
                 'I agree to the GDGoC community guidelines and code of conduct.',
                 style: Theme.of(context).textTheme.bodySmall,
+              ),
+            ),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: TextButton.icon(
+                onPressed: () async {
+                  final agreed = await showCommunityGuidelines(context);
+                  if (agreed && mounted) setState(() => _acceptedTerms = true);
+                },
+                icon: const Icon(Icons.menu_book_outlined, size: 18),
+                label: const Text('Read the community guidelines'),
               ),
             ),
             const SizedBox(height: AppSpacing.sm),
