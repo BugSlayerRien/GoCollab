@@ -156,7 +156,7 @@ class DashboardScreen extends ConsumerWidget {
                   return const EmptyState(icon: Icons.event_busy_rounded, title: 'No upcoming events', message: '');
                 }
                 return SizedBox(
-                  height: 150,
+                  height: 184,
                   child: ListView.separated(
                     scrollDirection: Axis.horizontal,
                     itemCount: upcoming.length,

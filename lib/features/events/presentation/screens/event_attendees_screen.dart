@@ -11,13 +11,29 @@ import '../providers/event_providers.dart';
 
 /// Officer-only: who registered, who actually showed up, and a manual
 /// check-in for members whose QR code can't be scanned.
-class EventAttendeesScreen extends ConsumerWidget {
+class EventAttendeesScreen extends ConsumerStatefulWidget {
   const EventAttendeesScreen({super.key, required this.eventId});
 
   final String eventId;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<EventAttendeesScreen> createState() => _EventAttendeesScreenState();
+}
+
+class _EventAttendeesScreenState extends ConsumerState<EventAttendeesScreen> {
+  final _searchController = TextEditingController();
+  String _query = '';
+
+  String get eventId => widget.eventId;
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final attendeesAsync = ref.watch(eventAttendeesProvider(eventId));
     final isWorking = ref.watch(eventActionsControllerProvider);
 
@@ -43,19 +59,60 @@ class EventAttendeesScreen extends ConsumerWidget {
               ]);
             }
             final checkedIn = attendees.where((a) => a.isCheckedIn).length;
+            final needle = _query.trim().toLowerCase();
+            final visible = needle.isEmpty
+                ? attendees
+                : attendees
+                    .where((a) =>
+                        a.name.toLowerCase().contains(needle) ||
+                        (a.studentNumber?.toLowerCase().contains(needle) ?? false))
+                    .toList();
             return ListView(
               padding: const EdgeInsets.all(AppSpacing.md),
+              keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
               children: [
+                TextField(
+                  controller: _searchController,
+                  onChanged: (value) => setState(() => _query = value),
+                  textInputAction: TextInputAction.search,
+                  decoration: InputDecoration(
+                    hintText: 'Search by name or student number',
+                    prefixIcon: const Icon(Icons.search_rounded),
+                    suffixIcon: _query.isEmpty
+                        ? null
+                        : IconButton(
+                            icon: const Icon(Icons.close_rounded),
+                            onPressed: () {
+                              _searchController.clear();
+                              setState(() => _query = '');
+                            },
+                          ),
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.md),
                 Text(
-                  '$checkedIn of ${attendees.length} checked in',
+                  needle.isEmpty
+                      ? '$checkedIn of ${attendees.length} checked in'
+                      : '${visible.length} match${visible.length == 1 ? '' : 'es'} · $checkedIn of ${attendees.length} checked in',
                   style: Theme.of(context).textTheme.titleMedium,
                 ),
                 const SizedBox(height: AppSpacing.sm),
-                ...attendees.map((a) => _AttendeeTile(
-                      attendee: a,
-                      isWorking: isWorking,
-                      onCheckIn: () => _checkIn(context, ref, a),
-                    )),
+                if (visible.isEmpty)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: AppSpacing.xl),
+                    child: Center(
+                      child: Text(
+                        'No one matches “${_query.trim()}”.',
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: context.appTextSecondary),
+                      ),
+                    ),
+                  )
+                else
+                  ...visible.map((a) => _AttendeeTile(
+                        attendee: a,
+                        isWorking: isWorking,
+                        onCheckIn: () => _checkIn(context, ref, a),
+                      )),
               ],
             );
           },

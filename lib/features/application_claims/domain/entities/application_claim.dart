@@ -16,6 +16,7 @@ class ApplicationClaim extends Equatable {
     this.applicantAvatarUrl,
     this.opportunityTitle,
     this.opportunityOrganization,
+    this.ocrResult = 'not_run',
   });
 
   final String id;
@@ -30,6 +31,9 @@ class ApplicationClaim extends Equatable {
   final String? applicantAvatarUrl;
   final String? opportunityTitle;
   final String? opportunityOrganization;
+
+  /// Advisory on-device OCR of the proof: not_run | matched | partial | mismatch.
+  final String ocrResult;
 
   bool get canSubmitProof => status == 'clicked' || status == 'rejected';
   bool get isPending => status == 'pending';
@@ -52,9 +56,10 @@ class ApplicationClaim extends Equatable {
       applicantAvatarUrl: applicant?['avatar_url'] as String?,
       opportunityTitle: opportunity?['title'] as String?,
       opportunityOrganization: opportunity?['organization'] as String?,
+      ocrResult: map['ocr_result'] as String? ?? 'not_run',
     );
   }
 
   @override
-  List<Object?> get props => [id, userId, opportunityId, status, clickedAt, proofPath, submittedAt, rejectionReason];
+  List<Object?> get props => [id, userId, opportunityId, status, clickedAt, proofPath, submittedAt, rejectionReason, ocrResult];
 }

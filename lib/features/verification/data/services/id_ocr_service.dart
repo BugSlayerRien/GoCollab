@@ -45,6 +45,36 @@ class IdOcrService {
     return compare(text, studentNumber: studentNumber, fullName: fullName);
   }
 
+  /// Reads a screenshot proving an external application and checks that it
+  /// mentions the opportunity. Advisory only, like [check].
+  Future<OcrResult> checkProof({
+    required XFile image,
+    required String organization,
+    required String title,
+  }) async {
+    final text = await impl.readText(image);
+    if (text == null) return OcrResult.notRun;
+    return compareProof(text, organization: organization, title: title);
+  }
+
+  static OcrResult compareProof(String ocrText, {required String organization, required String title}) {
+    final upper = ocrText.toUpperCase();
+    List<String> tokens(String s) =>
+        s.toUpperCase().split(RegExp(r'[^A-Z0-9]+')).where((t) => t.length >= 4).toList();
+
+    final orgTokens = tokens(organization);
+    final titleTokens = tokens(title);
+    final orgHits = orgTokens.where(upper.contains).length;
+    final titleHits = titleTokens.where(upper.contains).length;
+
+    final orgFound = orgTokens.isNotEmpty && orgHits == orgTokens.length;
+    final titleFound = titleTokens.isNotEmpty && titleHits >= (titleTokens.length >= 2 ? 2 : 1);
+
+    if (orgFound && titleFound) return OcrResult.matched;
+    if (orgHits > 0 || titleHits > 0) return OcrResult.partial;
+    return OcrResult.mismatch;
+  }
+
   /// Pure matching logic, separate from the OCR engine so it is testable.
   static OcrResult compare(String ocrText, {required String studentNumber, required String fullName}) {
     String digits(String s) => s.replaceAll(RegExp(r'[^0-9A-Za-z]'), '').toUpperCase();

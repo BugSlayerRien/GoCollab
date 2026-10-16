@@ -32,7 +32,7 @@ class OfficerDashboardScreen extends ConsumerWidget {
     final pendingVerifications =
         ref.watch(pendingVerificationRequestsProvider).valueOrNull?.length ?? 0;
 
-    final pendingClaims = ref.watch(pendingClaimsProvider).valueOrNull?.length ?? 0;
+    final pendingClaims = ref.watch(pendingClaimSummaryProvider).valueOrNull?.length ?? 0;
 
     final user = userAsync.valueOrNull;
     if (user == null) return const Scaffold(body: Center(child: CircularProgressIndicator()));
@@ -44,7 +44,7 @@ class OfficerDashboardScreen extends ConsumerWidget {
           ref.invalidate(eventsListProvider);
           ref.invalidate(partnersListProvider);
           ref.invalidate(pendingVerificationRequestsProvider);
-          ref.invalidate(pendingClaimsProvider);
+          ref.invalidate(pendingClaimSummaryProvider);
         },
         child: ListView(
           padding: const EdgeInsets.all(AppSpacing.lg),

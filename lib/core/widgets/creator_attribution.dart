@@ -39,6 +39,8 @@ class CreatorAttribution extends StatelessWidget {
         const SizedBox(width: AppSpacing.sm),
         Expanded(
           child: RichText(
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
             text: TextSpan(
               style: Theme.of(context).textTheme.bodySmall?.copyWith(color: context.appTextSecondary),
               children: [

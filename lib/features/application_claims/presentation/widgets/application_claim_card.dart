@@ -8,20 +8,34 @@ import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/confirm_dialog.dart';
 import '../../../auth/domain/entities/user_role.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
+import '../../../verification/data/services/id_ocr_service.dart';
 import '../../domain/entities/application_claim.dart';
 import '../providers/claim_providers.dart';
 
 /// Lets a member redeem points for applying on an external site: tap Apply,
 /// upload a screenshot of the confirmation, an officer approves it.
 class ApplicationClaimCard extends ConsumerWidget {
-  const ApplicationClaimCard({super.key, required this.opportunityId});
+  const ApplicationClaimCard({
+    super.key,
+    required this.opportunityId,
+    required this.title,
+    required this.organization,
+  });
 
   final String opportunityId;
+  final String title;
+  final String organization;
 
   Future<void> _pickAndSubmit(BuildContext context, WidgetRef ref) async {
     final file = await ImagePicker().pickImage(source: ImageSource.gallery, imageQuality: 85);
     if (file == null || !context.mounted) return;
-    final error = await ref.read(claimActionsControllerProvider.notifier).submitProof(opportunityId, file);
+    // On-device check that the screenshot mentions this opportunity. It only
+    // helps the officer triage; it never approves anything by itself.
+    final ocr = await const IdOcrService().checkProof(image: file, organization: organization, title: title);
+    if (!context.mounted) return;
+    final error = await ref
+        .read(claimActionsControllerProvider.notifier)
+        .submitProof(opportunityId, file, ocrResult: ocr.key);
     if (!context.mounted) return;
     showActionFeedback(
       context,

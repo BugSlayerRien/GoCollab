@@ -177,7 +177,11 @@ class _DetailBody extends ConsumerWidget {
               ),
             ],
           ),
-          if (opportunity.applicationUrl != null) ApplicationClaimCard(opportunityId: opportunity.id),
+          if (opportunity.applicationUrl != null) ApplicationClaimCard(
+              opportunityId: opportunity.id,
+              title: opportunity.title,
+              organization: opportunity.organization,
+            ),
         ],
       ),
     );
