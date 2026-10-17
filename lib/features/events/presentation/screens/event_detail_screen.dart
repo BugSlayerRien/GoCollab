@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../../../../core/widgets/in_app_browser.dart';
 import '../../../../core/animations/prismatic_background.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
@@ -17,6 +18,7 @@ import '../../../../core/widgets/status_badge.dart';
 import '../../../auth/domain/entities/user_role.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../../verification/presentation/widgets/verification_prompt_card.dart';
+import '../../data/ticket_cache.dart';
 import '../../domain/entities/event.dart';
 import '../providers/event_providers.dart';
 import '../widgets/create_event_sheet.dart';
@@ -36,9 +38,22 @@ class EventDetailScreen extends ConsumerWidget {
     return Scaffold(
       body: eventAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (error, _) => ErrorStateView(
-          message: 'Could not load this event.',
-          onRetry: () => ref.invalidate(eventDetailProvider(eventId)),
+        error: (error, _) => FutureBuilder<(String, String)?>(
+          future: TicketCache.load(eventId),
+          builder: (context, snapshot) {
+            final ticket = snapshot.data;
+            if (ticket == null) {
+              return ErrorStateView(
+                message: 'Could not load this event.',
+                onRetry: () => ref.invalidate(eventDetailProvider(eventId)),
+              );
+            }
+            return _OfflineTicket(
+              title: ticket.$1,
+              qrCode: ticket.$2,
+              onRetry: () => ref.invalidate(eventDetailProvider(eventId)),
+            );
+          },
         ),
         data: (event) => _EventDetailBody(
           event: event,
@@ -189,6 +204,26 @@ class _EventDetailBody extends ConsumerWidget {
                   onTap: () => _showPartner(context, event),
                 ),
               ],
+              if (event.isOnline && event.onlineUrl != null && event.onlineUrl!.trim().isNotEmpty) ...[
+                const SizedBox(height: AppSpacing.md),
+                AppButton(
+                  label: 'Join online',
+                  icon: Icons.videocam_outlined,
+                  variant: AppButtonVariant.outlined,
+                  onPressed: () => _joinOnline(context, event.onlineUrl!.trim()),
+                ),
+              ],
+              if (event.gdgEventUrl != null) ...[
+                const SizedBox(height: AppSpacing.xs),
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: TextButton.icon(
+                    onPressed: () => openInApp(context, event.gdgEventUrl!, title: event.title),
+                    icon: const Icon(Icons.public_rounded, size: 18),
+                    label: const Text('Also on GDG community'),
+                  ),
+                ),
+              ],
               const SizedBox(height: AppSpacing.lg),
               Text('About this event', style: Theme.of(context).textTheme.titleMedium),
               const SizedBox(height: AppSpacing.xs),
@@ -206,6 +241,14 @@ class _EventDetailBody extends ConsumerWidget {
               if (event.isRegistered && event.myQrCode != null) ...[
                 const SizedBox(height: AppSpacing.lg),
                 _MyQrCodeCard(qrData: event.myQrCode!, eventTitle: event.title),
+              ],
+              if (event.isAttended && event.feedbackFormUrl != null && event.feedbackFormUrl!.trim().isNotEmpty) ...[
+                const SizedBox(height: AppSpacing.lg),
+                AppButton(
+                  label: 'Give feedback',
+                  icon: Icons.rate_review_outlined,
+                  onPressed: () => openInApp(context, event.feedbackFormUrl!.trim(), title: 'Event feedback'),
+                ),
               ],
               const SizedBox(height: AppSpacing.xxl),
               if (!isOfficer) ...[
@@ -240,6 +283,18 @@ class _EventDetailBody extends ConsumerWidget {
         ),
       ],
     );
+  }
+
+  /// Video-call links open the Meet/Zoom/Teams app (they need the camera, mic
+  /// and the user's sign-in); anything else opens in the in-app browser.
+  Future<void> _joinOnline(BuildContext context, String url) async {
+    final host = Uri.tryParse(url)?.host.toLowerCase() ?? '';
+    final isCall = host.contains('meet.google.com') || host.contains('zoom.us') || host.contains('teams.');
+    if (isCall) {
+      await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
+    } else if (context.mounted) {
+      await openInApp(context, url, title: event.title);
+    }
   }
 
   Future<void> _handleRegistration(BuildContext context, WidgetRef ref) async {
@@ -302,7 +357,7 @@ void _showPartner(BuildContext context, Event event) {
               label: 'Visit website',
               icon: Icons.open_in_new_rounded,
               variant: AppButtonVariant.outlined,
-              onPressed: () => launchUrl(Uri.parse(event.partnerWebsite!), mode: LaunchMode.externalApplication),
+              onPressed: () => openInApp(context, event.partnerWebsite!, title: event.partnerName),
             ),
           ],
         ],
@@ -572,6 +627,48 @@ class _MyQrCodeCard extends StatelessWidget {
             padding: const EdgeInsets.all(AppSpacing.md),
             decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(AppSpacing.radiusMd)),
             child: QrImageView(data: qrData, size: 180, backgroundColor: Colors.white),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Shown when the event cannot be loaded but a ticket was saved earlier.
+class _OfflineTicket extends StatelessWidget {
+  const _OfflineTicket({required this.title, required this.qrCode, required this.onRetry});
+
+  final String title;
+  final String qrCode;
+  final VoidCallback onRetry;
+
+  @override
+  Widget build(BuildContext context) {
+    return SafeArea(
+      child: Column(
+        children: [
+          Align(alignment: Alignment.centerLeft, child: BackButton(onPressed: () => Navigator.of(context).maybePop())),
+          Expanded(
+            child: ListView(
+              padding: const EdgeInsets.all(AppSpacing.lg),
+              children: [
+                Row(
+                  children: [
+                    const Icon(Icons.cloud_off_rounded, size: 18),
+                    const SizedBox(width: AppSpacing.xs),
+                    Text('You are offline. Showing your saved ticket.', style: Theme.of(context).textTheme.bodySmall),
+                  ],
+                ),
+                const SizedBox(height: AppSpacing.lg),
+                _MyQrCodeCard(qrData: qrCode, eventTitle: title),
+                const SizedBox(height: AppSpacing.lg),
+                OutlinedButton.icon(
+                  onPressed: onRetry,
+                  icon: const Icon(Icons.refresh_rounded),
+                  label: const Text('Try again'),
+                ),
+              ],
+            ),
           ),
         ],
       ),

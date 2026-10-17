@@ -12,6 +12,34 @@ import '../../../verification/data/services/id_ocr_service.dart';
 import '../../domain/entities/application_claim.dart';
 import '../providers/claim_providers.dart';
 
+/// Pick a screenshot of the application confirmation and submit it for
+/// officer review. Used by the claim card and by the in-app browser's
+/// "Finished applying?" footer, so both paths behave identically.
+Future<void> pickAndSubmitClaimProof(
+  BuildContext context,
+  WidgetRef ref, {
+  required String opportunityId,
+  required String title,
+  required String organization,
+}) async {
+  final file = await ImagePicker().pickImage(source: ImageSource.gallery, imageQuality: 85);
+  if (file == null || !context.mounted) return;
+  // On-device check that the screenshot mentions this opportunity. It only
+  // helps the officer triage; it never approves anything by itself.
+  final ocr = await const IdOcrService().checkProof(image: file, organization: organization, title: title);
+  if (!context.mounted) return;
+  final error = await ref
+      .read(claimActionsControllerProvider.notifier)
+      .submitProof(opportunityId, file, ocrResult: ocr.key);
+  if (!context.mounted) return;
+  showActionFeedback(
+    context,
+    success: error == null,
+    successMessage: 'Proof submitted. An officer will review it.',
+    errorMessage: error,
+  );
+}
+
 /// Lets a member redeem points for applying on an external site: tap Apply,
 /// upload a screenshot of the confirmation, an officer approves it.
 class ApplicationClaimCard extends ConsumerWidget {
@@ -26,29 +54,10 @@ class ApplicationClaimCard extends ConsumerWidget {
   final String title;
   final String organization;
 
-  Future<void> _pickAndSubmit(BuildContext context, WidgetRef ref) async {
-    final file = await ImagePicker().pickImage(source: ImageSource.gallery, imageQuality: 85);
-    if (file == null || !context.mounted) return;
-    // On-device check that the screenshot mentions this opportunity. It only
-    // helps the officer triage; it never approves anything by itself.
-    final ocr = await const IdOcrService().checkProof(image: file, organization: organization, title: title);
-    if (!context.mounted) return;
-    final error = await ref
-        .read(claimActionsControllerProvider.notifier)
-        .submitProof(opportunityId, file, ocrResult: ocr.key);
-    if (!context.mounted) return;
-    showActionFeedback(
-      context,
-      success: error == null,
-      successMessage: 'Proof submitted. An officer will review it.',
-      errorMessage: error,
-    );
-  }
-
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final user = ref.watch(currentUserProvider).valueOrNull;
-    if (user == null || user.role == UserRole.officer) return const SizedBox.shrink();
+    if (user == null || user.role != UserRole.member) return const SizedBox.shrink();
 
     final claim = ref.watch(myClaimProvider(opportunityId)).valueOrNull;
     final isWorking = ref.watch(claimActionsControllerProvider);
@@ -114,7 +123,13 @@ class ApplicationClaimCard extends ConsumerWidget {
               label: claim.isRejected ? 'Upload new proof' : 'Upload proof',
               icon: Icons.upload_rounded,
               isLoading: isWorking,
-              onPressed: () => _pickAndSubmit(context, ref),
+              onPressed: () => pickAndSubmitClaimProof(
+                context,
+                ref,
+                opportunityId: opportunityId,
+                title: title,
+                organization: organization,
+              ),
             ),
           ],
         ],

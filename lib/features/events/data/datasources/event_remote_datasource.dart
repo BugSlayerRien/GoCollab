@@ -158,6 +158,7 @@ class EventRemoteDataSource {
         studentNumber: member?['student_number'] as String?,
         checkedInAt: a != null ? DateTime.parse(a['checked_in_at'] as String) : null,
         method: a?['method'] as String?,
+        status: (m['status'] as String?) ?? 'registered',
       );
     }).toList();
   }
@@ -179,6 +180,8 @@ class EventRemoteDataSource {
     String? bannerUrl,
     required String createdBy,
     String? partnerId,
+    String? gdgEventUrl,
+    String? feedbackFormUrl,
   }) async {
     await _client.from('events').insert({
       'title': title,
@@ -198,6 +201,8 @@ class EventRemoteDataSource {
       'status': 'upcoming',
       'created_by': createdBy,
       'partner_id': partnerId,
+      'gdg_event_url': gdgEventUrl,
+      'feedback_form_url': feedbackFormUrl,
     });
   }
 
@@ -219,6 +224,8 @@ class EventRemoteDataSource {
     String? bannerUrl,
     required EventStatus status,
     String? partnerId,
+    String? gdgEventUrl,
+    String? feedbackFormUrl,
   }) async {
     await _client.from('events').update({
       'title': title,
@@ -237,6 +244,8 @@ class EventRemoteDataSource {
       'banner_url': bannerUrl,
       'status': status.name,
       'partner_id': partnerId,
+      'gdg_event_url': gdgEventUrl,
+      'feedback_form_url': feedbackFormUrl,
     }).eq('id', id);
   }
 

@@ -94,6 +94,12 @@ class OfficerDashboardScreen extends ConsumerWidget {
                   color: AppColors.googleGreen,
                   onTap: () => context.push('/verification-requests'),
                 ),
+                QuickAction(
+                  icon: Icons.history_rounded,
+                  label: 'Audit log',
+                  color: AppColors.googleYellow,
+                  onTap: () => context.push('/audit-log'),
+                ),
               ],
             ),
             const SizedBox(height: AppSpacing.xl),

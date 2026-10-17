@@ -9,6 +9,7 @@ import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../domain/entities/opportunity.dart';
 import '../providers/opportunity_providers.dart';
 import '../widgets/create_opportunity_sheet.dart';
+import '../widgets/google_programs_section.dart';
 import '../widgets/opportunity_card.dart';
 
 class OpportunitiesListScreen extends ConsumerStatefulWidget {
@@ -79,6 +80,7 @@ class _OpportunitiesListScreenState extends ConsumerState<OpportunitiesListScree
                       ],
                     ),
                   ),
+                if (!_savedOnly) const GoogleProgramsSection(),
                 Expanded(
                   child: filtered.isEmpty
                       ? EmptyState(

@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/theme_extensions.dart';
 import '../../../../core/utils/date_formatter.dart';
 import '../../../../core/widgets/confirm_dialog.dart';
 import '../../../../core/widgets/empty_state.dart';
 import '../../../../core/widgets/status_badge.dart';
+import '../../domain/attendance_export.dart';
 import '../../domain/entities/event_attendee.dart';
 import '../providers/event_providers.dart';
 
@@ -36,6 +39,8 @@ class _EventAttendeesScreenState extends ConsumerState<EventAttendeesScreen> {
   Widget build(BuildContext context) {
     final attendeesAsync = ref.watch(eventAttendeesProvider(eventId));
     final isWorking = ref.watch(eventActionsControllerProvider);
+    final event = ref.watch(eventDetailProvider(eventId)).valueOrNull;
+    final eventEnded = event != null && event.endAt.isBefore(DateTime.now());
 
     return Scaffold(
       appBar: AppBar(title: const Text('Attendance')),
@@ -89,7 +94,48 @@ class _EventAttendeesScreenState extends ConsumerState<EventAttendeesScreen> {
                           ),
                   ),
                 ),
-                const SizedBox(height: AppSpacing.md),
+                Padding(
+                  padding: const EdgeInsets.only(top: AppSpacing.xs),
+                  child: Wrap(
+                    spacing: AppSpacing.xs,
+                    children: [
+                      TextButton.icon(
+                        onPressed: visible.isEmpty
+                            ? null
+                            : () async {
+                                await Clipboard.setData(ClipboardData(text: buildAttendanceTsv(visible)));
+                                if (!context.mounted) return;
+                                showActionFeedback(
+                                  context,
+                                  success: true,
+                                  successMessage:
+                                      'Copied ${visible.length} row${visible.length == 1 ? '' : 's'}. Paste into Google Sheets.',
+                                );
+                              },
+                        icon: const Icon(Icons.copy_all_rounded, size: 18),
+                        label: const Text('Copy for Google Sheets'),
+                      ),
+                      TextButton.icon(
+                        onPressed: () => launchUrl(Uri.parse('https://sheets.new'), mode: LaunchMode.externalApplication),
+                        icon: const Icon(Icons.table_chart_outlined, size: 18),
+                        label: const Text('Open Sheets'),
+                      ),
+                      if (eventEnded)
+                        TextButton.icon(
+                          onPressed: isWorking ? null : () => _markNoShows(context, ref),
+                          icon: const Icon(Icons.person_off_outlined, size: 18),
+                          label: const Text('Mark no-shows'),
+                        ),
+                      if (eventEnded)
+                        TextButton.icon(
+                          onPressed: isWorking ? null : () => _issueCertificates(context, ref),
+                          icon: const Icon(Icons.workspace_premium_outlined, size: 18),
+                          label: const Text('Issue certificates'),
+                        ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.xs),
                 Text(
                   needle.isEmpty
                       ? '$checkedIn of ${attendees.length} checked in'
@@ -112,12 +158,67 @@ class _EventAttendeesScreenState extends ConsumerState<EventAttendeesScreen> {
                         attendee: a,
                         isWorking: isWorking,
                         onCheckIn: () => _checkIn(context, ref, a),
+                        onUndo: () => _undo(context, ref, a),
                       )),
               ],
             );
           },
         ),
       ),
+    );
+  }
+
+  Future<void> _undo(BuildContext context, WidgetRef ref, EventAttendee attendee) async {
+    final ok = await confirmDestructiveAction(
+      context,
+      title: 'Undo check-in?',
+      message: '${attendee.name} will be marked as not checked in and the attendance points are taken back.',
+      confirmLabel: 'Undo',
+    );
+    if (!ok || !context.mounted) return;
+    final error = await ref.read(eventActionsControllerProvider.notifier).undoCheckIn(eventId, attendee.userId);
+    if (!context.mounted) return;
+    showActionFeedback(
+      context,
+      success: error == null,
+      successMessage: 'Check-in undone for ${attendee.name}.',
+      errorMessage: error,
+    );
+  }
+
+  Future<void> _issueCertificates(BuildContext context, WidgetRef ref) async {
+    final ok = await confirmDestructiveAction(
+      context,
+      title: 'Issue certificates?',
+      message: 'Everyone who was checked in receives a certificate and +50 points. This cannot be undone.',
+      confirmLabel: 'Issue',
+    );
+    if (!ok || !context.mounted) return;
+    final (count, error) = await ref.read(eventActionsControllerProvider.notifier).issueCertificates(eventId);
+    if (!context.mounted) return;
+    showActionFeedback(
+      context,
+      success: error == null,
+      successMessage: count == 0 ? 'Everyone already has a certificate.' : 'Issued $count certificate${count == 1 ? '' : 's'}.',
+      errorMessage: error,
+    );
+  }
+
+  Future<void> _markNoShows(BuildContext context, WidgetRef ref) async {
+    final ok = await confirmDestructiveAction(
+      context,
+      title: 'Mark no-shows?',
+      message: 'Everyone registered who was not checked in will be marked as a no-show.',
+      confirmLabel: 'Mark no-shows',
+    );
+    if (!ok || !context.mounted) return;
+    final (count, error) = await ref.read(eventActionsControllerProvider.notifier).markNoShows(eventId);
+    if (!context.mounted) return;
+    showActionFeedback(
+      context,
+      success: error == null,
+      successMessage: count == 0 ? 'No one to mark.' : 'Marked $count no-show${count == 1 ? '' : 's'}.',
+      errorMessage: error,
     );
   }
 
@@ -147,11 +248,17 @@ class _EventAttendeesScreenState extends ConsumerState<EventAttendeesScreen> {
 }
 
 class _AttendeeTile extends StatelessWidget {
-  const _AttendeeTile({required this.attendee, required this.isWorking, required this.onCheckIn});
+  const _AttendeeTile({
+    required this.attendee,
+    required this.isWorking,
+    required this.onCheckIn,
+    required this.onUndo,
+  });
 
   final EventAttendee attendee;
   final bool isWorking;
   final VoidCallback onCheckIn;
+  final VoidCallback onUndo;
 
   @override
   Widget build(BuildContext context) {
@@ -169,8 +276,20 @@ class _AttendeeTile extends StatelessWidget {
         style: Theme.of(context).textTheme.bodySmall?.copyWith(color: context.appTextSecondary),
       ),
       trailing: attendee.isCheckedIn
-          ? StatusBadge.success('Present')
-          : TextButton(onPressed: isWorking ? null : onCheckIn, child: const Text('Check in')),
+          ? Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                StatusBadge.success('Present'),
+                IconButton(
+                  icon: const Icon(Icons.undo_rounded, size: 20),
+                  tooltip: 'Undo check-in',
+                  onPressed: isWorking ? null : onUndo,
+                ),
+              ],
+            )
+          : (attendee.isNoShow
+              ? StatusBadge.alert('No-show')
+              : TextButton(onPressed: isWorking ? null : onCheckIn, child: const Text('Check in'))),
     );
   }
 }

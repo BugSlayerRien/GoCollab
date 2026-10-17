@@ -2,15 +2,20 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../../../core/services/place_search_service.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/theme_extensions.dart';
 import '../../../../core/utils/date_formatter.dart';
+import '../../../../core/utils/html_text.dart';
 import '../../../../core/utils/validators.dart';
 import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_text_field.dart';
 import '../../../../core/widgets/confirm_dialog.dart';
 import '../../../../core/widgets/sheet_messenger.dart';
+import '../../../gdg_events/domain/entities/gdg_event.dart';
+import '../../../gdg_events/presentation/providers/gdg_providers.dart';
+import '../../../gdg_events/presentation/widgets/gdg_import_sheet.dart';
 import '../../../partnerships/domain/entities/partner.dart';
 import '../../../partnerships/presentation/providers/partnership_providers.dart';
 import '../../domain/entities/event.dart';
@@ -59,6 +64,9 @@ class _EventEditorSheetState extends ConsumerState<_EventEditorSheet> {
   XFile? _bannerFile;
   bool _removeBanner = false;
   String? _partnerId;
+  String? _gdgEventUrl;
+  bool _importing = false;
+  late final TextEditingController _feedbackFormController;
 
   bool get _isEditing => widget.existing != null;
 
@@ -87,6 +95,8 @@ class _EventEditorSheetState extends ConsumerState<_EventEditorSheet> {
     _endAt = existing?.endAt ?? _startAt.add(const Duration(hours: 3));
     _registrationDeadline = existing?.registrationDeadline;
     _partnerId = existing?.partnerId;
+    _gdgEventUrl = existing?.gdgEventUrl;
+    _feedbackFormController = TextEditingController(text: existing?.feedbackFormUrl ?? '');
   }
 
   @override
@@ -101,6 +111,7 @@ class _EventEditorSheetState extends ConsumerState<_EventEditorSheet> {
     _longitudeController.dispose();
     _capacityController.dispose();
     _onlineUrlController.dispose();
+    _feedbackFormController.dispose();
     super.dispose();
   }
 
@@ -133,6 +144,50 @@ class _EventEditorSheetState extends ConsumerState<_EventEditorSheet> {
       _placeSearchController.clear();
     });
     FocusScope.of(context).unfocus();
+  }
+
+  /// Fill the form from one of our chapter's events on gdg.community.dev.
+  Future<void> _importFromGdg() async {
+    final picked = await showModalBottomSheet<GdgEvent>(
+      context: context,
+      isScrollControlled: true,
+      builder: (_) => const GdgImportSheet(),
+    );
+    if (picked == null || !mounted) return;
+
+    setState(() => _importing = true);
+    try {
+      final detail = await ref.read(gdgRepositoryProvider).detail(picked.id);
+      if (!mounted) return;
+      setState(() {
+        _titleController.text = detail.title;
+        _descriptionController.text = htmlToPlainText(detail.descriptionHtml ?? '');
+        _startAt = detail.startAt;
+        _endAt = detail.endAt.isAfter(detail.startAt) ? detail.endAt : detail.startAt.add(const Duration(hours: 3));
+        _isOnline = detail.isVirtual;
+        _venueController.text = detail.venueName ?? '';
+        _venueAddressController.text = detail.venueAddress ?? '';
+        _latitudeController.text = detail.latitude?.toString() ?? '';
+        _longitudeController.text = detail.longitude?.toString() ?? '';
+        if (detail.capacity != null && detail.capacity! > 0) _capacityController.text = '${detail.capacity}';
+        _gdgEventUrl = detail.url;
+      });
+      showActionFeedback(
+        context,
+        success: true,
+        successMessage: 'Imported from GDG. Review the details, then create the event.',
+      );
+    } catch (_) {
+      if (!mounted) return;
+      showActionFeedback(
+        context,
+        success: false,
+        successMessage: '',
+        errorMessage: 'Could not load that event from gdg.community.dev.',
+      );
+    } finally {
+      if (mounted) setState(() => _importing = false);
+    }
   }
 
   Future<void> _addPartnerInline() async {
@@ -315,6 +370,8 @@ class _EventEditorSheetState extends ConsumerState<_EventEditorSheet> {
             bannerFile: _bannerFile,
             removeBanner: _removeBanner,
             partnerId: _partnerId,
+            gdgEventUrl: _gdgEventUrl,
+            feedbackFormUrl: _feedbackFormController.text.trim().isEmpty ? null : _feedbackFormController.text.trim(),
           )
         : await controller.createEvent(
             title: _titleController.text.trim(),
@@ -332,6 +389,8 @@ class _EventEditorSheetState extends ConsumerState<_EventEditorSheet> {
             registrationDeadline: _registrationDeadline,
             bannerFile: _bannerFile,
             partnerId: _partnerId,
+            gdgEventUrl: _gdgEventUrl,
+            feedbackFormUrl: _feedbackFormController.text.trim().isEmpty ? null : _feedbackFormController.text.trim(),
           );
 
     if (!mounted) return;
@@ -390,6 +449,23 @@ class _EventEditorSheetState extends ConsumerState<_EventEditorSheet> {
             mainAxisSize: MainAxisSize.min,
             children: [
               Text(_isEditing ? 'Edit event' : 'New event', style: Theme.of(context).textTheme.titleLarge),
+              if (!_isEditing) ...[
+                const SizedBox(height: AppSpacing.sm),
+                OutlinedButton.icon(
+                  onPressed: _importing ? null : _importFromGdg,
+                  icon: _importing
+                      ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2))
+                      : const Icon(Icons.public_rounded, size: 18),
+                  label: const Text('Import from GDG'),
+                ),
+              ],
+              if (_gdgEventUrl != null) ...[
+                const SizedBox(height: AppSpacing.xs),
+                Text(
+                  'Linked to a GDG community event.',
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(color: context.appTextSecondary),
+                ),
+              ],
               const SizedBox(height: AppSpacing.lg),
               Wrap(
                 spacing: AppSpacing.xs,
@@ -552,12 +628,31 @@ class _EventEditorSheetState extends ConsumerState<_EventEditorSheet> {
                   title: const Text('Online event'),
                 ),
               ),
-              if (_isOnline)
+              if (_isOnline) ...[
                 AppTextField(
                   label: 'Online URL',
                   controller: _onlineUrlController,
                   validator: (v) => Validators.requiredUrl(v, fieldName: 'Online URL'),
                 ),
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: TextButton.icon(
+                    // Meet needs the member's Google sign-in / the Meet app, so this
+                    // opens outside the app; paste the link back into the field above.
+                    onPressed: () => launchUrl(Uri.parse('https://meet.google.com/new'), mode: LaunchMode.externalApplication),
+                    icon: const Icon(Icons.video_call_outlined, size: 18),
+                    label: const Text('Create a Google Meet link'),
+                  ),
+                ),
+              ],
+              const SizedBox(height: AppSpacing.sm),
+              AppTextField(
+                label: 'Feedback form link (optional)',
+                hint: 'A Google Form members can fill in after attending',
+                controller: _feedbackFormController,
+                keyboardType: TextInputType.url,
+                validator: Validators.url,
+              ),
               if (_isEditing) ...[
                 const SizedBox(height: AppSpacing.sm),
                 DropdownButtonFormField<EventStatus>(

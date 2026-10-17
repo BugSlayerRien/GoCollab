@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:url_launcher/url_launcher.dart';
+import '../../../../core/widgets/in_app_browser.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/theme_extensions.dart';
 import '../../../../core/utils/date_formatter.dart';
@@ -149,10 +149,25 @@ class _DetailBody extends ConsumerWidget {
                   onPressed: opportunity.applicationUrl == null
                       ? null
                       : () {
-                          // Launch first (popup blockers need a direct user gesture),
-                          // then record the server-timestamped click.
-                          launchUrl(Uri.parse(opportunity.applicationUrl!), mode: LaunchMode.externalApplication);
+                          // Server-timestamped click, then open the application
+                          // inside the app with a one-tap path to claim points.
                           ref.read(claimActionsControllerProvider.notifier).recordClick(opportunity.id);
+                          openInApp(
+                            context,
+                            opportunity.applicationUrl!,
+                            title: opportunity.title,
+                            footerAction: BrowserFooterAction(
+                              label: 'Finished applying? Claim your points',
+                              icon: Icons.redeem_rounded,
+                              onPressed: () => pickAndSubmitClaimProof(
+                                context,
+                                ref,
+                                opportunityId: opportunity.id,
+                                title: opportunity.title,
+                                organization: opportunity.organization,
+                              ),
+                            ),
+                          );
                         },
                 ),
               ),

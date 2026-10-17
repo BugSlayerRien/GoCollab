@@ -18,7 +18,7 @@ class VerificationPromptCard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final user = ref.watch(currentUserProvider).valueOrNull;
-    if (user == null || user.role == UserRole.officer || user.isVerified) {
+    if (user == null || user.role != UserRole.member || user.isVerified) {
       return const SizedBox.shrink();
     }
 

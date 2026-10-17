@@ -100,6 +100,8 @@ class EventRepositoryImpl implements EventRepository {
     String? bannerUrl,
     required String createdBy,
     String? partnerId,
+    String? gdgEventUrl,
+    String? feedbackFormUrl,
   }) async {
     try {
       await _dataSource.createEvent(
@@ -119,6 +121,8 @@ class EventRepositoryImpl implements EventRepository {
         bannerUrl: bannerUrl,
         createdBy: createdBy,
         partnerId: partnerId,
+          gdgEventUrl: gdgEventUrl,
+          feedbackFormUrl: feedbackFormUrl,
       );
       return const Result.success(null);
     } catch (e) {
@@ -145,6 +149,8 @@ class EventRepositoryImpl implements EventRepository {
     String? bannerUrl,
     required EventStatus status,
     String? partnerId,
+    String? gdgEventUrl,
+    String? feedbackFormUrl,
   }) async {
     try {
       await _dataSource.updateEvent(
@@ -165,6 +171,8 @@ class EventRepositoryImpl implements EventRepository {
         bannerUrl: bannerUrl,
         status: status,
         partnerId: partnerId,
+          gdgEventUrl: gdgEventUrl,
+          feedbackFormUrl: feedbackFormUrl,
       );
       return const Result.success(null);
     } catch (e) {

@@ -19,7 +19,7 @@ class EventHistoryItem extends Equatable {
   final String? certificateUrl;
   final String? certificateNumber;
 
-  bool get hasCertificate => certificateUrl != null;
+  bool get hasCertificate => certificateNumber != null;
 
   @override
   List<Object?> get props => [eventId, eventTitle, eventDate, attended, certificateUrl, certificateNumber];

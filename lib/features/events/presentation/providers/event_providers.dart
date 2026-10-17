@@ -1,11 +1,13 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../../../core/di/supabase_providers.dart';
+import '../../../../core/errors/exception_mapper.dart';
 import '../../../../core/services/google_calendar_service.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../../notifications/presentation/providers/notification_providers.dart';
 import '../../../profile/presentation/providers/profile_providers.dart';
 import '../../data/datasources/event_remote_datasource.dart';
+import '../../data/ticket_cache.dart';
 import '../../data/datasources/gcal_datasource.dart';
 import '../../data/repositories/event_repository_impl.dart';
 import '../../data/repositories/gcal_repository.dart';
@@ -111,7 +113,14 @@ final eventDetailProvider = FutureProvider.autoDispose.family<Event, String>((re
   final currentUser = await ref.watch(currentUserProvider.future);
   final repository = ref.watch(eventRepositoryProvider);
   final result = await repository.getEventById(eventId, currentUserId: currentUser?.id);
-  return result.when(success: (data) => data, failure: (f) => throw f);
+  final event = result.when(success: (data) => data, failure: (f) => throw f);
+  // Keep the ticket for offline use; drop it once it can no longer be used.
+  if (event.isRegistered && event.myQrCode != null && !event.isPast) {
+    await TicketCache.save(eventId: eventId, title: event.title, qrCode: event.myQrCode!);
+  } else {
+    await TicketCache.clear(eventId);
+  }
+  return event;
 });
 
 /// Officer attendee list for one event.
@@ -153,6 +162,51 @@ class EventActionsController extends StateNotifier<bool> {
     return result.when(success: (_) => null, failure: (f) => f.message);
   }
 
+  /// Officer: reverse a wrong check-in (also takes back the attendance points).
+  Future<String?> undoCheckIn(String eventId, String userId) async {
+    state = true;
+    try {
+      await _ref
+          .read(supabaseClientProvider)
+          .rpc('undo_check_in', params: {'p_event_id': eventId, 'p_user_id': userId});
+      _ref.invalidate(eventAttendeesProvider(eventId));
+      _ref.invalidate(eventDetailProvider(eventId));
+      return null;
+    } catch (e) {
+      return mapExceptionToFailure(e).message;
+    } finally {
+      state = false;
+    }
+  }
+
+  /// Officer, after the event: everyone still just registered becomes a
+  /// no-show. Returns how many were marked, or an error message.
+  Future<(int, String?)> markNoShows(String eventId) async {
+    state = true;
+    try {
+      final count = await _ref.read(supabaseClientProvider).rpc('mark_no_shows', params: {'p_event_id': eventId});
+      _ref.invalidate(eventAttendeesProvider(eventId));
+      return ((count as num?)?.toInt() ?? 0, null);
+    } catch (e) {
+      return (0, mapExceptionToFailure(e).message);
+    } finally {
+      state = false;
+    }
+  }
+
+  /// Officer, after the event: certificates for everyone who was checked in.
+  Future<(int, String?)> issueCertificates(String eventId) async {
+    state = true;
+    try {
+      final count = await _ref.read(supabaseClientProvider).rpc('issue_certificates', params: {'p_event_id': eventId});
+      return ((count as num?)?.toInt() ?? 0, null);
+    } catch (e) {
+      return (0, mapExceptionToFailure(e).message);
+    } finally {
+      state = false;
+    }
+  }
+
   Future<String?> cancel(String eventId) async {
     final user = _ref.read(currentUserProvider).valueOrNull;
     if (user == null) return 'You must be signed in.';
@@ -184,6 +238,8 @@ class EventActionsController extends StateNotifier<bool> {
     DateTime? registrationDeadline,
     XFile? bannerFile,
     String? partnerId,
+    String? gdgEventUrl,
+    String? feedbackFormUrl,
   }) async {
     state = true;
     final user = _ref.read(currentUserProvider).valueOrNull;
@@ -220,6 +276,8 @@ class EventActionsController extends StateNotifier<bool> {
           bannerUrl: bannerUrl,
           createdBy: user.id,
           partnerId: partnerId,
+          gdgEventUrl: gdgEventUrl,
+          feedbackFormUrl: feedbackFormUrl,
         );
     state = false;
     if (result.isSuccess) {
@@ -250,6 +308,8 @@ class EventActionsController extends StateNotifier<bool> {
     XFile? bannerFile,
     bool removeBanner = false,
     String? partnerId,
+    String? gdgEventUrl,
+    String? feedbackFormUrl,
   }) async {
     state = true;
 
@@ -283,6 +343,8 @@ class EventActionsController extends StateNotifier<bool> {
           bannerUrl: bannerUrl,
           status: status,
           partnerId: partnerId,
+          gdgEventUrl: gdgEventUrl,
+          feedbackFormUrl: feedbackFormUrl,
         );
     state = false;
     if (result.isSuccess) {

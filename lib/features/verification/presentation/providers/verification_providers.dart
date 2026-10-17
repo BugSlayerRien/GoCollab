@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../../../core/di/supabase_providers.dart';
+import '../../../../core/errors/exception_mapper.dart';
 import '../../../auth/domain/entities/verification_status.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../data/datasources/verification_remote_datasource.dart';
@@ -58,6 +59,20 @@ final verificationDocumentUrlProvider =
 class VerificationActionsController extends StateNotifier<bool> {
   VerificationActionsController(this._ref) : super(false);
   final Ref _ref;
+
+  /// A member whose email did not match a school domain picks their chapter
+  /// once; the server refuses to change it afterwards.
+  Future<String?> chooseChapter(String chapterId) async {
+    try {
+      final client = _ref.read(supabaseClientProvider);
+      await client.rpc('choose_my_chapter', params: {'p_chapter': chapterId});
+      // Re-emits the profile through the auth stream (no splash flicker).
+      await client.auth.refreshSession();
+      return null;
+    } catch (e) {
+      return mapExceptionToFailure(e).message;
+    }
+  }
 
   Future<String?> submit({
     required String studentNumber,

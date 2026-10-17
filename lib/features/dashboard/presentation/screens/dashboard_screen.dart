@@ -11,6 +11,8 @@ import '../../../announcements/presentation/widgets/announcement_card.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../../events/presentation/providers/event_providers.dart';
 import '../../../events/presentation/widgets/event_card.dart';
+import '../../../gdg_events/presentation/providers/gdg_providers.dart';
+import '../../../gdg_events/presentation/widgets/gdg_event_card.dart';
 import '../../../notifications/presentation/providers/notification_providers.dart';
 import '../../../opportunities/presentation/providers/opportunity_providers.dart';
 import '../../../opportunities/presentation/widgets/opportunity_card.dart';
@@ -169,6 +171,38 @@ class DashboardScreen extends ConsumerWidget {
                 );
               },
             ),
+            const SizedBox(height: AppSpacing.xl),
+            SectionHeader(
+              title: 'GDG events near you',
+              onSeeAll: () {
+                ref.read(gdgModeProvider.notifier).state = true;
+                ref.read(selectedTabIndexProvider.notifier).state = 2;
+              },
+            ),
+            const SizedBox(height: AppSpacing.sm),
+            ref.watch(gdgUpcomingEventsProvider).when(
+                  loading: () => const SizedBox(height: 60, child: Center(child: CircularProgressIndicator())),
+                  error: (_, __) => const SizedBox.shrink(),
+                  data: (events) {
+                    final next = events.take(3).toList();
+                    if (next.isEmpty) return const SizedBox.shrink();
+                    return SizedBox(
+                      height: 150,
+                      child: ListView.separated(
+                        scrollDirection: Axis.horizontal,
+                        itemCount: next.length,
+                        separatorBuilder: (_, __) => const SizedBox(width: AppSpacing.sm),
+                        itemBuilder: (context, index) => SizedBox(
+                          width: 240,
+                          child: GdgEventCard(
+                            event: next[index],
+                            onTap: () => context.push('/gdg-events/${next[index].id}'),
+                          ),
+                        ),
+                      ),
+                    );
+                  },
+                ),
             const SizedBox(height: AppSpacing.xl),
             SectionHeader(title: 'Saved opportunities', onSeeAll: () => ref.read(selectedTabIndexProvider.notifier).state = 1),
             const SizedBox(height: AppSpacing.sm),

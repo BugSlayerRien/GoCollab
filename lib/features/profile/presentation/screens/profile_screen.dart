@@ -1,7 +1,9 @@
+import 'package:printing/printing.dart';
+import '../../domain/certificate_pdf.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:url_launcher/url_launcher.dart';
+import '../../../../core/widgets/in_app_browser.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/theme_extensions.dart';
@@ -206,7 +208,7 @@ class _GithubSection extends ConsumerWidget {
                 Align(
                   alignment: Alignment.centerLeft,
                   child: TextButton(
-                    onPressed: () => launchUrl(Uri.parse(stats.profileUrl!), mode: LaunchMode.externalApplication),
+                    onPressed: () => openInApp(context, stats.profileUrl!, title: 'GitHub'),
                     child: const Text('Open GitHub profile'),
                   ),
                 ),
@@ -251,7 +253,20 @@ class _EventHistorySection extends ConsumerWidget {
               title: Text(item.eventTitle),
               subtitle: Text(DateFormatter.date(item.eventDate)),
               trailing: item.hasCertificate
-                  ? const Icon(Icons.workspace_premium_rounded, color: AppColors.googleBlue)
+                  ? IconButton(
+                      icon: const Icon(Icons.workspace_premium_rounded, color: AppColors.googleBlue),
+                      tooltip: 'Download certificate',
+                      onPressed: () async {
+                        final name = ref.read(currentUserProvider).valueOrNull?.fullName ?? 'Member';
+                        final bytes = await buildCertificatePdf(
+                          memberName: name,
+                          eventTitle: item.eventTitle,
+                          eventDate: item.eventDate,
+                          certificateNumber: item.certificateNumber!,
+                        );
+                        await Printing.sharePdf(bytes: bytes, filename: 'certificate-${item.certificateNumber}.pdf');
+                      },
+                    )
                   : null,
             );
           }).toList(),

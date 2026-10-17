@@ -42,6 +42,8 @@ abstract class EventRepository {
     String? bannerUrl,
     required String createdBy,
     String? partnerId,
+    String? gdgEventUrl,
+    String? feedbackFormUrl,
   });
 
   Future<Result<void>> updateEvent({
@@ -62,6 +64,8 @@ abstract class EventRepository {
     String? bannerUrl,
     required EventStatus status,
     String? partnerId,
+    String? gdgEventUrl,
+    String? feedbackFormUrl,
   });
 
   Future<Result<void>> deleteEvent(String id);

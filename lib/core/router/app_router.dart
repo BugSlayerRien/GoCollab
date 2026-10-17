@@ -1,6 +1,10 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../features/admin/presentation/screens/admin_chapters_screen.dart';
+import '../../features/admin/presentation/screens/admin_members_screen.dart';
+import '../../features/admin/presentation/screens/audit_log_screen.dart';
 import '../../features/application_claims/presentation/screens/application_claims_screen.dart';
+import '../../features/auth/domain/entities/user_role.dart';
 import '../../features/auth/presentation/providers/auth_providers.dart';
 import '../../features/auth/presentation/screens/forgot_password_screen.dart';
 import '../../features/auth/presentation/screens/login_screen.dart';
@@ -8,6 +12,8 @@ import '../../features/auth/presentation/screens/register_screen.dart';
 import '../../features/auth/presentation/screens/reset_password_screen.dart';
 import '../../features/calendar/presentation/screens/my_calendar_screen.dart';
 import '../../features/events/presentation/screens/event_attendees_screen.dart';
+import '../../features/gdg_events/presentation/screens/gdg_chapters_screen.dart';
+import '../../features/gdg_events/presentation/screens/gdg_event_detail_screen.dart';
 import '../../features/events/presentation/screens/event_detail_screen.dart';
 import '../../features/events/presentation/screens/qr_checkin_screen.dart';
 import '../../features/notifications/presentation/screens/notifications_screen.dart';
@@ -21,6 +27,14 @@ import '../../features/verification/presentation/screens/verification_requests_s
 import '../../features/verification/presentation/screens/verification_screen.dart';
 
 const _authRoutes = {'/login', '/register', '/forgot-password'};
+
+/// Screens that only a chapter officer may open. The database enforces this
+/// too; the guard just keeps other roles from landing on a dead screen.
+bool _isOfficerRoute(String path) =>
+    path == '/gdg-chapters' ||
+    path == '/verification-requests' ||
+    path == '/application-claims' ||
+    RegExp(r'^/events/[^/]+/(check-in|attendees)$').hasMatch(path);
 
 /// Single source of truth for navigation. Redirect logic below implements
 /// role-agnostic session gating (splash while resolving, auth flow when
@@ -61,6 +75,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       if (isResetRoute && !isRecovery) return '/';
 
       if (isAuthRoute || isSplash) return '/';
+
+      if (_isOfficerRoute(matched) && user.role != UserRole.officer) return '/';
+      if (matched.startsWith('/admin') && user.role != UserRole.admin) return '/';
+      if (matched == '/audit-log' && user.role == UserRole.member) return '/';
       return null;
     },
     routes: [
@@ -90,6 +108,14 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: '/partners/:id',
         builder: (context, state) => PartnerDetailScreen(partnerId: state.pathParameters['id']!),
       ),
+      GoRoute(
+        path: '/gdg-events/:id',
+        builder: (context, state) => GdgEventDetailScreen(eventId: int.parse(state.pathParameters['id']!)),
+      ),
+      GoRoute(path: '/admin/chapters', builder: (context, state) => const AdminChaptersScreen()),
+      GoRoute(path: '/admin/members', builder: (context, state) => const AdminMembersScreen()),
+      GoRoute(path: '/audit-log', builder: (context, state) => const AuditLogScreen()),
+      GoRoute(path: '/gdg-chapters', builder: (context, state) => const GdgChaptersScreen()),
       GoRoute(path: '/application-claims', builder: (context, state) => const ApplicationClaimsScreen()),
       GoRoute(path: '/verify', builder: (context, state) => const VerificationScreen()),
       GoRoute(

@@ -13,8 +13,21 @@ class AnalyticsRemoteDataSource {
   final SupabaseClient _client;
 
   Future<AnalyticsSnapshot> getSnapshot() async {
-    final profiles = await _client.from('profiles').select('id, created_at, is_active');
-    final events = await _client.from('events').select('id, title, start_at').order('start_at');
+    // Officers only ever see their own chapter. RLS already limits the
+    // registration / attendance / engagement rows; members and events are
+    // readable by everyone, so they are narrowed here.
+    final uid = _client.auth.currentUser?.id;
+    final me = uid == null ? null : await _client.from('profiles').select('chapter_id').eq('id', uid).maybeSingle();
+    final chapterId = me?['chapter_id'] as String?;
+
+    var profilesQuery = _client.from('profiles').select('id, created_at, is_active');
+    var eventsQuery = _client.from('events').select('id, title, start_at');
+    if (chapterId != null) {
+      profilesQuery = profilesQuery.eq('chapter_id', chapterId);
+      eventsQuery = eventsQuery.eq('chapter_id', chapterId);
+    }
+    final profiles = await profilesQuery;
+    final events = await eventsQuery.order('start_at');
     final registrations = await _client.from('event_registrations').select('event_id, status');
     final attendance = await _client.from('attendance').select('event_id, user_id');
     final engagementCount = await _client.from('engagement_logs').select().count(CountOption.exact);

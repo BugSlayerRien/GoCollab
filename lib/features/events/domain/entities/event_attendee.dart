@@ -9,6 +9,7 @@ class EventAttendee extends Equatable {
     this.studentNumber,
     this.checkedInAt,
     this.method,
+    this.status = 'registered',
   });
 
   final String userId;
@@ -20,8 +21,12 @@ class EventAttendee extends Equatable {
   /// 'qr' or 'manual'.
   final String? method;
 
+  /// registration status: registered, attended or no-show.
+  final String status;
+
+  bool get isNoShow => status == 'no-show';
   bool get isCheckedIn => checkedInAt != null;
 
   @override
-  List<Object?> get props => [userId, name, avatarUrl, studentNumber, checkedInAt, method];
+  List<Object?> get props => [userId, name, avatarUrl, studentNumber, checkedInAt, method, status];
 }

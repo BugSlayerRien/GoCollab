@@ -11,6 +11,7 @@ import '../../../../core/widgets/confirm_dialog.dart';
 import '../../../../core/widgets/status_badge.dart';
 import '../../../auth/domain/entities/verification_status.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
+import '../../../auth/presentation/providers/chapter_providers.dart';
 import '../../data/services/id_ocr_service.dart';
 import '../providers/verification_providers.dart';
 
@@ -29,6 +30,7 @@ class _VerificationScreenState extends ConsumerState<VerificationScreen> {
   final _studentNumberController = TextEditingController();
   final _imagePicker = ImagePicker();
   XFile? _idDocument;
+  String? _chapterId;
 
   @override
   void dispose() {
@@ -55,6 +57,24 @@ class _VerificationScreenState extends ConsumerState<VerificationScreen> {
     }
 
     final user = ref.read(currentUserProvider).valueOrNull;
+    if (user?.chapterId == null) {
+      if (_chapterId == null) {
+        showActionFeedback(
+          context,
+          success: false,
+          successMessage: '',
+          errorMessage: 'Choose your chapter first.',
+        );
+        return;
+      }
+      final chapterError =
+          await ref.read(verificationActionsControllerProvider.notifier).chooseChapter(_chapterId!);
+      if (!mounted) return;
+      if (chapterError != null) {
+        showActionFeedback(context, success: false, successMessage: '', errorMessage: chapterError);
+        return;
+      }
+    }
     final studentNumber = _studentNumberController.text.trim();
     final ocr = await const IdOcrService().check(
       image: _idDocument!,
@@ -118,6 +138,9 @@ class _VerificationScreenState extends ConsumerState<VerificationScreen> {
                 formKey: _formKey,
                 studentNumberController: _studentNumberController,
                 idDocument: _idDocument,
+                needsChapter: user?.chapterId == null,
+                selectedChapterId: _chapterId,
+                onChapterChanged: (id) => setState(() => _chapterId = id),
                 isSubmitting: isSubmitting,
                 previousRejectionReason: requestAsync.valueOrNull?.isRejected == true
                     ? requestAsync.valueOrNull?.rejectionReason
@@ -187,11 +210,14 @@ class _StatusCard extends StatelessWidget {
   }
 }
 
-class _SubmitForm extends StatelessWidget {
+class _SubmitForm extends ConsumerWidget {
   const _SubmitForm({
     required this.formKey,
     required this.studentNumberController,
     required this.idDocument,
+    required this.needsChapter,
+    required this.selectedChapterId,
+    required this.onChapterChanged,
     required this.isSubmitting,
     required this.previousRejectionReason,
     required this.onPickDocument,
@@ -201,13 +227,17 @@ class _SubmitForm extends StatelessWidget {
   final GlobalKey<FormState> formKey;
   final TextEditingController studentNumberController;
   final XFile? idDocument;
+  final bool needsChapter;
+  final String? selectedChapterId;
+  final ValueChanged<String?> onChapterChanged;
   final bool isSubmitting;
   final String? previousRejectionReason;
   final VoidCallback onPickDocument;
   final VoidCallback onSubmit;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final chapters = needsChapter ? ref.watch(chapterOptionsProvider).valueOrNull : null;
     return Form(
       key: formKey,
       autovalidateMode: AutovalidateMode.onUserInteraction,
@@ -229,6 +259,25 @@ class _SubmitForm extends StatelessWidget {
             style: Theme.of(context).textTheme.bodySmall?.copyWith(color: context.appTextSecondary),
           ),
           const SizedBox(height: AppSpacing.lg),
+          if (needsChapter) ...[
+            DropdownButtonFormField<String>(
+              initialValue: selectedChapterId,
+              isExpanded: true,
+              decoration: const InputDecoration(
+                labelText: 'Your chapter',
+                helperText: 'Officers of this chapter review your ID. This cannot be changed later.',
+              ),
+              items: [
+                for (final c in (chapters ?? const []).where((c) => c.isActive))
+                  DropdownMenuItem(
+                    value: c.id,
+                    child: Text(c.campus.isEmpty ? c.name : '${c.name} · ${c.campus}', overflow: TextOverflow.ellipsis),
+                  ),
+              ],
+              onChanged: onChapterChanged,
+            ),
+            const SizedBox(height: AppSpacing.lg),
+          ],
           AppTextField(
             label: 'Student number',
             controller: studentNumberController,

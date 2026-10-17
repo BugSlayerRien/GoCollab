@@ -32,6 +32,8 @@ class EventModel extends Event {
     super.partnerDescription,
     super.partnerWebsite,
     super.isAttended,
+    super.gdgEventUrl,
+    super.feedbackFormUrl,
   });
 
   /// [map] is a raw `events` row. [registeredCount] should be pre-aggregated
@@ -80,6 +82,8 @@ class EventModel extends Event {
       partnerDescription: partner?['description'] as String?,
       partnerWebsite: partner?['website'] as String?,
       isAttended: registration?['status'] == 'attended',
+      gdgEventUrl: map['gdg_event_url'] as String?,
+      feedbackFormUrl: map['feedback_form_url'] as String?,
     );
   }
 }

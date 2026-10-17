@@ -81,6 +81,8 @@ class Event extends Equatable {
     this.partnerDescription,
     this.partnerWebsite,
     this.isAttended = false,
+    this.gdgEventUrl,
+    this.feedbackFormUrl,
   });
 
   final String id;
@@ -117,6 +119,12 @@ class Event extends Equatable {
 
   /// The member was checked in at the event (registration status 'attended').
   final bool isAttended;
+
+  /// The same event on gdg.community.dev, when it was imported from there.
+  final String? gdgEventUrl;
+
+  /// Google Form shown to members after they attend.
+  final String? feedbackFormUrl;
 
   ContentCreator? get creator => ContentCreator(
         id: createdBy,
@@ -170,5 +178,7 @@ class Event extends Equatable {
         partnerDescription,
         partnerWebsite,
         isAttended,
+        gdgEventUrl,
+        feedbackFormUrl,
       ];
 }

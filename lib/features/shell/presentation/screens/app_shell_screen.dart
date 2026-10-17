@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/animations/prismatic_screen_frame.dart';
+import '../../../admin/presentation/screens/admin_home_screen.dart';
 import '../../../analytics/presentation/screens/analytics_screen.dart';
 import '../../../auth/domain/entities/user_role.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
@@ -29,10 +30,11 @@ class AppShellScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final user = ref.watch(currentUserProvider).valueOrNull;
     final isOfficer = user?.role == UserRole.officer;
+    final isAdmin = user?.role == UserRole.admin;
     final selectedIndex = ref.watch(selectedTabIndexProvider);
 
-    final destinations = isOfficer ? _officerDestinations : _memberDestinations;
-    final screens = isOfficer ? _officerScreens : _memberScreens;
+    final destinations = isAdmin ? _adminDestinations : (isOfficer ? _officerDestinations : _memberDestinations);
+    final screens = isAdmin ? _adminScreens : (isOfficer ? _officerScreens : _memberScreens);
 
     final safeIndex = selectedIndex >= screens.length ? 0 : selectedIndex;
 
@@ -80,5 +82,19 @@ final _officerScreens = const [
   CommunityScreen(),
   AnalyticsScreen(),
   PartnersListScreen(),
+  ProfileScreen(),
+];
+
+const _adminDestinations = [
+  NavDestinationSpec(
+    icon: Icons.admin_panel_settings_outlined,
+    selectedIcon: Icons.admin_panel_settings_rounded,
+    label: 'Admin',
+  ),
+  NavDestinationSpec(icon: Icons.person_outline_rounded, selectedIcon: Icons.person_rounded, label: 'Profile'),
+];
+
+final _adminScreens = const [
+  AdminHomeScreen(),
   ProfileScreen(),
 ];
