@@ -2,7 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:url_launcher/url_launcher.dart';
+import '../../../../core/widgets/in_app_browser.dart';
 import '../../../../core/services/place_search_service.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/theme_extensions.dart';
@@ -639,7 +639,7 @@ class _EventEditorSheetState extends ConsumerState<_EventEditorSheet> {
                   child: TextButton.icon(
                     // Meet needs the member's Google sign-in / the Meet app, so this
                     // opens outside the app; paste the link back into the field above.
-                    onPressed: () => launchUrl(Uri.parse('https://meet.google.com/new'), mode: LaunchMode.externalApplication),
+                    onPressed: () => openExternal(context, 'https://meet.google.com/new'),
                     icon: const Icon(Icons.video_call_outlined, size: 18),
                     label: const Text('Create a Google Meet link'),
                   ),

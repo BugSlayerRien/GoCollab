@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:url_launcher/url_launcher.dart';
+import '../../../../core/widgets/in_app_browser.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/theme_extensions.dart';
 import '../../../../core/utils/date_formatter.dart';
@@ -116,7 +116,7 @@ class _EventAttendeesScreenState extends ConsumerState<EventAttendeesScreen> {
                         label: const Text('Copy for Google Sheets'),
                       ),
                       TextButton.icon(
-                        onPressed: () => launchUrl(Uri.parse('https://sheets.new'), mode: LaunchMode.externalApplication),
+                        onPressed: () => openExternal(context, 'https://sheets.new'),
                         icon: const Icon(Icons.table_chart_outlined, size: 18),
                         label: const Text('Open Sheets'),
                       ),

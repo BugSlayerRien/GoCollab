@@ -1,3 +1,6 @@
+import 'dart:async';
+import 'package:flutter/foundation.dart';
+import 'package:supabase_flutter/supabase_flutter.dart' show AuthState;
 import '../../../../core/errors/exception_mapper.dart';
 import '../../../../core/utils/result.dart';
 import '../../domain/entities/app_user.dart';
@@ -11,19 +14,43 @@ class AuthRepositoryImpl implements AuthRepository {
 
   @override
   Stream<AppUser?> watchCurrentUser() async* {
-    // Emit any session established during startup (e.g. PKCE password-recovery callback
-    // in handleWebAuthCallback) before the auth stream listener is attached.
-    yield await getCurrentUser();
+    // Subscribe BEFORE the first (slow) profile fetch. On a cold start from the
+    // OAuth redirect the sign-in event can arrive while that fetch is still
+    // running; a late subscription would miss it and leave the user on the
+    // login screen. A plain StreamController buffers until we start reading.
+    final buffered = StreamController<AuthState>();
+    final subscription = _dataSource.onAuthStateChange.listen(buffered.add);
+    try {
+      // Emit any session established during startup (e.g. PKCE callback).
+      yield await getCurrentUser();
 
-    yield* _dataSource.onAuthStateChange.asyncMap((state) async {
-      final user = state.session?.user;
-      if (user == null) return null;
-      try {
-        return await _dataSource.fetchProfile(user.id);
-      } catch (_) {
-        return null;
+      await for (final state in buffered.stream) {
+        final user = state.session?.user;
+        debugPrint('[Auth] ${state.event.name} user=${user?.id}');
+        if (user == null) {
+          yield null;
+          continue;
+        }
+        yield await _fetchProfileWithRetry(user.id);
       }
-    });
+    } finally {
+      await subscription.cancel();
+      await buffered.close();
+    }
+  }
+
+  Future<AppUser?> _fetchProfileWithRetry(String userId) async {
+    for (var attempt = 0; attempt < 3; attempt++) {
+      try {
+        final profile = await _dataSource.fetchProfile(userId);
+        if (profile != null) return profile;
+      } catch (e) {
+        debugPrint('[Auth] profile fetch failed (attempt ${attempt + 1}): $e');
+      }
+      // the profile row is created by a database trigger; give it a moment
+      await Future<void>.delayed(const Duration(milliseconds: 600));
+    }
+    return null;
   }
 
   @override

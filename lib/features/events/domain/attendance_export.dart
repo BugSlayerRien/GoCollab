@@ -15,7 +15,7 @@ String buildAttendanceTsv(List<EventAttendee> attendees) {
       [
         cell(a.name),
         cell(a.studentNumber),
-        a.isCheckedIn ? 'Present' : 'Registered',
+        a.isCheckedIn ? 'Present' : (a.isNoShow ? 'No-show' : 'Registered'),
         a.checkedInAt != null ? time.format(a.checkedInAt!.toLocal()) : '',
         a.method == null ? '' : (a.method == 'qr' ? 'QR scan' : 'Manual'),
       ],

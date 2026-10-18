@@ -13,6 +13,31 @@ class BrowserFooterAction {
   final VoidCallback onPressed;
 }
 
+/// Opens [url] in the phone's own browser or app (Chrome, Google Meet, ...),
+/// which already has the user's Google sign-in. If nothing can handle it, or
+/// the launch silently fails, it falls back to the in-app browser and says so,
+/// instead of doing nothing.
+Future<void> openExternal(BuildContext context, String url) async {
+  final uri = Uri.tryParse(url.trim());
+  if (uri == null || !(uri.scheme == 'http' || uri.scheme == 'https')) return;
+
+  var opened = false;
+  try {
+    opened = await launchUrl(uri, mode: LaunchMode.externalApplication);
+  } catch (_) {}
+  if (!opened) {
+    try {
+      opened = await launchUrl(uri);
+    } catch (_) {}
+  }
+  if (opened || !context.mounted) return;
+
+  ScaffoldMessenger.of(context).showSnackBar(
+    const SnackBar(content: Text('Could not open your browser, opening it inside the app instead.')),
+  );
+  await openInApp(context, url);
+}
+
 /// Opens [url] inside the app so the user doesn't have to leave GoCollab.
 ///
 /// * Android / iOS: a full-screen in-app WebView with an optional footer

@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:qr_flutter/qr_flutter.dart';
-import 'package:url_launcher/url_launcher.dart';
 import '../../../../core/widgets/in_app_browser.dart';
 import '../../../../core/animations/prismatic_background.dart';
 import '../../../../core/theme/app_colors.dart';
@@ -292,7 +291,7 @@ class _EventDetailBody extends ConsumerWidget {
     final host = Uri.tryParse(url)?.host.toLowerCase() ?? '';
     final isCall = host.contains('meet.google.com') || host.contains('zoom.us') || host.contains('teams.');
     if (isCall) {
-      await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
+      await openExternal(context, url);
     } else if (context.mounted) {
       await openInApp(context, url, title: event.title);
     }

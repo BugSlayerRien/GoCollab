@@ -23,8 +23,12 @@ class SupabaseService {
       publishableKey: Env.supabasePublishableKey,
       authOptions: const FlutterAuthClientOptions(
         authFlowType: AuthFlowType.pkce,
-        // We exchange `?code=` explicitly in [handleWebAuthCallback] before runApp.
-        detectSessionInUri: false,
+        // On the web we exchange `?code=` ourselves in [handleWebAuthCallback]
+        // before runApp. On Android/iOS the OAuth and email links arrive as
+        // deep links (ph.gdgoc.gocollab://login-callback?code=...) and
+        // supabase_flutter must be allowed to exchange them, otherwise the app
+        // is opened by the redirect but never signs in.
+        detectSessionInUri: !kIsWeb,
       ),
       realtimeClientOptions: const RealtimeClientOptions(
         eventsPerSecond: 5,
@@ -32,6 +36,14 @@ class SupabaseService {
     );
 
     await handleWebAuthCallback();
+
+    // A cold start from the OAuth deep link exchanges the code inside
+    // initialize(), before any auth listener exists. Keep the Google provider
+    // token (needed for Calendar) from that first session.
+    final session = client.auth.currentSession;
+    if (session != null) {
+      await GoogleTokenStorage.saveFromSession(session);
+    }
   }
 
   /// Exchanges `?code=` (PKCE) or hash tokens from Supabase auth redirects.
