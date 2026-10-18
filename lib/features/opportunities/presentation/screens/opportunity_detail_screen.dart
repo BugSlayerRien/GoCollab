@@ -146,7 +146,7 @@ class _DetailBody extends ConsumerWidget {
                 child: AppButton(
                   label: 'Apply now',
                   icon: Icons.open_in_new_rounded,
-                  onPressed: opportunity.applicationUrl == null
+                  onPressed: opportunity.applicationUrl == null || !opportunity.isOpen
                       ? null
                       : () {
                           // Server-timestamped click, then open the application

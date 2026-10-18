@@ -24,6 +24,7 @@ class _OpportunitiesListScreenState extends ConsumerState<OpportunitiesListScree
     with SingleTickerProviderStateMixin {
   OpportunityType? _filter;
   bool _savedOnly = false;
+  bool _showHistory = false; // closed or past-deadline opportunities
 
   @override
   Widget build(BuildContext context) {
@@ -36,8 +37,13 @@ class _OpportunitiesListScreenState extends ConsumerState<OpportunitiesListScree
     return Scaffold(
       appBar: AppBar(
         leading: sidebarMenuLeading(ref),
-        title: const Text('Career Hub'),
+        title: Text(_showHistory ? 'Opportunity history' : 'Career Hub'),
         actions: [
+          IconButton(
+            icon: Icon(_showHistory ? Icons.work_outline_rounded : Icons.history_rounded),
+            tooltip: _showHistory ? 'Open opportunities' : 'History (closed)',
+            onPressed: () => setState(() => _showHistory = !_showHistory),
+          ),
           IconButton(
             icon: Icon(_savedOnly ? Icons.bookmark_rounded : Icons.bookmark_border_rounded),
             tooltip: 'Saved opportunities',
@@ -45,7 +51,7 @@ class _OpportunitiesListScreenState extends ConsumerState<OpportunitiesListScree
           ),
         ],
       ),
-      floatingActionButton: isOfficer
+      floatingActionButton: isOfficer && !_showHistory
           ? FloatingActionButton.extended(
               onPressed: () => showCreateOpportunitySheet(context, postedBy: currentUser!.id),
               icon: const Icon(Icons.add_rounded),
@@ -66,8 +72,9 @@ class _OpportunitiesListScreenState extends ConsumerState<OpportunitiesListScree
             onRetry: () => ref.invalidate(_savedOnly ? savedOpportunitiesProvider : opportunitiesListProvider),
           ),
           data: (opportunities) {
-            final filtered =
-                _filter == null ? opportunities : opportunities.where((o) => o.type == _filter).toList();
+            // Open ones by default; closed or past-deadline ones live in History.
+            final byState = opportunities.where((o) => _showHistory ? !o.isOpen : o.isOpen);
+            final filtered = _filter == null ? byState.toList() : byState.where((o) => o.type == _filter).toList();
             return Column(
               children: [
                 if (!_savedOnly)
@@ -82,15 +89,19 @@ class _OpportunitiesListScreenState extends ConsumerState<OpportunitiesListScree
                       ],
                     ),
                   ),
-                if (!_savedOnly) const GoogleProgramsSection(),
+                if (!_savedOnly && !_showHistory) const GoogleProgramsSection(),
                 Expanded(
                   child: filtered.isEmpty
                       ? EmptyState(
                           icon: _savedOnly ? Icons.bookmark_border_rounded : Icons.work_outline_rounded,
-                          title: _savedOnly ? 'No saved opportunities yet' : 'No opportunities found',
-                          message: _savedOnly
-                              ? 'Bookmark internships, scholarships, or hackathons to find them here.'
-                              : 'New career opportunities are posted regularly — check back soon.',
+                          title: _showHistory
+                              ? 'No closed opportunities'
+                              : (_savedOnly ? 'No saved opportunities yet' : 'No opportunities found'),
+                          message: _showHistory
+                              ? 'Opportunities move here once they close or pass their deadline.'
+                              : (_savedOnly
+                                  ? 'Bookmark internships, scholarships, or hackathons to find them here.'
+                                  : 'New career opportunities are posted regularly — check back soon.'),
                         )
                       : ListView.separated(
                           padding: const EdgeInsets.all(AppSpacing.md),

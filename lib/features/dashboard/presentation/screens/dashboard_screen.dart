@@ -209,7 +209,8 @@ class DashboardScreen extends ConsumerWidget {
             savedAsync.when(
               loading: () => const SizedBox(height: 40, child: Center(child: CircularProgressIndicator())),
               error: (_, __) => const SizedBox.shrink(),
-              data: (saved) {
+              data: (allSaved) {
+                final saved = allSaved.where((o) => o.isOpen).toList();
                 if (saved.isEmpty) {
                   return const EmptyState(icon: Icons.bookmark_border_rounded, title: 'Nothing saved yet', message: '');
                 }
