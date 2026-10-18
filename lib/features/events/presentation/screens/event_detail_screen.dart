@@ -166,10 +166,11 @@ class _EventDetailBody extends ConsumerWidget {
           padding: const EdgeInsets.all(AppSpacing.lg),
           sliver: SliverList(
             delegate: SliverChildListDelegate([
-              Row(
+              Wrap(
+                spacing: AppSpacing.xs,
+                runSpacing: AppSpacing.xs,
                 children: [
                   StatusBadge.pending(event.category.label),
-                  const SizedBox(width: AppSpacing.xs),
                   if (event.isAttended)
                     StatusBadge.success('Attended ✓')
                   else if (event.isRegistered)
@@ -392,7 +393,14 @@ class _PartnerRow extends StatelessWidget {
           else
             const Icon(Icons.handshake_outlined, size: 16),
           const SizedBox(width: AppSpacing.xs),
-          Text('In partnership with $name', style: Theme.of(context).textTheme.bodySmall),
+          Flexible(
+            child: Text(
+              'In partnership with $name',
+              style: Theme.of(context).textTheme.bodySmall,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
           const SizedBox(width: 2),
           const Icon(Icons.chevron_right_rounded, size: 16),
         ],

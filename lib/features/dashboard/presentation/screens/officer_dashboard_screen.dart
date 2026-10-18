@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../shell/presentation/widgets/collapsible_sidebar.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/theme/app_colors.dart';
@@ -51,6 +52,7 @@ class OfficerDashboardScreen extends ConsumerWidget {
           children: [
             DashboardHeader(
               user: user,
+              leading: const SidebarMenuButton(),
               unreadNotificationCount: unreadCount,
               onNotificationsTap: () => context.push('/notifications'),
               onProfileTap: () => ref.read(selectedTabIndexProvider.notifier).state = 6,
@@ -108,13 +110,15 @@ class OfficerDashboardScreen extends ConsumerWidget {
             analyticsAsync.when(
               loading: () => const SizedBox(height: 80, child: Center(child: CircularProgressIndicator())),
               error: (_, __) => const SizedBox.shrink(),
-              data: (snapshot) => GridView.count(
-                crossAxisCount: 2,
+              data: (snapshot) => GridView(
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
-                mainAxisSpacing: AppSpacing.sm,
-                crossAxisSpacing: AppSpacing.sm,
-                childAspectRatio: 1.6,
+                gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
+                  maxCrossAxisExtent: 320,
+                  mainAxisSpacing: AppSpacing.sm,
+                  crossAxisSpacing: AppSpacing.sm,
+                  mainAxisExtent: 116 * MediaQuery.textScalerOf(context).scale(1),
+                ),
                 children: [
                   StatSummaryCard(
                     label: 'Active members',

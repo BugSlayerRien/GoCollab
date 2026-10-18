@@ -56,15 +56,25 @@ class _CardContent extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  StatusBadge.pending(event.category.label),
-                  const SizedBox(width: AppSpacing.xs),
-                  if (event.isRegistered) StatusBadge.success('Registered'),
-                  if (!event.isAvailable && !event.isRegistered)
-                    StatusBadge.alert(event.isPast ? 'Past' : 'Closed'),
-                  const Spacer(),
+                  Expanded(
+                    child: Wrap(
+                      spacing: AppSpacing.xs,
+                      runSpacing: AppSpacing.xs,
+                      children: [
+                        StatusBadge.pending(event.category.label),
+                        if (event.isRegistered) StatusBadge.success('Registered'),
+                        if (!event.isAvailable && !event.isRegistered)
+                          StatusBadge.alert(event.isPast ? 'Past' : 'Closed'),
+                      ],
+                    ),
+                  ),
                   if (event.isFeatured)
-                    const Icon(Icons.auto_awesome_rounded, size: 16, color: AppColors.googleYellow),
+                    const Padding(
+                      padding: EdgeInsets.only(left: AppSpacing.xs),
+                      child: Icon(Icons.auto_awesome_rounded, size: 16, color: AppColors.googleYellow),
+                    ),
                 ],
               ),
               const SizedBox(height: AppSpacing.sm),
@@ -83,6 +93,7 @@ class _CardContent extends StatelessWidget {
                     child: Text(
                       DateFormatter.weekdayDate(event.startAt),
                       style: Theme.of(context).textTheme.bodySmall,
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ),
                 ],

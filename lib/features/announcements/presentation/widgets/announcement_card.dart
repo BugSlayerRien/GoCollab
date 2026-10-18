@@ -44,15 +44,26 @@ class AnnouncementCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              if (announcement.isPinned) ...[
-                const Icon(Icons.push_pin_rounded, size: 14, color: AppColors.googleRed),
-                const SizedBox(width: 4),
-              ],
-              StatusBadge(label: announcement.category.label, color: color),
+              Flexible(
+                child: Wrap(
+                  spacing: 4,
+                  runSpacing: 4,
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  children: [
+                    if (announcement.isPinned)
+                      const Icon(Icons.push_pin_rounded, size: 14, color: AppColors.googleRed),
+                    StatusBadge(label: announcement.category.label, color: color),
+                  ],
+                ),
+              ),
               const Spacer(),
-              Text(
-                timeago.format(announcement.publishedAt),
-                style: Theme.of(context).textTheme.labelSmall,
+              Flexible(
+                child: Text(
+                  timeago.format(announcement.publishedAt),
+                  style: Theme.of(context).textTheme.labelSmall,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
               ),
               if (onEdit != null)
                 IconButton(

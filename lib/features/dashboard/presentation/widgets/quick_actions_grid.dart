@@ -18,15 +18,16 @@ class QuickActionsGrid extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final scale = MediaQuery.textScalerOf(context).scale(1);
     return GridView.builder(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
       itemCount: actions.length,
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 4,
         mainAxisSpacing: AppSpacing.sm,
         crossAxisSpacing: AppSpacing.sm,
-        childAspectRatio: 0.85,
+        mainAxisExtent: 52 + AppSpacing.xs + 2 * 15 * scale + 6,
       ),
       itemBuilder: (context, index) {
         final action = actions[index];
@@ -48,6 +49,7 @@ class QuickActionsGrid extends StatelessWidget {
                 style: Theme.of(context).textTheme.labelSmall?.copyWith(color: context.appTextPrimary),
                 textAlign: TextAlign.center,
                 maxLines: 2,
+                overflow: TextOverflow.ellipsis,
               ),
             ],
           ),

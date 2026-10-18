@@ -5,3 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 /// path) so "See all" shortcuts from the Dashboard can jump straight to a
 /// tab without pushing a new route / losing the shell chrome.
 final selectedTabIndexProvider = StateProvider<int>((ref) => 0);
+
+/// Whether the officer/admin sidebar is open. Closed (and fully hidden) by
+/// default; the burger button in each tab's app bar opens it.
+final sidebarOpenProvider = StateProvider<bool>((ref) => false);

@@ -32,6 +32,11 @@ class GoCollabApp extends ConsumerWidget {
       darkTheme: AppTheme.dark,
       themeMode: themeMode,
       routerConfig: router,
+      builder: (context, child) => MediaQuery.withClampedTextScaling(
+        minScaleFactor: 0.9,
+        maxScaleFactor: 1.2,
+        child: child ?? const SizedBox.shrink(),
+      ),
     );
   }
 }

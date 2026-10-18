@@ -40,9 +40,13 @@ class GoogleSignInButton extends StatelessWidget {
                     errorBuilder: (_, __, ___) => const Icon(Icons.g_mobiledata_rounded, size: 22),
                   ),
                   const SizedBox(width: AppSpacing.sm),
-                  Text(
-                    'Continue with Google',
-                    style: Theme.of(context).textTheme.labelLarge,
+                  Flexible(
+                    child: Text(
+                      'Continue with Google',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: Theme.of(context).textTheme.labelLarge,
+                    ),
                   ),
                 ],
               ),

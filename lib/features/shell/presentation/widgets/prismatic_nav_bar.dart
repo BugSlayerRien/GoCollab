@@ -113,12 +113,19 @@ class _PrismaticNavBarState extends State<PrismaticNavBar> with SingleTickerProv
                         ),
                       ),
                       const SizedBox(height: 2),
-                      Text(
-                        destination.label,
-                        style: TextStyle(
-                          fontSize: 11,
-                          fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-                          color: isSelected ? AppColors.googleBlue : context.appTextDisabled,
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 2),
+                        child: FittedBox(
+                          fit: BoxFit.scaleDown,
+                          child: Text(
+                            destination.label,
+                            maxLines: 1,
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+                              color: isSelected ? AppColors.googleBlue : context.appTextDisabled,
+                            ),
+                          ),
                         ),
                       ),
                     ],

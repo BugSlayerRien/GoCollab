@@ -13,6 +13,7 @@ import '../../../opportunities/presentation/screens/opportunities_list_screen.da
 import '../../../partnerships/presentation/screens/partners_list_screen.dart';
 import '../../../profile/presentation/screens/profile_screen.dart';
 import '../providers/shell_providers.dart';
+import '../widgets/collapsible_sidebar.dart';
 import '../widgets/prismatic_nav_bar.dart';
 
 /// The single post-auth entry point (`/`). Renders a role-aware bottom
@@ -38,8 +39,23 @@ class AppShellScreen extends ConsumerWidget {
 
     final safeIndex = selectedIndex >= screens.length ? 0 : selectedIndex;
 
+    final content = PrismaticScreenFrame(child: IndexedStack(index: safeIndex, children: screens));
+
+    // Officers and admins have too many destinations for a bottom bar: they get
+    // a collapsible sidebar instead. Members keep the bottom bar.
+    if (isOfficer || isAdmin) {
+      return Scaffold(
+        body: CollapsibleSidebar(
+          destinations: destinations,
+          selectedIndex: safeIndex,
+          onDestinationSelected: (index) => ref.read(selectedTabIndexProvider.notifier).state = index,
+          child: content,
+        ),
+      );
+    }
+
     return Scaffold(
-      body: PrismaticScreenFrame(child: IndexedStack(index: safeIndex, children: screens)),
+      body: content,
       bottomNavigationBar: PrismaticNavBar(
         selectedIndex: safeIndex,
         destinations: destinations,

@@ -1,3 +1,4 @@
+import '../../../shell/presentation/widgets/collapsible_sidebar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -34,6 +35,7 @@ class _OpportunitiesListScreenState extends ConsumerState<OpportunitiesListScree
 
     return Scaffold(
       appBar: AppBar(
+        leading: sidebarMenuLeading(ref),
         title: const Text('Career Hub'),
         actions: [
           IconButton(

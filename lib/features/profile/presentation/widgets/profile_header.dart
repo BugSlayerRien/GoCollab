@@ -43,7 +43,10 @@ class ProfileHeader extends ConsumerWidget {
                 const SizedBox(height: 2),
                 Text(user.email, style: Theme.of(context).textTheme.bodySmall, overflow: TextOverflow.ellipsis),
                 const SizedBox(height: AppSpacing.xs),
-                Row(
+                Wrap(
+                  spacing: AppSpacing.xs,
+                  runSpacing: 4,
+                  crossAxisAlignment: WrapCrossAlignment.center,
                   children: [
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm, vertical: 3),
@@ -61,22 +64,29 @@ class ProfileHeader extends ConsumerWidget {
                         ),
                       ),
                     ),
-                    if (user.isVerified) ...[
-                      const SizedBox(width: AppSpacing.xs),
-                      Icon(Icons.verified_rounded, size: 14, color: AppColors.googleGreen),
-                      const SizedBox(width: 2),
-                      Text(
-                        'Verified',
-                        style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                              color: AppColors.googleGreen,
-                              fontWeight: FontWeight.w600,
-                            ),
+                    if (user.isVerified)
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.verified_rounded, size: 14, color: AppColors.googleGreen),
+                          const SizedBox(width: 2),
+                          Text(
+                            'Verified',
+                            style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                                  color: AppColors.googleGreen,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                          ),
+                        ],
                       ),
-                    ],
-                    const SizedBox(width: AppSpacing.xs),
-                    Icon(Icons.star_rounded, size: 14, color: AppColors.googleYellow),
-                    const SizedBox(width: 2),
-                    Text('$points pts', style: Theme.of(context).textTheme.labelSmall),
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.star_rounded, size: 14, color: AppColors.googleYellow),
+                        const SizedBox(width: 2),
+                        Text('$points pts', style: Theme.of(context).textTheme.labelSmall),
+                      ],
+                    ),
                   ],
                 ),
               ],

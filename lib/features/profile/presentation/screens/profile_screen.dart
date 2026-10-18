@@ -1,3 +1,4 @@
+import '../../../shell/presentation/widgets/collapsible_sidebar.dart';
 import 'package:printing/printing.dart';
 import '../../domain/certificate_pdf.dart';
 import 'package:flutter/material.dart';
@@ -25,6 +26,7 @@ class ProfileScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
+        leading: sidebarMenuLeading(ref),
         title: const Text('Profile'),
         actions: [
           IconButton(

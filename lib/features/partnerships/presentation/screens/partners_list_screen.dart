@@ -1,3 +1,4 @@
+import '../../../shell/presentation/widgets/collapsible_sidebar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -19,7 +20,7 @@ class PartnersListScreen extends ConsumerWidget {
     final partnersAsync = ref.watch(partnersListProvider);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Partnerships')),
+      appBar: AppBar(leading: sidebarMenuLeading(ref), title: const Text('Partnerships')),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => showCreatePartnerSheet(context),
         icon: const Icon(Icons.add_business_rounded),

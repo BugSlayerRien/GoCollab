@@ -1,3 +1,4 @@
+import '../../../shell/presentation/widgets/collapsible_sidebar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/animations/prismatic_shimmer.dart';
@@ -25,7 +26,7 @@ class CommunityScreen extends ConsumerWidget {
     final isOfficer = currentUser?.role == UserRole.officer;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Community')),
+      appBar: AppBar(leading: sidebarMenuLeading(ref), title: const Text('Community')),
       floatingActionButton: isOfficer
           ? FloatingActionButton.extended(
               onPressed: () => showCreateAnnouncementSheet(context, ref, authorId: currentUser!.id),

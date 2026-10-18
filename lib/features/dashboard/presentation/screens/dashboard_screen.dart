@@ -158,7 +158,7 @@ class DashboardScreen extends ConsumerWidget {
                   return const EmptyState(icon: Icons.event_busy_rounded, title: 'No upcoming events', message: '');
                 }
                 return SizedBox(
-                  height: 184,
+                  height: 224 * MediaQuery.textScalerOf(context).scale(1),
                   child: ListView.separated(
                     scrollDirection: Axis.horizontal,
                     itemCount: upcoming.length,
@@ -187,7 +187,7 @@ class DashboardScreen extends ConsumerWidget {
                     final next = events.take(3).toList();
                     if (next.isEmpty) return const SizedBox.shrink();
                     return SizedBox(
-                      height: 150,
+                      height: 168 * MediaQuery.textScalerOf(context).scale(1),
                       child: ListView.separated(
                         scrollDirection: Axis.horizontal,
                         itemCount: next.length,
@@ -253,7 +253,10 @@ class _StatChip extends StatelessWidget {
           Icon(icon, color: color, size: 18),
           const SizedBox(height: 4),
           Text(value, style: Theme.of(context).textTheme.titleMedium),
-          Text(label, style: Theme.of(context).textTheme.labelSmall),
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Text(label, style: Theme.of(context).textTheme.labelSmall, maxLines: 1),
+          ),
         ],
       ),
     );

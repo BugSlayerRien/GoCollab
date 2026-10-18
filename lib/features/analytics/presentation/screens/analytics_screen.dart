@@ -1,3 +1,4 @@
+import '../../../shell/presentation/widgets/collapsible_sidebar.dart';
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -21,7 +22,7 @@ class AnalyticsScreen extends ConsumerWidget {
     final snapshotAsync = ref.watch(analyticsSnapshotProvider);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Community Analytics')),
+      appBar: AppBar(leading: sidebarMenuLeading(ref), title: const Text('Community Analytics')),
       body: RefreshIndicator(
         onRefresh: () async => ref.invalidate(analyticsSnapshotProvider),
         child: snapshotAsync.when(
@@ -33,13 +34,15 @@ class AnalyticsScreen extends ConsumerWidget {
           data: (snapshot) => ListView(
             padding: const EdgeInsets.all(AppSpacing.lg),
             children: [
-              GridView.count(
-                crossAxisCount: 2,
+              GridView(
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
-                mainAxisSpacing: AppSpacing.sm,
-                crossAxisSpacing: AppSpacing.sm,
-                childAspectRatio: 1.5,
+                gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
+                  maxCrossAxisExtent: 320,
+                  mainAxisSpacing: AppSpacing.sm,
+                  crossAxisSpacing: AppSpacing.sm,
+                  mainAxisExtent: 116 * MediaQuery.textScalerOf(context).scale(1),
+                ),
                 children: [
                   StatSummaryCard(
                     label: 'Active members',

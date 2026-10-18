@@ -17,6 +17,7 @@ class DashboardHeader extends StatelessWidget {
     this.onProfileTap,
     this.unreadNotificationCount = 0,
     this.communityPoints,
+    this.leading,
   });
 
   final AppUser user;
@@ -24,6 +25,9 @@ class DashboardHeader extends StatelessWidget {
   final VoidCallback? onProfileTap;
   final int unreadNotificationCount;
   final int? communityPoints;
+
+  /// e.g. the sidebar burger button for officers.
+  final Widget? leading;
 
   String get _greeting {
     final hour = DateTime.now().hour;
@@ -37,22 +41,28 @@ class DashboardHeader extends StatelessWidget {
     return ClipRRect(
       borderRadius: BorderRadius.circular(AppSpacing.radiusXl),
       child: Container(
-        height: 150,
+        height: 150 * MediaQuery.textScalerOf(context).scale(1).clamp(1.0, 1.3),
         decoration: BoxDecoration(color: context.appSurface, borderRadius: BorderRadius.circular(AppSpacing.radiusXl)),
         child: PrismaticBackground(
           opacity: 0.34,
           loopDuration: const Duration(seconds: 14),
           child: Padding(
-            padding: const EdgeInsets.all(AppSpacing.lg),
+            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg, vertical: AppSpacing.md),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                if (leading != null) ...[leading!, const SizedBox(width: AppSpacing.xs)],
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Text(_greeting, style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: context.appTextSecondary)),
+                      Text(
+                        _greeting,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: context.appTextSecondary),
+                      ),
                       const SizedBox(height: 2),
                       Text(
                         user.fullName.split(' ').first,
@@ -64,7 +74,14 @@ class DashboardHeader extends StatelessWidget {
                         children: [
                           const Icon(Icons.star_rounded, size: 16, color: AppColors.googleYellow),
                           const SizedBox(width: 4),
-                          Text('${communityPoints ?? user.points} community points', style: Theme.of(context).textTheme.bodySmall),
+                          Flexible(
+                            child: Text(
+                              '${communityPoints ?? user.points} community points',
+                              style: Theme.of(context).textTheme.bodySmall,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
                         ],
                       ),
                     ],

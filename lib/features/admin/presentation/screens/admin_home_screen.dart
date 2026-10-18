@@ -1,3 +1,4 @@
+import '../../../shell/presentation/widgets/collapsible_sidebar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -14,7 +15,7 @@ class AdminHomeScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final user = ref.watch(currentUserProvider).valueOrNull;
     return Scaffold(
-      appBar: AppBar(title: const Text('Administration')),
+      appBar: AppBar(leading: sidebarMenuLeading(ref), title: const Text('Administration')),
       body: ListView(
         padding: const EdgeInsets.all(AppSpacing.lg),
         children: [
